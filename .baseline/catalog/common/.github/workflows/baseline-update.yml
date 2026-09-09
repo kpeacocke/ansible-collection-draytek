@@ -1,0 +1,63 @@
+name: Baseline update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 1 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Resolve baseline source from repository state
+        shell: bash
+        run: |
+          baseline_repository="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          state = json.loads(Path('.baseline/state.json').read_text(encoding='utf-8'))
+          value = str(state.get('source_repository') or '').strip()
+          if not value:
+              raise SystemExit('missing .baseline/state.json source_repository')
+          print(value)
+          PY
+          )"
+          echo "BASELINE_REPOSITORY=$baseline_repository" >> "$GITHUB_ENV"
+      - name: Fetch baseline source
+        env:
+          GH_TOKEN: ${{ secrets.BASELINE_READ_TOKEN || github.token }}
+        run: gh repo clone "$BASELINE_REPOSITORY" "$RUNNER_TEMP/engineering-baseline" -- --depth=1
+      - name: Apply baseline update safely
+        run: python scripts/project_factory.py apply-update --source "$RUNNER_TEMP/engineering-baseline"
+      - name: Open update pull request when required
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if git diff --cached --quiet; then
+            echo "Baseline is current."
+            exit 0
+          fi
+          version="$(cat .baseline/VERSION)"
+          branch="chore/engineering-baseline-${version}"
+          if gh pr list --head "$branch" --state open --json number --jq 'length' | grep -q '^1$'; then
+            echo "An update PR already exists for $version."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git commit -m "chore: update engineering baseline to $version"
+          git push origin HEAD
+          gh pr create --title "chore: update engineering baseline to $version" \
+            --body "Automated engineering-baseline update. Project overrides are preserved. Review managed-file changes and normal CI before merging."

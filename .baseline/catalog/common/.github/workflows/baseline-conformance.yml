@@ -1,0 +1,119 @@
+name: Baseline conformance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Validate engineering baseline
+        run: python scripts/project_factory.py local-doctor
+      - name: Validate project factory
+        run: python scripts/project_factory.py self-test
+      - name: Prove first bootstrap when this is still a template
+        shell: bash
+        run: |
+          if python - <<'PY'
+          import json
+          from pathlib import Path
+          raise SystemExit(0 if json.loads(Path('.baseline/state.json').read_text()).get('template_mode') else 1)
+          PY
+          then
+            tmp="$(mktemp -d)"
+            cp -a . "$tmp/repo"
+            cd "$tmp/repo"
+            git remote remove origin 2>/dev/null || true
+            python scripts/baseline.py bootstrap --profile generic --name ci-smoke --owner ci-owner --owner-name ci-owner --codeowner @ci-owner
+            grep -q '@ci-owner' .github/CODEOWNERS
+            ! grep -q '@OWNER' .github/CODEOWNERS
+            python scripts/project_factory.py local-doctor
+          else
+            echo "Repository is already bootstrapped; template-mode smoke is not applicable."
+          fi
+      - name: Golden template — prove stale template adoption
+        if: github.repository == 'kpeacocke/engineering-baseline-template'
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="$PWD"
+          tmp="$(mktemp -d)"
+          cp -a . "$tmp/raw-template"
+          printf 'STALE MANAGED TEMPLATE FILE\n' > "$tmp/raw-template/scripts/github_reconcile.py"
+          SOURCE_ROOT="$source_root" TARGET_ROOT="$tmp/raw-template" python - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          source = Path(os.environ['SOURCE_ROOT'])
+          target = Path(os.environ['TARGET_ROOT'])
+          sys.path.insert(0, str(source / 'scripts'))
+          from _project_factory.local import adopt, local_doctor
+
+          adopt(
+              source, target, profile='generic', owner='kpeacocke',
+              name='ci-stale-template',
+              source_repository='kpeacocke/engineering-baseline-template',
+          )
+          state = json.loads((target / '.baseline/state.json').read_text())
+          if state['template_mode'] is not False:
+              raise AssertionError('template_mode was not cleared')
+          if state['local_overrides'] != []:
+              raise AssertionError(f"unexpected local overrides: {state['local_overrides']}")
+          if state['source_repository'] != 'kpeacocke/engineering-baseline-template':
+              raise AssertionError('source_repository was not persisted')
+          expected = source / '.baseline/catalog/common/scripts/github_reconcile.py'
+          if (target / 'scripts/github_reconcile.py').read_bytes() != expected.read_bytes():
+              raise AssertionError('stale managed template file was not replaced')
+          local_doctor(target)
+          PY
+      - name: Golden template — execute Python profile
+        if: github.repository == 'kpeacocke/engineering-baseline-template'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cp -a . "$tmp/python"
+          cd "$tmp/python"
+          git remote remove origin 2>/dev/null || true
+          python scripts/baseline.py bootstrap --profile python --name integration-python --owner kpeacocke
+          python scripts/project_factory.py local-doctor
+          python -m venv "$tmp/python-venv"
+          "$tmp/python-venv/bin/python" -m pip install --disable-pip-version-check poetry==2.4.2
+          "$tmp/python-venv/bin/poetry" install --no-interaction
+          "$tmp/python-venv/bin/poetry" check
+          "$tmp/python-venv/bin/poetry" run ruff check src tests
+          "$tmp/python-venv/bin/poetry" run ruff format --check src tests
+          "$tmp/python-venv/bin/poetry" run mypy
+          "$tmp/python-venv/bin/poetry" run pytest
+      - name: Golden template — execute Ansible profile
+        if: github.repository == 'kpeacocke/engineering-baseline-template'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cp -a . "$tmp/ansible"
+          cd "$tmp/ansible"
+          git remote remove origin 2>/dev/null || true
+          python scripts/baseline.py bootstrap \
+            --profile ansible \
+            --name integration-ansible \
+            --owner kpeacocke \
+            --ansible-namespace kpeacocke \
+            --ansible-collection integration_collection
+          python scripts/project_factory.py local-doctor
+          python -m venv "$tmp/ansible-venv"
+          "$tmp/ansible-venv/bin/python" -m pip install --disable-pip-version-check -r requirements-dev.txt
+          "$tmp/ansible-venv/bin/ansible-lint"
+          "$tmp/ansible-venv/bin/ansible-galaxy" collection build --force
