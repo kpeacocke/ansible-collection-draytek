@@ -1,0 +1,14 @@
+namespace: "kpeacocke"
+name: "draytek"
+version: 0.1.0
+readme: README.md
+authors:
+  - "kpeacocke"
+description: "TODO: describe this project."
+license: []
+tags:
+  - infrastructure
+  - tools
+dependencies: {}
+repository: ""
+issues: ""

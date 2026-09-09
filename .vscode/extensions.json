@@ -6,6 +6,8 @@
     "github.vscode-github-actions",
     "EditorConfig.EditorConfig",
     "DavidAnson.vscode-markdownlint",
-    "redhat.vscode-yaml"
+    "redhat.vscode-yaml",
+    "redhat.ansible",
+    "ms-python.python"
   ]
 }
