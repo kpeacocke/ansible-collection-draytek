@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "installed_version": "0.2.0",
+  "installed_version": "0.3.0",
   "profile": "ansible",
   "project_name": "ansible-collection-draytek",
   "description": "TODO: describe this project.",
@@ -11,6 +11,6 @@
   "ansible_collection": "draytek",
   "source_repository": "kpeacocke/engineering-baseline-template",
   "template_mode": false,
-  "last_reconciled": "2026-09-09T23:54:13+00:00",
+  "last_reconciled": "2026-09-10T01:51:59+00:00",
   "local_overrides": []
 }
