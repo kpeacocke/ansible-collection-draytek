@@ -23,3 +23,44 @@ jobs:
         run: ansible-lint
       - name: Build collection
         run: ansible-galaxy collection build --force
+
+  units:
+    # Uses plain pytest, not `ansible-test units --docker`: the only maintained
+    # GitHub Action for ansible-test calls unpinned nested actions, which this
+    # repository's SHA-pinning ruleset rejects (see PR #5 discussion).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Install Ansible tooling
+        run: python -m pip install -r requirements-dev.txt
+      - name: Install collection dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+      - name: Run unit tests
+        run: python -m pytest tests/unit
+
+  sanity:
+    # Scoped to plugins/ and tests/ (actual collection content). scripts/ and
+    # .baseline/ are repository governance tooling, not collection content;
+    # ansible-test treats the whole checkout as "the collection" and has no
+    # config (galaxy.yml build_ignore only affects the build artifact) to
+    # exclude them, so they are passed as explicit positional targets instead
+    # of relying on a repo-wide scan (see PR #5 discussion).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ansible_collections/kpeacocke/draytek
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Install Ansible tooling
+        run: python -m pip install -r ansible_collections/kpeacocke/draytek/requirements-dev.txt
+      - name: Install collection dependencies
+        working-directory: ansible_collections/kpeacocke/draytek
+        run: ansible-galaxy collection install -r requirements.yml -p "$GITHUB_WORKSPACE"
+      - name: Run ansible-test sanity
+        working-directory: ansible_collections/kpeacocke/draytek
+        run: ansible-test sanity --docker default -v -- plugins/ tests/
