@@ -211,6 +211,7 @@ def write_state(
     source_repository: str | None = None,
     *,
     template_mode: bool = False,
+    local_overrides: list[str] | None = None,
 ) -> None:
     data = {
         "schema_version": 1,
@@ -226,6 +227,7 @@ def write_state(
         "source_repository": source_repository,
         "template_mode": template_mode,
         "last_reconciled": now_iso(),
+        "local_overrides": local_overrides if local_overrides is not None else [],
     }
     STATE.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8", newline="\n")
 
@@ -244,7 +246,11 @@ def cmd_bootstrap(args: argparse.Namespace) -> int:
     for asset in applicable_assets(m, args.profile):
         result = apply_asset(asset, values, force_seed=force_seed)
         print(f"[{result:<9}] {render_path(asset['path'], values)} ({asset['ownership']})")
-    write_state(values, args.source_repository or old.get("source_repository"))
+    write_state(
+        values,
+        args.source_repository or old.get("source_repository"),
+        local_overrides=old.get("local_overrides", []),
+    )
     print("RESULT: BOOTSTRAPPED")
     return 0
 
@@ -387,6 +393,7 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
             values,
             st.get("source_repository"),
             template_mode=bool(st.get("template_mode", False)),
+            local_overrides=st.get("local_overrides", []),
         )
     print("RESULT: COMPLIANT" if bad == 0 else f"RESULT: DRIFT ({bad} asset(s))")
     return 0 if bad == 0 else 1
