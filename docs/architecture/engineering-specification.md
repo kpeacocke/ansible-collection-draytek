@@ -358,6 +358,20 @@ Example:
 
 Do not continue and hope compatible commands work.
 
+### Implementation status
+
+As of milestone 1 (PR #5), this is **not implemented**. `plugins/cliconf/drayos.py`
+reports only a static `network_os` identifier (which cliconf plugin is in use,
+not which physical device is connected). `plugins/module_utils/network/drayos/models.py`
+defines the `PlatformInfo` structure and an `unknown_platform()` placeholder as
+the interface real detection should populate.
+
+Real detection is blocked on discovery work (section 65): it requires
+identifying the actual DrayOS command(s) that reveal model/platform/firmware
+from official documentation or a real device, then capturing fixtures, before
+any parser is written. Tracked in
+[issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6).
+
 ---
 
 # 10. Capability Model
@@ -1865,6 +1879,11 @@ can successfully run:
 against a supported Vigor router.
 
 Do not begin resource modules until this works reliably.
+
+Status: terminal plugin, cliconf plugin, and drayos_command landed in PR #5.
+Platform detection is intentionally not yet implemented -- see section 9
+("Implementation status") and issue #6; it is blocked on real-device
+discovery, not skipped for convenience.
 
 ---
 
