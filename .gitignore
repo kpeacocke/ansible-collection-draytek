@@ -41,3 +41,10 @@ build/
 # baseline:managed:end
 
 # Project-specific ignores
+
+# Local ansible_collections symlink used by conftest.py for plain pytest runs
+.cache/
+
+# Local ansible-galaxy scratch state (created by some CLI invocations in cwd)
+.ansible/
+

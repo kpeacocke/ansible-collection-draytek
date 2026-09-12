@@ -1,0 +1,5 @@
+---
+add_features:
+  - drayos_command - run operational commands on DrayOS devices.
+  - Add the DrayOS terminal plugin (prompt/error detection for network_cli).
+  - Add the DrayOS cliconf plugin (the network_cli abstraction for DrayOS devices).

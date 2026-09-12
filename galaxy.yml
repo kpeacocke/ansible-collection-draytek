@@ -4,11 +4,15 @@ version: 0.1.0
 readme: README.md
 authors:
   - "kpeacocke"
-description: "TODO: describe this project."
-license: []
+description: "Ansible collection for automating DrayTek DrayOS network devices."
+license:
+  - GPL-3.0-or-later
 tags:
   - infrastructure
   - tools
-dependencies: {}
+  - networking
+  - network
+dependencies:
+  ansible.netcommon: ">=6.0.0"
 repository: ""
 issues: ""
