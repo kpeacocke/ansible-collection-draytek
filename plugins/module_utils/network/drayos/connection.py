@@ -1,3 +1,5 @@
+# Copyright: (c) 2026, kpeacocke
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Connection helpers shared by DrayOS modules.
 
 This module does not implement SSH, prompt handling, or command parsing of

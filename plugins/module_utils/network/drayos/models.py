@@ -1,3 +1,5 @@
+# Copyright: (c) 2026, kpeacocke
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Structured platform-identification model (engineering-specification.md, section 9).
 
 Populating this model from real device output is deferred: DrayOS does not

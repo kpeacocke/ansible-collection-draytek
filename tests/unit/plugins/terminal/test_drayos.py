@@ -19,6 +19,15 @@ def test_stdout_prompt_does_not_match_plain_output():
     assert not _matches(TerminalModule.terminal_stdout_re, b"some command output\nmore text")
 
 
+def test_stdout_prompt_does_not_match_output_ending_in_bare_gt():
+    # Regression: a space before '>' must not be mistaken for a prompt.
+    assert not _matches(TerminalModule.terminal_stdout_re, b"threshold >")
+
+
+def test_stdout_prompt_matches_with_trailing_space():
+    assert _matches(TerminalModule.terminal_stdout_re, b"Vigor2960> ")
+
+
 def test_stderr_matches_invalid_command():
     assert _matches(TerminalModule.terminal_stderr_re, b"Invalid command.")
 

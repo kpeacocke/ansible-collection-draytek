@@ -16,3 +16,16 @@ dependencies:
   ansible.netcommon: ">=6.0.0"
 repository: ""
 issues: ""
+build_ignore:
+  # Repository governance/tooling, not collection content.
+  - .baseline
+  - scripts
+  - baseline.sh
+  - baseline.ps1
+  - requirements-dev.txt
+  - .devcontainer
+  - .vscode
+  - .ansible-lint
+  - .mypy_cache
+  - .venv
+  - .cache

@@ -117,3 +117,58 @@ def test_command_error_is_reported_via_fail_json(monkeypatch):
         drayos_command.main()
 
     assert excinfo.value.kwargs["msg"] == "device unreachable"
+
+
+def test_wait_for_unknown_operator_fails_cleanly():
+    _set_module_args(
+        {
+            "commands": ["show system"],
+            "wait_for": ["result[0] not_a_real_operator 1"],
+        }
+    )
+
+    with pytest.raises(AnsibleFailJson) as excinfo:
+        drayos_command.main()
+
+    assert "unknown operator" in excinfo.value.kwargs["msg"]
+
+
+def test_wait_for_malformed_condition_fails_cleanly():
+    _set_module_args({"commands": ["show system"], "wait_for": ["result[0]"]})
+
+    with pytest.raises(AnsibleFailJson):
+        drayos_command.main()
+
+
+def test_retries_below_one_is_rejected():
+    _set_module_args({"commands": ["show system"], "retries": 0})
+
+    with pytest.raises(AnsibleFailJson) as excinfo:
+        drayos_command.main()
+
+    assert "retries must be at least 1" in excinfo.value.kwargs["msg"]
+
+
+def test_negative_interval_is_rejected():
+    _set_module_args({"commands": ["show system"], "interval": -1})
+
+    with pytest.raises(AnsibleFailJson) as excinfo:
+        drayos_command.main()
+
+    assert "interval must not be negative" in excinfo.value.kwargs["msg"]
+
+
+def test_output_key_is_stripped_from_per_command_dict(monkeypatch):
+    seen = {}
+
+    def _capture(module, commands):
+        seen["commands"] = commands
+        return ["ok"]
+
+    monkeypatch.setattr(drayos_command, "run_commands", _capture)
+    _set_module_args({"commands": [{"command": "show system", "output": "json"}]})
+
+    with pytest.raises(AnsibleExitJson):
+        drayos_command.main()
+
+    assert "output" not in seen["commands"][0]

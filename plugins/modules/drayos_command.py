@@ -1,3 +1,5 @@
+# Copyright: (c) 2026, kpeacocke
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
 DOCUMENTATION = r"""
@@ -10,16 +12,15 @@ description:
     an operational and diagnostic escape hatch, not a configuration module.
 version_added: "0.1.0"
 author:
-  - kpeacocke
+  - kpeacocke (@kpeacocke)
 options:
   commands:
     description:
       - List of commands to send to the device. Each item may be a plain
-        string, or a dictionary with a required O(commands[].command) key
-        and optional O(commands[].output), O(commands[].prompt),
-        O(commands[].answer), O(commands[].newline), O(commands[].sendonly),
-        and O(commands[].check_all) keys. O(wait_for) and O(match) are
-        module-level options and are not accepted per-command.
+        string, or a dictionary with a required C(command) key and
+        optional C(prompt), C(answer), C(newline), C(sendonly), and
+        C(check_all) keys. O(wait_for) and O(match) are module-level
+        options and are not accepted per-command.
     type: list
     elements: raw
     required: true
@@ -101,6 +102,9 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.e
 def parse_commands(module: AnsibleModule) -> list:
     commands = transform_commands(module)
 
+    for command in commands:
+        command.pop("output", None)
+
     if module.check_mode:
         for command in commands:
             if not command["command"].startswith("show"):
@@ -123,6 +127,17 @@ def main() -> None:
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
+    retries = module.params["retries"]
+    interval = module.params["interval"]
+    match = module.params["match"]
+
+    if retries < 1:
+        module.fail_json(msg=f"retries must be at least 1, got {retries}")
+        return
+    if interval < 0:
+        module.fail_json(msg=f"interval must not be negative, got {interval}")
+        return
+
     try:
         commands = parse_commands(module)
     except ValidationError as exc:
@@ -133,13 +148,9 @@ def main() -> None:
 
     try:
         conditionals = [Conditional(condition) for condition in wait_for]
-    except ValueError as exc:
+    except (ValueError, AttributeError, IndexError) as exc:
         module.fail_json(msg=str(exc))
         return
-
-    retries = module.params["retries"]
-    interval = module.params["interval"]
-    match = module.params["match"]
 
     result: dict = {"changed": False}
     responses: list = []

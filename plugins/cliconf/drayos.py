@@ -1,3 +1,5 @@
+# Copyright: (c) 2026, kpeacocke
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """DrayOS cliconf plugin.
 
 Provides the primary ``network_cli`` abstraction for DrayOS devices
@@ -7,6 +9,20 @@ device-info parsing is deferred until real command output has been captured
 from a test device (section 65) rather than guessed.
 """
 from __future__ import annotations
+
+DOCUMENTATION = r"""
+author: kpeacocke (@kpeacocke)
+name: drayos
+short_description: Use network_cli cliconf plugin with DrayOS devices
+description:
+  - This cliconf plugin provides low-level abstraction APIs for sending and
+    receiving CLI commands from DrayOS network devices over a
+    C(network_cli) connection.
+  - It does not implement configuration retrieval or editing; DrayOS does
+    not expose a Cisco-style configuration mode that has been validated
+    against a real device.
+version_added: "0.1.0"
+"""
 
 import json
 from collections.abc import Mapping
