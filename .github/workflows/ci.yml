@@ -28,12 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - name: Run unit tests with ansible-test
+        uses: ansible-community/ansible-test-gh-action@6ded727edb598e670ac056a8e680ca4050bac0a3 # v1.18.0
         with:
-          python-version: "3.14"
-      - name: Install Ansible tooling
-        run: python -m pip install -r requirements-dev.txt
-      - name: Install collection dependencies
-        run: ansible-galaxy collection install -r requirements.yml
-      - name: Run unit tests
-        run: python -m pytest tests/unit
+          ansible-core-version: stable-2.19
+          testing-type: units
+          test-deps: ansible.netcommon

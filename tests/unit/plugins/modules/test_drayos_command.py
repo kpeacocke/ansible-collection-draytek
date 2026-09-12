@@ -100,3 +100,20 @@ def test_check_mode_rejects_non_show_commands(monkeypatch):
         drayos_command.main()
 
     assert "only show commands are supported" in excinfo.value.kwargs["msg"]
+
+
+def test_command_error_is_reported_via_fail_json(monkeypatch):
+    from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.errors import (
+        CommandError,
+    )
+
+    def _raise(module, commands):
+        raise CommandError("device unreachable")
+
+    monkeypatch.setattr(drayos_command, "run_commands", _raise)
+    _set_module_args({"commands": ["show system"]})
+
+    with pytest.raises(AnsibleFailJson) as excinfo:
+        drayos_command.main()
+
+    assert excinfo.value.kwargs["msg"] == "device unreachable"

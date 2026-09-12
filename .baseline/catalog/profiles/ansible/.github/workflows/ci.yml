@@ -23,3 +23,14 @@ jobs:
         run: ansible-lint
       - name: Build collection
         run: ansible-galaxy collection build --force
+
+  units:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Run unit tests with ansible-test
+        uses: ansible-community/ansible-test-gh-action@6ded727edb598e670ac056a8e680ca4050bac0a3 # v1.18.0
+        with:
+          ansible-core-version: stable-2.19
+          testing-type: units
+          test-deps: ansible.netcommon

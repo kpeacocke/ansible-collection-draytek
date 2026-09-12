@@ -15,8 +15,11 @@ options:
   commands:
     description:
       - List of commands to send to the device. Each item may be a plain
-        string, or a dictionary supporting O(wait_for), O(match), and
-        O(command).
+        string, or a dictionary with a required O(commands[].command) key
+        and optional O(commands[].output), O(commands[].prompt),
+        O(commands[].answer), O(commands[].newline), O(commands[].sendonly),
+        and O(commands[].check_all) keys. O(wait_for) and O(match) are
+        module-level options and are not accepted per-command.
     type: list
     elements: raw
     required: true
@@ -90,6 +93,7 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.c
     run_commands,
 )
 from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.errors import (
+    DrayTekError,
     ValidationError,
 )
 
@@ -140,7 +144,11 @@ def main() -> None:
     result: dict = {"changed": False}
     responses: list = []
     for _ in range(retries):
-        responses = run_commands(module, commands)
+        try:
+            responses = run_commands(module, commands)
+        except DrayTekError as exc:
+            module.fail_json(msg=str(exc))
+            return
 
         for item in list(conditionals):
             if item(responses):
