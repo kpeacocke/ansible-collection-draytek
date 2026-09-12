@@ -154,7 +154,7 @@ def main() -> None:
 
     result: dict = {"changed": False}
     responses: list = []
-    for _ in range(retries):
+    for _attempt in range(retries):
         try:
             responses = run_commands(module, commands)
         except DrayTekError as exc:
