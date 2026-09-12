@@ -197,7 +197,9 @@ Start with approximately this structure:
     │   ├── supported_devices.md
     │   ├── development.md
     │   ├── testing.md
-    │   ├── architecture.md
+    │   ├── architecture/
+    │   │   ├── README.md
+    │   │   └── engineering-specification.md
     │   └── security.md
     │
     ├── meta/
