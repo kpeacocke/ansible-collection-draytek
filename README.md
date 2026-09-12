@@ -30,4 +30,7 @@ In VS Code, use `/plan`, `/implement`, `/debug`, `/verify`, `/review`, `/preflig
 
 ## Repository-specific documentation
 
-Add architecture, setup, operation and usage documentation under `docs/` as the project takes shape.
+The collection's engineering specification is the source of truth for scope, architecture and
+milestones: [docs/architecture/engineering-specification.md](docs/architecture/engineering-specification.md).
+
+Add further setup, operation and usage documentation under `docs/` as the project takes shape.
