@@ -1877,8 +1877,10 @@ Correcting an earlier (wrong) note here: DrayTek does document the CLI.
 Fixture capture from a real device (step 3) is still required before writing
 any parser — published references and `?` output describe syntax, not this
 collection's normalised internal representation — but it is not the *only*
-source of truth. Community-contributed fixtures (see CONTRIBUTING.md) remain
-valuable for breadth across the Vigor range regardless; see also section 32.
+source of truth. Community-contributed fixtures (see
+[CONTRIBUTING.md](../../CONTRIBUTING.md#contributing-drayos-device-fixtures))
+remain valuable for breadth across the Vigor range regardless; see also
+[section 32](#32-supported-device-matrix).
 
 ### Documented `sys` command evidence (confidence: legacy, unverified on current firmware)
 

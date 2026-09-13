@@ -25,7 +25,8 @@ pages, alongside the User Guide) and the CLI is self-documenting (`?` lists
 commands, `<command> ?` shows sub-commands). Even so, this collection's
 DrayOS support (parsing, facts, platform detection) must still be built and
 verified from real captured device output, not assumed from documentation
-alone (engineering-specification.md, sections 65 and 78.3). One person's set
+alone ([discovery rule](docs/architecture/engineering-specification.md#65-discovery-before-implementation) and
+[working instructions](docs/architecture/engineering-specification.md#78-copilot-working-instructions)). One person's set
 of devices can only prove so much — coverage across the Vigor range depends
 on fixtures from other owners too.
 
@@ -41,5 +42,5 @@ If you have access to a DrayTek device not yet listed in
    don't have authorisation to capture output from.
 
 A model/firmware combination only moves from "expected compatible" to
-"tested" once a real fixture exists for it.
+"tested" once a sanitised real-device fixture exists for it.
 

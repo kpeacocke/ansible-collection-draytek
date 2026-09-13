@@ -8,7 +8,7 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos i
     facts,
 )
 
-FIXTURES = Path(__file__).parents[3] / "fixtures" / "drayos" / "vigor2927_4.4.0"
+FIXTURES = Path(__file__).parents[3] / "fixtures" / "drayos" / "vigor2927" / "4.4.0"
 
 
 def _read(name: str) -> str:

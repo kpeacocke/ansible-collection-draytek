@@ -9,7 +9,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible_collections.kpeacocke.draytek.plugins.modules import drayos_facts
 
-FIXTURES = Path(__file__).parents[3] / "fixtures" / "drayos" / "vigor2927_4.4.0"
+FIXTURES = Path(__file__).parents[3] / "fixtures" / "drayos" / "vigor2927" / "4.4.0"
 
 
 def _read(name: str) -> str:

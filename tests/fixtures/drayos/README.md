@@ -2,7 +2,8 @@
 
 Each subdirectory here corresponds to one captured model/firmware combination.
 
-Naming convention: `<model>_<firmware-version>/` (for example `vigor2927_4.4.5.1/`).
+Naming convention: `<model>/<firmware-version>/` (for example
+`vigor2927/4.4.5.1/`), matching section 33 of the engineering specification.
 
 Do not commit fixtures containing:
 
@@ -26,9 +27,9 @@ Fixtures are either:
   fixture's directory name), or
 - taken verbatim from a vendor-published example in an official DrayTek
   Command Reference/User Guide (acceptable as a starting point per
-  engineering-specification.md section 65, but must be labelled as such).
+  [the engineering specification's discovery rule](../../docs/architecture/engineering-specification.md#65-discovery-before-implementation), but must be labelled as such).
 
-`vigor2927_4.4.0/` is the second kind: the example output is copied verbatim
+`vigor2927/4.4.0/` is the second kind: the example output is copied verbatim
 from the Vigor2927 Series User's Guide V2.2, Part X (Telnet Commands), not
 captured from a live device. It has not been confirmed to match current
 firmware output byte-for-byte. Treat parsers built against it as validated
