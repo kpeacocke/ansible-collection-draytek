@@ -1852,15 +1852,26 @@ Before implementing each resource module:
 
 Never implement a write operation from undocumented assumptions.
 
-### Finding: no official DrayTek CLI reference
+### Finding: official documentation and self-discovery both exist
 
-As of milestone 1/2 discovery, DrayTek does not appear to publish an official
-CLI/Telnet command reference (unlike, for example, Cisco). Step 1 above will
-therefore frequently come back empty, and fixture capture from real devices
-(step 3) is the primary source of truth for this collection, not vendor
-documentation. This makes community-contributed fixtures (see
-CONTRIBUTING.md) the main scaling mechanism for device coverage beyond
-whatever hardware the core maintainers own; see also section 32.
+Correcting an earlier (wrong) note here: DrayTek does document the CLI.
+
+- Each product's Command Reference is published alongside its User Guide on
+  DrayTek's regional Downloads pages.
+- The CLI is self-documenting on the device itself: `?` lists available
+  commands, and `<command> ?` shows sub-commands/syntax for that command.
+- CLI login uses the same admin account as the web UI (SSH/Telnet, per
+  https://www.draytek.co.uk/support/guides/kb-draytek-cli-win).
+- A "Web Console" is available from the web UI (the sliders icon) that
+  provides CLI access without a separate SSH/Telnet login, since it reuses
+  the existing authenticated web session — useful when SSH/Telnet is
+  disabled, locked out, or otherwise unavailable.
+
+Fixture capture from a real device (step 3) is still required before writing
+any parser — published references and `?` output describe syntax, not this
+collection's normalised internal representation — but it is not the *only*
+source of truth. Community-contributed fixtures (see CONTRIBUTING.md) remain
+valuable for breadth across the Vigor range regardless; see also section 32.
 
 ---
 

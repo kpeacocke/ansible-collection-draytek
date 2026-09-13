@@ -20,12 +20,14 @@ Pull requests must state what changed, why, verification evidence, risk/rollout 
 
 ## Contributing DrayOS device fixtures
 
-DrayTek does not publish an official CLI/Telnet command reference, so this
-collection's DrayOS support (parsing, facts, platform detection) is built and
-verified from real captured device output, not guessed syntax
-(engineering-specification.md, sections 65 and 78.3). One person's set of
-devices can only prove so much — coverage across the Vigor range depends on
-fixtures from other owners.
+DrayTek publishes a Command Reference per product (on its regional Downloads
+pages, alongside the User Guide) and the CLI is self-documenting (`?` lists
+commands, `<command> ?` shows sub-commands). Even so, this collection's
+DrayOS support (parsing, facts, platform detection) must still be built and
+verified from real captured device output, not assumed from documentation
+alone (engineering-specification.md, sections 65 and 78.3). One person's set
+of devices can only prove so much — coverage across the Vigor range depends
+on fixtures from other owners too.
 
 If you have access to a DrayTek device not yet listed in
 [docs/supported_devices.md](docs/supported_devices.md), you can help by:
