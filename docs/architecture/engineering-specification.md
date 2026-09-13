@@ -1852,6 +1852,16 @@ Before implementing each resource module:
 
 Never implement a write operation from undocumented assumptions.
 
+### Finding: no official DrayTek CLI reference
+
+As of milestone 1/2 discovery, DrayTek does not appear to publish an official
+CLI/Telnet command reference (unlike, for example, Cisco). Step 1 above will
+therefore frequently come back empty, and fixture capture from real devices
+(step 3) is the primary source of truth for this collection, not vendor
+documentation. This makes community-contributed fixtures (see
+CONTRIBUTING.md) the main scaling mechanism for device coverage beyond
+whatever hardware the core maintainers own; see also section 32.
+
 ---
 
 # 66. First Development Milestone
