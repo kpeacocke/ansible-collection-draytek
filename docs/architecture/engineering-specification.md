@@ -1873,6 +1873,37 @@ collection's normalised internal representation — but it is not the *only*
 source of truth. Community-contributed fixtures (see CONTRIBUTING.md) remain
 valuable for breadth across the Vigor range regardless; see also section 32.
 
+### Documented `sys` command evidence (confidence: legacy, unverified on current firmware)
+
+A DrayTek-authored Telnet/Logs manual (mirrored at
+https://manuals.plus/draytek/telnet-logs-commands-manual; original covers the
+Vigor 2600/2900-era ISDN/ADSL routers) documents this real, DrayTek-written
+command syntax:
+
+    sys version   : show router version information
+    sys admin <ASCII string>
+    sys cfg default
+    sys cfg status
+    sys cmdlog    : show the latest command
+    sys domainname <name>
+    sys iface     : show every interface status
+    sys name <ASCII string, max 20 chars>
+    sys passwd <ASCII string, max 23 chars>
+    sys reboot
+    sys tftpd
+    ip addr       : show or set NAT local IP address
+    log -c / -p / -i / -w / -F : call/PPP/ISDN/WAN log display and flush
+
+This is genuine documented evidence, not a guess — but it is explicitly for
+legacy firmware. DrayTek's current DrayOS 5 CLI guide
+(https://faq.draytek.com.au/docs/how-to-use-cli-commands-on-drayos-5-routers/)
+exists but is video-only; no text-extractable current-firmware command
+listing has been found yet. `sys version` is a *plausible* starting
+hypothesis for facts/platform detection given this history, not a confirmed
+one for current DrayOS. It must still be validated (does the command exist
+today, and in what output format) via `?`/`sys ?` self-discovery or a real
+device before any parser is implemented, per section 65 rule 3.
+
 ---
 
 # 66. First Development Milestone
