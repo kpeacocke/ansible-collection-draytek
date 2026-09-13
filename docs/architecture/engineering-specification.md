@@ -360,17 +360,22 @@ Do not continue and hope compatible commands work.
 
 ### Implementation status
 
-As of milestone 1 (PR #5), this is **not implemented**. `plugins/cliconf/drayos.py`
-reports only a static `network_os` identifier (which cliconf plugin is in use,
-not which physical device is connected). `plugins/module_utils/network/drayos/models.py`
-defines the `PlatformInfo` structure and an `unknown_platform()` placeholder as
-the interface real detection should populate.
+Updated: a real parser now exists. `plugins/module_utils/network/drayos/facts.py`
+implements `parse_sys_version()`, returning a populated `PlatformInfo` (model,
+firmware version, hardware revision, serial number) from `sys version`
+output. It is built and unit-tested against the documented example output in
+`docs/command-reference/draytek-vigor2927-telnet.yaml` (sourced from the
+Vigor2927 Series User's Guide V2.2), not yet against a real device — see
+`tests/fixtures/drayos/README.md`'s provenance note and
+[issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6)
+for what remains before this can be called "tested" rather than "expected
+compatible" (section 32).
 
-Real detection is blocked on discovery work (section 65): it requires
-identifying the actual DrayOS command(s) that reveal model/platform/firmware
-from official documentation or a real device, then capturing fixtures, before
-any parser is written. Tracked in
-[issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6).
+`plugins/cliconf/drayos.py`'s `get_device_info()` still reports only a static
+`network_os` identifier (which cliconf plugin is in use, not which physical
+device is connected) — wiring `parse_sys_version()` into a `drayos_facts`
+module or connection-layer detection call is not yet done; that is milestone
+2 work (section 67), not milestone 1.
 
 ---
 

@@ -21,4 +21,4 @@ Never infer that an entire Vigor family works because one model passed tests.
 
 | Product | Platform | Firmware | Tested | CI Tested | Support Level | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| _(none yet)_ | DrayOS | | No | No | | Awaiting first captured device fixture (see [issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6)) |
+| Vigor2927Vac | DrayOS | 4.4.0 | No (documentation-derived) | Yes (unit tests against fixture) | Expected compatible | Parsers (`sys version`, `sys iface`, `show status`) built and unit-tested against the Vigor2927 Series User's Guide V2.2's documented example output, not yet against a real device. See [issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6). |
