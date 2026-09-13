@@ -373,9 +373,11 @@ compatible" (section 32).
 
 `plugins/cliconf/drayos.py`'s `get_device_info()` still reports only a static
 `network_os` identifier (which cliconf plugin is in use, not which physical
-device is connected) — wiring `parse_sys_version()` into a `drayos_facts`
-module or connection-layer detection call is not yet done; that is milestone
-2 work (section 67), not milestone 1.
+device is connected) — `parse_sys_version()` is now wired into the
+`drayos_facts` module (section 67), but not into connection-layer/cliconf
+detection; a device that isn't really DrayOS still won't fail cleanly at
+connection time, only when `drayos_facts` is run against it and parsing
+comes back empty.
 
 ---
 
@@ -1959,6 +1961,14 @@ Acceptance criteria:
 - malformed fixture handling is tested
 - multiple firmware fixtures are represented
 - no configuration mutation occurs
+
+Status: structured device model (`PlatformInfo`), a facts parser
+(`plugins/module_utils/network/drayos/facts.py`), and `drayos_facts` have
+landed, built and unit-tested against documented Vigor2927 example output
+(see section 9's implementation status and `docs/supported_devices.md`).
+Not yet done: capability detection, and multiple firmware fixtures (only
+one model/firmware combination is represented so far -- see issue #6 for
+real-device confirmation and CONTRIBUTING.md for adding further fixtures).
 
 ---
 
