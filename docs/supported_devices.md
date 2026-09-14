@@ -17,9 +17,15 @@ These terms are not interchangeable:
   separately where available.
 - **Expected compatible** — believed to work by architectural similarity to a
   tested product, but not itself verified.
+- **Evidence only** — vendor documentation has been catalogued, but no
+  collection transport or runtime support has been established.
 
 Never infer that an entire Vigor family works because one model passed tests.
 
 | Product | Platform | Firmware | Tested | CI Tested | Support Level | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | Vigor2927Vac | DrayOS | 4.4.0 | No (documentation-derived) | Yes (unit tests against fixture) | Expected compatible | Parsers (`sys version`, `sys iface`, `show status`) built and unit-tested against the Vigor2927 Series User's Guide V2.2's documented example output, not yet against a real device. See [issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6). |
+| VigorAP 1060C | Web UI management evidence | V1.4.9 | No | No | Evidence only | Catalogue records Web UI evidence; no CLI, HTTP or API transport is documented. |
+| VigorAP 918R | Web UI management evidence | V1.4.6 | No | No | Evidence only | Catalogue records management evidence; no CLI, HTTP or API transport is documented. |
+| VigorSwitch P2100/G2100 | Telnet/console CLI evidence | V2.8.3 | No | No | Evidence only | CLI catalogue exists; SSH parity, readback, idempotency and runtime support are unverified. |
+| VigorSwitch G1080 | Web UI management evidence | V1.04.04 | No | No | Evidence only | Catalogue records Web UI evidence; no CLI, HTTP or API transport is documented. |

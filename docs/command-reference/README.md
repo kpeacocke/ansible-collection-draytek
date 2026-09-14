@@ -1,13 +1,21 @@
-# DrayTek Vigor2927 Command Catalogue
+# DrayTek Command Evidence Catalogues
 
-This directory is intended to be placed in an Ansible collection repository as:
+This directory contains vendor-derived evidence for device families that the
+collection may support in future. These YAML files are design and parser
+inputs, not Ansible APIs, runtime configuration, or proof of device support.
 
 ```text
 docs/command-reference/
   draytek-vigor2927-telnet.yaml
+  draytek-vigorswitch-p2100-g2100-telnet.yaml
+  draytek-vigorap-1060c-management.yaml
+  draytek-vigorap-918r-management.yaml
+  draytek-vigorswitch-g1080-management.yaml
 ```
 
-The YAML catalogue is derived from **Part X — Telnet Commands** of the supplied DrayTek Vigor2927 Series User's Guide.
+The catalogue index is [CATALOGUES.md](CATALOGUES.md). It records the device,
+firmware/document boundary, evidence type, record count and implementation
+limits for each package.
 
 ## Purpose
 
@@ -32,6 +40,22 @@ The vendor manual documents a **Telnet command interface**. The catalogue does n
 
 Likewise, the catalogue does not label commands as safely idempotent merely because they have read and write-looking syntax. Idempotency must be proven from an actual read/compare/write workflow.
 
+## Evidence boundaries
+
+- `telnet` catalogues contain documented CLI syntax, but do not establish SSH
+  command parity or safe Ansible semantics.
+- `management` catalogues contain Web UI evidence and proposed resource
+  mappings, but do not establish HTTP/CGI/API transports.
+- Proposed mappings are engineering guidance, not vendor claims.
+- No device family is runtime-supported merely because a catalogue exists.
+- A resource still needs a read path, sanitised fixtures, comparison logic,
+  check-mode behaviour, idempotency proof and device/firmware validation.
+
+The source PDFs retained under `sources/` are provenance for the 918R and G1080
+catalogues. Generated ZIP packages and validation logs are intentionally not
+kept; their contents are already installed and their checks are represented by
+the repository's normal CI and validation commands.
+
 ## Recommended repository placement
 
 ```text
@@ -41,6 +65,7 @@ Likewise, the catalogue does not label commands as safely idempotent merely beca
 docs/
   command-reference/
     README.md
+    CATALOGUES.md
     draytek-vigor2927-telnet.yaml
 ```
 
