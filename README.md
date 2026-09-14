@@ -33,4 +33,8 @@ In VS Code, use `/plan`, `/implement`, `/debug`, `/verify`, `/review`, `/preflig
 The collection's engineering specification is the source of truth for scope, architecture and
 milestones: [docs/architecture/engineering-specification.md](docs/architecture/engineering-specification.md).
 
+Vendor-derived device evidence is indexed in
+[docs/command-reference/CATALOGUES.md](docs/command-reference/CATALOGUES.md). These catalogues
+inform future implementation; they do not by themselves establish runtime device support.
+
 Add further setup, operation and usage documentation under `docs/` as the project takes shape.
