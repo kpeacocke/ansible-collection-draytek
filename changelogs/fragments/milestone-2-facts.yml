@@ -1,3 +1,0 @@
----
-minor_changes:
-  - drayos_facts - collect facts (default/hardware/system/interfaces/wan/lan) from DrayOS devices.

@@ -360,24 +360,15 @@ Do not continue and hope compatible commands work.
 
 ### Implementation status
 
-Updated: a real parser now exists. `plugins/module_utils/network/drayos/facts.py`
-implements `parse_sys_version()`, returning a populated `PlatformInfo` (model,
-firmware version, hardware revision, serial number) from `sys version`
-output. It is built and unit-tested against the documented example output in
-`docs/command-reference/draytek-vigor2927-telnet.yaml` (sourced from the
-Vigor2927 Series User's Guide V2.2), not yet against a real device — see
-`tests/fixtures/drayos/README.md`'s provenance note and
-[issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6)
-for what remains before this can be called "tested" rather than "expected
-compatible" (section 32).
+No facts parser or `drayos_facts` module is shipped yet. The documented
+Vigor2927 examples are retained as evidence, but section 65 requires a
+sanitised real-device capture before parser implementation. The current
+`PlatformInfo` model remains the intended target for that follow-up, tracked
+in [issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6).
 
-`plugins/cliconf/drayos.py`'s `get_device_info()` still reports only a static
-`network_os` identifier (which cliconf plugin is in use, not which physical
-device is connected) — `parse_sys_version()` is now wired into the
-`drayos_facts` module (section 67), but not into connection-layer/cliconf
-detection; a device that isn't really DrayOS still won't fail cleanly at
-connection time, only when `drayos_facts` is run against it and parsing
-comes back empty.
+`plugins/cliconf/drayos.py` reports only a static `network_os` identifier;
+platform detection and capability detection remain blocked on transport and
+device-output validation.
 
 ---
 
@@ -1964,13 +1955,11 @@ Acceptance criteria:
 - multiple firmware fixtures are represented
 - no configuration mutation occurs
 
-Status: structured device model (`PlatformInfo`), a facts parser
-(`plugins/module_utils/network/drayos/facts.py`), and `drayos_facts` have
-landed, built and unit-tested against documented Vigor2927 example output
-(see section 9's implementation status and `docs/supported_devices.md`).
-Not yet done: capability detection, and multiple firmware fixtures (only
-one model/firmware combination is represented so far -- see issue #6 for
-real-device confirmation and CONTRIBUTING.md for adding further fixtures).
+Status: the structured `PlatformInfo` model and documentation evidence
+catalogues are present, but the facts parser and `drayos_facts` remain
+deferred until a real-device fixture exists. Capability detection and
+multiple firmware fixtures are also outstanding (see issue #6 and
+CONTRIBUTING.md for contributing fixtures).
 
 ---
 
