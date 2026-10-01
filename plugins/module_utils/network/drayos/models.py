@@ -2,12 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Structured platform-identification model (engineering-specification.md, section 9).
 
-Populating this model from real device output is deferred: DrayOS does not
-have a publicly documented, collection-verified "show version" equivalent
-yet. Per section 65/78 of the engineering specification, that parsing must
-not be implemented until real command output has been captured from a test
-device and turned into fixtures. Until then, callers receive an explicitly
-"unknown" :class:`PlatformInfo` rather than guessed values.
+Fields are populated only from recognised output; absent values remain unknown.
 """
 from __future__ import annotations
 
@@ -27,6 +22,7 @@ class PlatformInfo:
     firmware_version: str | None = None
     hardware_version: str | None = None
     serial_number: str | None = None
+    hostname: str | None = None
     capabilities: tuple[str, ...] = field(default_factory=tuple)
 
     def as_dict(self) -> dict[str, object]:
@@ -34,6 +30,7 @@ class PlatformInfo:
             "vendor": self.vendor,
             "platform": self.platform,
             "model": self.model,
+            "hostname": self.hostname,
             "firmware_version": self.firmware_version,
             "hardware_version": self.hardware_version,
             "serial_number": self.serial_number,

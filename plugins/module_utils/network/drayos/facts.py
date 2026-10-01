@@ -14,6 +14,7 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.m
 )
 
 _SYS_VERSION_PATTERNS = {
+    "hostname": re.compile(r"^[ \t]*Router Name:[ \t]*([^\r\n]*)", re.MULTILINE),
     "model": re.compile(r"Router Model:\s*(\S+)"),
     "version": re.compile(r"Version:\s*(\S+)"),
     "revision": re.compile(r"Revision:\s*(.+)"),
@@ -35,6 +36,7 @@ def parse_sys_version(text: str) -> PlatformInfo:
 
     return PlatformInfo(
         model=values.get("model"),
+        hostname=values.get("hostname") or None,
         firmware_version=values.get("version"),
         hardware_version=values.get("revision"),
         serial_number=serial,

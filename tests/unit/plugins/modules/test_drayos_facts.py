@@ -128,6 +128,8 @@ def test_module_all_subsets_with_lac_fixture(monkeypatch, check_mode):
     result = excinfo.value.kwargs
     assert result["changed"] is False
     parsed = result["ansible_facts"]["drayos"]
+    assert parsed["default"]["hostname"] == "REDACTED_HOSTNAME"
+    assert parsed["system"]["hostname"] == "REDACTED_HOSTNAME"
     assert parsed["default"]["model"] == "Vigor2927Lac"
     assert parsed["system"]["firmware_version"] == "4.5.2.2"
     assert len(parsed["interfaces"]) == 10

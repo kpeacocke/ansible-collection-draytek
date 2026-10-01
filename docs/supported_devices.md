@@ -12,8 +12,11 @@ output through the existing `network_cli` connection. It always reports
 The recovered stash labels the Lac fixtures as live-device captures; this PR
 preserves that provenance but does not independently establish how they were
 captured. Fixture parsing does not prove SSH transport, prompt handling, or
-pagination works against the router. In particular, parsing the saved
-`--- MORE ---` markers does not implement interactive page advancement.
+pagination works against the router. The transport now answers the captured `--- MORE ---` prompt with Space,
+without a carriage return, for `sys iface` and `show status`. Repeated prompts
+are handled up to 64 advances per command; the persistent command timeout
+bounds stalled or over-limit output. Tests exercise the actual netcommon
+Paramiko and libssh receive loops with gated multi-page responses.
 Do not infer support for other models or firmware from these fixtures.
 
 ## AWX fixture validation
@@ -25,3 +28,10 @@ index. The job creates a temporary collection layout and virtual environment,
 runs the targeted tests, and removes its temporary directory even on failure.
 Record the AWX job ID and `scm_revision` with the result. This job tests fixtures
 and mocked module execution; it does not contact or validate a live router.
+
+
+`tests/awx/validate_vigor2927lac_live.yml` uses the existing `HomeOne` inventory
+host and its AWX SSH credential for a read-only check. It asserts model,
+firmware, nonempty hostname, interface 11 and WAN 6, without logging device
+facts. It must run without a host limit so localhost collection setup executes.
+It changes no router configuration.

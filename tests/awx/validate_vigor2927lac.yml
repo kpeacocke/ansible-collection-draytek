@@ -45,6 +45,18 @@
             requirements: "{{ collection_source }}/requirements-dev.txt"
             virtualenv: "{{ validation_temp.path }}/venv"
 
+        - name: Install declared collection dependencies
+          ansible.builtin.command:
+            argv:
+              - "{{ validation_temp.path }}/venv/bin/ansible-galaxy"
+              - collection
+              - install
+              - -r
+              - "{{ collection_source }}/requirements.yml"
+              - -p
+              - "{{ validation_temp.path }}"
+          changed_when: true
+
         - name: Run targeted facts tests
           ansible.builtin.command:
             argv:
@@ -54,7 +66,11 @@
               - -q
               - tests/unit/plugins/module_utils/test_facts.py
               - tests/unit/plugins/modules/test_drayos_facts.py
+              - tests/unit/plugins/cliconf/test_drayos.py
+              - tests/unit/plugins/module_utils/test_models.py
             chdir: "{{ validation_temp.path }}/ansible_collections/kpeacocke/draytek"
+          environment:
+            PYTHONPATH: "{{ validation_temp.path }}"
           changed_when: false
           register: facts_tests
 

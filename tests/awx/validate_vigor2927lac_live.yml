@@ -1,0 +1,29 @@
+---
+- name: Make the checked-out collection available to the AWX playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Create playbook collection namespace
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/collections/ansible_collections/kpeacocke"
+        state: directory
+        mode: "0700"
+
+    - name: Link the exact project revision as a collection
+      ansible.builtin.file:
+        src: "{{ playbook_dir }}/../.."
+        dest: "{{ playbook_dir }}/collections/ansible_collections/kpeacocke/draytek"
+        state: link
+
+- name: Validate read-only facts on the known Lac router
+  hosts: HomeOne
+  gather_facts: false
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: kpeacocke.draytek.drayos
+    ansible_command_timeout: 60
+    ansible_connect_timeout: 30
+  tasks:
+    - name: Load live validation after collection setup
+      ansible.builtin.include_tasks: tasks/validate_lac_facts.yml

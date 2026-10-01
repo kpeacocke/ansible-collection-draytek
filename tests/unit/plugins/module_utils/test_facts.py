@@ -22,6 +22,7 @@ def _read_live(name: str) -> str:
 
 def test_parse_sys_version_extracts_documented_platform_fields():
     info = facts.parse_sys_version(_read("sys_version.txt"))
+    assert info.hostname == "DrayTek"
     assert info.model == "Vigor2927Vac"
     assert info.firmware_version == "4.4.0"
     assert info.hardware_version == "3075_6ffc5c5 drayos2015_V2927_440"
@@ -30,6 +31,7 @@ def test_parse_sys_version_extracts_documented_platform_fields():
 
 def test_parse_sys_version_leaves_unrecognised_fields_unset():
     info = facts.parse_sys_version("not a real sys version response")
+    assert info.hostname is None
     assert info.model is None
     assert info.firmware_version is None
 
@@ -59,6 +61,7 @@ def test_parse_show_status_extracts_lan_and_wan_fields():
 def test_parse_sys_version_extracts_live_vigor2927lac_firmware():
     info = facts.parse_sys_version(_read_live("sys_version.txt"))
 
+    assert info.hostname == "REDACTED_HOSTNAME"
     assert info.model == "Vigor2927Lac"
     assert info.firmware_version == "4.5.2.2"
     assert info.hardware_version == "6569_e31a944115 drayos2015_Vigor2927_452_fd593bfca2"
@@ -91,3 +94,7 @@ def test_parse_show_status_extracts_connected_and_usb_wans():
 @pytest.mark.parametrize("parser, expected", [(facts.parse_sys_iface, []), (facts.parse_show_status, {"wan": []})])
 def test_parsers_handle_malformed_output_without_inventing_values(parser, expected):
     assert parser("garbage input") == expected
+
+
+def test_empty_hostname_does_not_consume_next_line():
+    assert facts.parse_sys_version("Router Name: \nRevision: abc").hostname is None

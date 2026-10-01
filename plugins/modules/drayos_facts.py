@@ -104,6 +104,7 @@ def build_facts(subsets: set, responses: dict) -> dict:
     if "system" in subsets:
         facts["system"] = {
             "firmware_version": version_info.firmware_version if version_info else None,
+            "hostname": version_info.hostname if version_info else None,
             "uptime": status_info.get("uptime") if status_info else None,
         }
     if "interfaces" in subsets and "sys iface" in responses:

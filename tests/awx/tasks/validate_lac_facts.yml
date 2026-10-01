@@ -1,0 +1,23 @@
+---
+- name: Collect all facts without logging device data
+  kpeacocke.draytek.drayos_facts:
+    gather_subset: [all]
+  register: live_facts
+  no_log: true
+
+- name: Assert expected identity and data beyond the fixture page boundary
+  ansible.builtin.assert:
+    that:
+      - not live_facts.changed
+      - live_facts.ansible_facts.drayos.default.model == 'Vigor2927Lac'
+      - live_facts.ansible_facts.drayos.system.firmware_version == '4.5.2.2'
+      - live_facts.ansible_facts.drayos.default.hostname | length > 0
+      - live_facts.ansible_facts.drayos.default.hostname == live_facts.ansible_facts.drayos.system.hostname
+      - "'11' in live_facts.ansible_facts.drayos.interfaces | map(attribute='interface') | list"
+      - "'6' in live_facts.ansible_facts.drayos.wan | map(attribute='interface') | list"
+    quiet: true
+  no_log: true
+
+- name: Report read-only validation without identifying network data
+  ansible.builtin.debug:
+    msg: "Lac 4.5.2.2: hostname populated, final interface and WAN present, changed=false."
