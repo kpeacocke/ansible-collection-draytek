@@ -1,6 +1,11 @@
 ---
 - name: Collect facts with privacy-preserving error classification
   block:
+    - name: Verify login and unpaged version command before paginated facts
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: [default]
+      no_log: true
+
     - name: Collect all facts without logging device data
       kpeacocke.draytek.drayos_facts:
         gather_subset: [all]
@@ -15,6 +20,7 @@
              | regex_findall('authentication|permission denied|host key|known_hosts|timed out|timeout|unable to connect|not supported|'
                                ~ 'socket|paramiko|libssh|no such file|not found|unable to decode|invalid connection|connection refused|could not|failed to')
              | unique | list }}
+          Failed stage: {{ ansible_failed_task.name }}.
 
 - name: Assert expected identity and data beyond the fixture page boundary
   ansible.builtin.assert:
