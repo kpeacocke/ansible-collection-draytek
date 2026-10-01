@@ -12,7 +12,8 @@
         msg: >-
           Live facts failed. Diagnostic categories:
           {{ (ansible_failed_result.msg | default('') | lower)
-             | regex_findall('authentication|permission denied|host key|known_hosts|timed out|timeout|unable to connect|not supported|socket|paramiko|libssh|no such file|not found|unable to decode|invalid connection|connection refused|could not|failed to')
+             | regex_findall('authentication|permission denied|host key|known_hosts|timed out|timeout|unable to connect|not supported|'
+                               ~ 'socket|paramiko|libssh|no such file|not found|unable to decode|invalid connection|connection refused|could not|failed to')
              | unique | list }}
 
 - name: Assert expected identity and data beyond the fixture page boundary
