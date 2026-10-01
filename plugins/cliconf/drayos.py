@@ -25,7 +25,6 @@ version_added: "0.1.0"
 """
 
 import json
-import re
 from collections.abc import Mapping
 
 from ansible.errors import AnsibleConnectionFailure
@@ -122,11 +121,7 @@ class Cliconf(CliconfBase):
                 out = self.send_command(**cmd)
             except AnsibleConnectionFailure as exc:
                 if check_rc:
-                    window = getattr(self._connection, "_last_recv_window", b"") or b""
-                    safe_words = {"MORE", "q", "Quit", "Enter", "New", "Lines", "Space", "Bar", "Next", "Page"}
-                    shape = re.sub(r"[A-Za-z0-9_]+", lambda m: m[0] if m[0] in safe_words else "X",
-                                   window.decode("ascii", errors="replace"))
-                    raise AnsibleConnectionFailure("PAGER_SHAPE:" + json.dumps(shape)) from exc
+                    raise
                 out = getattr(exc, "message", str(exc))
 
             responses.append(out)

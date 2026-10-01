@@ -77,7 +77,7 @@ def test_pager_advances_multiple_pages_through_network_cli(cliconf, monkeypatch,
         def __init__(self):
             self.sent = []
             self.chunks = [b"page one\r\n" + marker, b"\r\npage two\r\n" + marker,
-                           b"\r\npage three\r\nrouter>"]
+                           b"\r\npage three\r\nrouter>  "]
             self.read_count = 0
 
         def settimeout(self, timeout):

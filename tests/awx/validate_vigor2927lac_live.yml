@@ -27,23 +27,5 @@
     ansible_command_timeout: 60
     ansible_connect_timeout: 30
   tasks:
-    - name: Probe interface command with normal paging
-      drayos_pager_probe:
-        command: sys iface
-      register: pager_probe
-      no_log: true
-    - name: Report pager formatting only
-      ansible.builtin.debug:
-        var: pager_probe
-    - name: Close probe session
-      ansible.builtin.meta: reset_connection
-    - name: Probe status command with normal paging
-      drayos_pager_probe:
-        command: show status
-      register: status_probe
-      no_log: true
-    - name: Report status diagnostic only
-      ansible.builtin.debug:
-        var: status_probe
-    - name: Close status probe session
-      ansible.builtin.meta: reset_connection
+    - name: Load live validation using the project-synced collection
+      ansible.builtin.include_tasks: tasks/validate_lac_facts.yml
