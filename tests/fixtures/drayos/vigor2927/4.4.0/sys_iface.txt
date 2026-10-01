@@ -1,0 +1,32 @@
+> sys iface
+               Interface 0 Ethernet:
+               Status: UP
+               IP Address: 192.168.1.1          Netmask: 0xFFFFFF00 (Private)
+             IP Address: 0.0.0.0               Netmask: 0xFFFFFFFF
+             MAC: 00-50-7F-00-00-00
+             Interface 4 Ethernet:
+             Status: DOWN
+             IP Address: 0.0.0.0               Netmask: 0x00000000
+             MAC: 00-50-7F-00-00-02
+             Interface 5 Ethernet:
+             Status: DOWN
+             IP Address: 0.0.0.0               Netmask: 0x00000000
+             MAC: 00-50-7F-00-00-03
+             Interface 6 Ethernet:
+             Status: DOWN
+             IP Address: 0.0.0.0               Netmask: 0x00000000
+             MAC: 00-50-7F-00-00-04
+             Interface 7 Ethernet:
+             Status: DOWN
+             IP Address: 0.0.0.0               Netmask: 0x00000000
+             MAC: 00-50-7F-00-00-05
+             Interface 8 Ethernet:
+             Status: DOWN
+             IP Address: 0.0.0.0               Netmask: 0x00000000
+             MAC: 00-50-7F-00-00-06
+             Interface 9 Ethernet:
+             Status: DOWN
+             IP Address: 0.0.0.0        Netmask: 0x00000000
+             MAC: 00-50-7F-00-00-07
+             --- MORE --- ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---
+             >

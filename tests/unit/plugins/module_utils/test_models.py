@@ -13,6 +13,7 @@ def test_unknown_platform_has_expected_vendor_and_platform():
 
 def test_unknown_platform_leaves_detail_fields_unset():
     info = models.unknown_platform()
+    assert info.hostname is None
     assert info.model is None
     assert info.firmware_version is None
     assert info.hardware_version is None
@@ -23,6 +24,7 @@ def test_unknown_platform_leaves_detail_fields_unset():
 def test_as_dict_round_trips_all_fields():
     info = models.PlatformInfo(
         model="Vigor2960",
+        hostname="lab-router",
         firmware_version="4.4.3",
         hardware_version="A1",
         serial_number="1234567890",
@@ -33,6 +35,7 @@ def test_as_dict_round_trips_all_fields():
         "vendor": "DrayTek",
         "platform": "DrayOS",
         "model": "Vigor2960",
+        "hostname": "lab-router",
         "firmware_version": "4.4.3",
         "hardware_version": "A1",
         "serial_number": "1234567890",

@@ -1,0 +1,8 @@
+REDACTED_HOSTNAME> sys version
+Router Model: Vigor2927Lac    Version: 4.5.2.2 English
+Profile version: 4.0.0    Status: 1 (0xf9682c2f)
+Router IP: 192.168.1.1    Netmask: 255.255.255.0
+Firmware Build Date/Time: Jul  9 2026 11:31:06
+Router Name: REDACTED_HOSTNAME
+Revision: 6569_e31a944115 drayos2015_Vigor2927_452_fd593bfca2
+Router serial no: None

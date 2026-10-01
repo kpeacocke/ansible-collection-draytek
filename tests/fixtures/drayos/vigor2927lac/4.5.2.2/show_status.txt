@@ -1,0 +1,39 @@
+REDACTED_HOSTNAME> show status
+System Uptime:177:30:48
+LAN Status
+Primary DNS:REDACTED_DNS_1     Secondary DNS:REDACTED_DNS_2
+IP Address:192.168.1.1        Tx Rate:1714871623    Rx Rate:919389810
+
+WAN 1 Status: Connected
+Enable:Yes       Line:Ethernet    Name:REDACTED_WAN_NAME_1
+Mode:DHCP Client Up Time:39:12:55    IP:REDACTED_WAN_IP_1 GW IP:REDACTED_WAN_GATEWAY_1
+TX Packets:81510172   TX Rate(bps):75456 RX Packets:150271312  RX Rate(bps):2785960
+
+WAN 2 Status: Connected
+Enable:Yes       Line:Ethernet    Name:REDACTED_WAN_NAME_2
+Mode:PPPoE       Up Time:177:30:31   IP:REDACTED_WAN_IP_2 GW IP:REDACTED_WAN_GATEWAY_2
+TX Packets:161727809  TX Rate(bps):39912 RX Packets:182168940  RX Rate(bps):46456
+
+WAN 3 Status: Disconnected
+Enable:No        Line:Ethernet    Name:
+Mode:---         Up Time:00:00:00    IP:---            GW IP:---
+TX Packets:0          TX Rate(bps):0   RX Packets:0          RX Rate(bps):0
+
+WAN 4 Status: Disconnected
+Enable:No        Line:Ethernet    Name:
+
+--- MORE ---   ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---
+Mode:---         Up Time:00:00:00    IP:---            GW IP:---
+TX Packets:0          TX Rate(bps):0   RX Packets:0          RX Rate(bps):0
+
+WAN 5 Status: Disconnected
+Enable:No        Line:USB         Name:
+Mode:---         Up Time:00:00:00    IP:---            GW IP:---
+TX Packets:0          TX Rate(bps):0   RX Packets:0          RX Rate(bps):0
+
+WAN 6 Status: Disconnected
+Enable:No        Line:USB         Name:
+Mode:---         Up Time:00:00:00    IP:---            GW IP:---
+TX Packets:0          TX Rate(bps):0   RX Packets:0          RX Rate(bps):0
+
+REDACTED_HOSTNAME>

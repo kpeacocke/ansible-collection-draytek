@@ -1,0 +1,84 @@
+---
+- name: Validate Vigor2927Lac support in an isolated collection layout
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    collection_source: "{{ playbook_dir }}/../.."
+  tasks:
+    - name: Create temporary validation directory
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: draytek-validation-
+      register: validation_temp
+
+    - name: Validate recovered collection
+      block:
+        - name: Create collection namespace
+          ansible.builtin.file:
+            path: "{{ validation_temp.path }}/ansible_collections/kpeacocke/draytek"
+            state: directory
+            mode: "0700"
+
+        - name: Copy project into real collection layout
+          ansible.builtin.copy:
+            src: "{{ collection_source }}/{{ item }}"
+            dest: "{{ validation_temp.path }}/ansible_collections/kpeacocke/draytek/"
+            remote_src: true
+            mode: preserve
+          loop:
+            - plugins
+            - tests
+            - conftest.py
+
+        - name: Create isolated Python environment
+          ansible.builtin.command:
+            argv:
+              - "{{ ansible_playbook_python }}"
+              - -m
+              - venv
+              - "{{ validation_temp.path }}/venv"
+            creates: "{{ validation_temp.path }}/venv/bin/python"
+
+        - name: Install declared testing tools
+          ansible.builtin.pip:
+            requirements: "{{ collection_source }}/requirements-dev.txt"
+            virtualenv: "{{ validation_temp.path }}/venv"
+
+        - name: Install declared collection dependencies
+          ansible.builtin.command:
+            argv:
+              - "{{ validation_temp.path }}/venv/bin/ansible-galaxy"
+              - collection
+              - install
+              - -r
+              - "{{ collection_source }}/requirements.yml"
+              - -p
+              - "{{ validation_temp.path }}"
+          changed_when: true
+
+        - name: Run targeted facts tests
+          ansible.builtin.command:
+            argv:
+              - "{{ validation_temp.path }}/venv/bin/python"
+              - -m
+              - pytest
+              - -q
+              - tests/unit/plugins/module_utils/test_facts.py
+              - tests/unit/plugins/modules/test_drayos_facts.py
+              - tests/unit/plugins/cliconf/test_drayos.py
+              - tests/unit/plugins/module_utils/test_models.py
+            chdir: "{{ validation_temp.path }}/ansible_collections/kpeacocke/draytek"
+          environment:
+            PYTHONPATH: "{{ validation_temp.path }}"
+          changed_when: false
+          register: facts_tests
+
+        - name: Report fixture validation results
+          ansible.builtin.debug:
+            msg: "{{ facts_tests.stdout_lines }}"
+      always:
+        - name: Remove temporary validation directory
+          ansible.builtin.file:
+            path: "{{ validation_temp.path }}"
+            state: absent
