@@ -6,7 +6,7 @@ output through the existing `network_cli` connection. It always reports
 
 | Model | Firmware | Evidence | Validation scope |
 | --- | --- | --- | --- |
-| Vigor2927Lac | 4.5.2.2 | Recovered sanitised device-output fixtures | Parser and mocked module tests; live AWX/device execution remains unverified |
+| Vigor2927Lac | 4.5.2.2 | Recovered sanitised device-output fixtures | Parser/module/transport regressions and read-only live AWX validation (job #970) |
 | Vigor2927Vac | 4.4.0 | Vendor documentation examples | Parser regression coverage only; not live-device validation |
 
 The recovered stash labels the Lac fixtures as live-device captures; this PR
@@ -17,6 +17,11 @@ without a carriage return, for `sys iface` and `show status`. Repeated prompts
 are handled up to 64 advances per command; the persistent command timeout
 bounds stalled or over-limit output. Tests exercise the actual netcommon
 Paramiko and libssh receive loops with gated multi-page responses.
+Live AWX job [#970](https://awx.ambitiouscake.com/jobs/playbook/970/output)
+validated revision `04313ae`: all facts completed, hostname was populated,
+interface 11 and WAN 6 were present, and the router reported `changed=false`.
+The live command prompt ends with two spaces after `>`; terminal matching
+accepts trailing horizontal whitespace, with receive-loop regression coverage.
 Do not infer support for other models or firmware from these fixtures.
 
 ## AWX fixture validation

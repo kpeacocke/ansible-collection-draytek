@@ -3,10 +3,9 @@
 """DrayOS terminal plugin.
 
 Prompt and error-pattern detection are intentionally conservative. DrayOS CLI
-prompt/error formatting has not yet been confirmed against a real device
-fixture (engineering-specification.md, sections 11 and 65); the patterns
-below are a generic starting point and must be tightened once fixtures are
-captured.
+prompt completion is validated on Vigor2927Lac 4.5.2.2, including trailing
+horizontal whitespace observed in AWX. Other device prompt and error formats
+remain unverified (engineering-specification.md, sections 11 and 65).
 
 The prompt pattern deliberately requires the prompt character to directly
 follow the preceding token (no intervening whitespace), so that ordinary
