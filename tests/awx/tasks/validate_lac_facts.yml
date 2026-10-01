@@ -1,9 +1,19 @@
 ---
-- name: Collect all facts without logging device data
-  kpeacocke.draytek.drayos_facts:
-    gather_subset: [all]
-  register: live_facts
-  no_log: true
+- name: Collect facts with privacy-preserving error classification
+  block:
+    - name: Collect all facts without logging device data
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: [all]
+      register: live_facts
+      no_log: true
+  rescue:
+    - name: Report failure category without exposing device output
+      ansible.builtin.fail:
+        msg: >-
+          Live facts failed. Diagnostic categories:
+          {{ (ansible_failed_result.msg | default('') | lower)
+             | regex_findall('authentication|permission denied|host key|known_hosts|timed out|timeout|unable to connect|not supported|socket|paramiko|libssh|no such file|not found|unable to decode|invalid connection|connection refused|could not|failed to')
+             | unique | list }}
 
 - name: Assert expected identity and data beyond the fixture page boundary
   ansible.builtin.assert:
