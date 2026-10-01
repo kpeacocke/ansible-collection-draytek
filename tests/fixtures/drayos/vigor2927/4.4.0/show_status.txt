@@ -1,0 +1,20 @@
+> show status
+             System Uptime:95:4:44
+             LAN Status
+             Primary DNS:8.8.8.8              Secondary DNS:8.8.4.4
+             IP Address:192.168.1.1           Tx Rate:125096    Rx Rate:41045
+             WAN 1 Status: Disconnected
+             Enable:Yes      Line:Ethernet    Name:
+             Mode:DHCP Client Up Time:0:00:00     IP:---                  GW IP:---
+             TX Packets:0        TX Rate(bps):0 RX Packets:0                   RX Rate(bps):0
+             WAN 2 Status: Disconnected
+             Enable:Yes      Line:Ethernet    Name:
+             Mode:DHCP Client Up Time:0:00:00     IP:---                  GW IP:---
+             TX Packets:0        TX Rate(bps):0 RX Packets:0                   RX Rate(bps):0
+             WAN 3 Status: Disconnected
+             Enable:No       Line:Ethernet    Name:
+             Mode:---       Up Time:0:00:00      IP:---                 GW IP:---
+             TX Packets:0         TX Rate(bps):0 RX Packets:0                 RX Rate(bps):0
+             WAN 4 Status: Disconnected
+             Enable:No       Line:Ethernet        Name:
+             ...

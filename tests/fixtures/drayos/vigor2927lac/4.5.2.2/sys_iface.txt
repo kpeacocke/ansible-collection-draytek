@@ -1,0 +1,43 @@
+REDACTED_HOSTNAME> sys iface
+Interface 0 Ethernet:
+Status: UP
+IP Address: 192.168.1.1       Netmask: 0xFFFFFF00 (Private)
+IP Address: 0.0.0.0           Netmask: 0xFFFFFFFF
+MAC: REDACTED_MAC_0
+Interface 3 Ethernet:
+Status: UP
+IP Address: REDACTED_WAN_IP_1 Netmask: 0xFFC00000
+MAC: REDACTED_MAC_3
+Interface 4 Ethernet:
+Status: UP
+IP Address: REDACTED_WAN_IP_2 Netmask: 0xFFFFFFFF
+MAC: REDACTED_MAC_4
+Interface 5 Ethernet:
+Status: DOWN
+IP Address: 0.0.0.0           Netmask: 0x00000000
+MAC: REDACTED_MAC_5
+Interface 6 Ethernet:
+Status: DOWN
+IP Address: 0.0.0.0           Netmask: 0x00000000
+MAC: REDACTED_MAC_6
+Interface 7 Ethernet:
+Status: DOWN
+IP Address: 0.0.0.0           Netmask: 0x00000000
+MAC: REDACTED_MAC_7
+--- MORE ---   ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---
+Interface 8 Ethernet:
+Status: DOWN
+IP Address: 0.0.0.0           Netmask: 0x00000000
+MAC: REDACTED_MAC_8
+Interface 9 Ethernet:
+Status: DOWN
+IP Address: 0.0.0.0           Netmask: 0x00000000
+MAC: REDACTED_MAC_9
+Interface 10 Ethernet:
+Status: DOWN
+IP Address: 0.0.0.0           Netmask: 0x00000000
+MAC: REDACTED_MAC_10
+Interface 11 Ethernet:
+Status: DOWN
+IP Address: 0.0.0.0           Netmask: 0x00000000
+MAC: REDACTED_MAC_11

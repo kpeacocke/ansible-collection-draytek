@@ -1,0 +1,9 @@
+> sys version
+             Router Model: Vigor2927Vac         Version: 4.4.0 English
+             Profile version: 4.0.0        Status: 1 (0x9de81d8f)
+             Router IP: 192.168.1.1        Netmask: 255.255.255.0
+             Firmware Build Date/Time: Apr 19 2022 15:48:29
+             Router Name: DrayTek
+             Revision: 3075_6ffc5c5 drayos2015_V2927_440
+             Router serial no: None
+             >
