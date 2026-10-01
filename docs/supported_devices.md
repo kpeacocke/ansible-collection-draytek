@@ -33,5 +33,6 @@ and mocked module execution; it does not contact or validate a live router.
 `tests/awx/validate_vigor2927lac_live.yml` uses the existing `HomeOne` inventory
 host and its AWX SSH credential for a read-only check. It asserts model,
 firmware, nonempty hostname, interface 11 and WAN 6, without logging device
-facts. It must run without a host limit so localhost collection setup executes.
+facts. AWX installs the pinned implementation from `collections/requirements.yml`
+before parsing the playbook. Update that pin when collection code changes.
 It changes no router configuration.
