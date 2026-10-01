@@ -1,0 +1,986 @@
+schema_version: '1.0'
+catalogue_kind: management_evidence_not_cli
+source:
+  product: VigorSwitch G1080
+  document: VigorSwitch G1080 User's Guide
+  version: '1.0'
+  firmware: V1.04.04
+  date: '2018-06-05'
+  filename: DrayTek_UG_VigorSwitch G1080_V1.0.pdf
+  sha256: cc1f2a005bf7f54f1d9cea788bde7b32bfada5db05d30001b5937f3344685f27
+  pdf_page_count: 41
+  identity_pdf_page: 2
+  page_convention: Printed Arabic page + 4 = physical PDF page (1-based).
+scope:
+  coverage: All Chapter 3 management sections plus relevant capability/access evidence. Not exhaustive
+    screenshot transcription.
+  unknown_value_policy: null means not established, never zero/disabled/unlimited.
+  source_inheritance: Every setting and statement inherits record source_pages; proposals are separately
+    labelled.
+  device_tested: false
+transport_evidence:
+  web_ui: Documented through Ethernet/browser.
+  cli_syntax: null
+  telnet_support: null
+  ssh_support: null
+  http_endpoints: null
+  cgi_paths: null
+  api_contract: null
+  snmp_contract: null
+records:
+- id: capabilities
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Device capabilities
+    section: 1.1; 1.2
+    source_pages:
+    - manual_page: 1
+      pdf_page: 5
+    - manual_page: 2
+      pdf_page: 6
+    settings: []
+    behaviours:
+    - Eight 10/100/1000Mbps copper ports; web management; VLAN, QoS and aggregation described.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Feature overview mentions static trunking, 8K MAC entries, 9KB jumbo frames and up to 9600-byte
+      packets. These are overview claims, not writable controls.
+    - Generic SFP and trap references do not establish an SFP port or an SNMP configuration API on G1080.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_capabilities
+    operation_class: reference
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: web_access
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Web management login
+    section: 1.5.1; Chapter 3
+    source_pages:
+    - manual_page: 6
+      pdf_page: 10
+    - manual_page: 23
+      pdf_page: 27
+    settings:
+    - name: DHCP
+      description: ''
+      options: null
+      documented_default: Enable
+      documented_range: null
+      sensitive: false
+    - name: Password
+      description: Manual documents initial password admin; never use as an automatic credential fallback.
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: true
+    behaviours:
+    - Only one administrator can configure the switch at a time.
+    - Management is through Ethernet and a browser.
+    constraints: []
+    prerequisites:
+    - Reachable management address; directly connected PC needs compatible subnet settings.
+    notes:
+    - The browser address in prose is incomplete (192.168.1.); do not turn it into an endpoint or infer
+      a fixed default address from sample screenshots.
+    - PDF p27 visually checked. No CLI command reference, Telnet/SSH service contract, HTTP payload or
+      API is documented.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_web_access
+    operation_class: workflow
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: system_information
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Information
+    section: 3.1; 3.2
+    source_pages:
+    - manual_page: 24
+      pdf_page: 28
+    - manual_page: 25
+      pdf_page: 29
+    settings:
+    - name: Port 1 - Port 8
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Model Name
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Device Name
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Firmware Version
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Build Date
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: MAC address
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: IPv4 address
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Subnet Mask
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Loop Detection Status
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Displays device and port status; Device Name link permits changing the name.
+    - Loop means detection enabled and loop detected; Normal means no detected loop OR loop detection
+      disabled.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Normal is not proof that loop detection is enabled.
+    - This page contains a write action, so the whole page is not read-only.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_system_information
+    operation_class: facts_and_configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: port_statistics
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Port Statistics
+    section: '3.3'
+    source_pages:
+    - manual_page: 26
+      pdf_page: 30
+    settings:
+    - name: Link Status
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Num. of Tx Packets
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Num. of Rx Packets
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Clear Counters
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Shows per-port link/rate and total transmitted/received packet counts.
+    - Clear Counters removes all statistics on the page.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Counter width, wrap and reset persistence are undocumented. Never clear counters during facts collection.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_port_statistics
+    operation_class: facts_and_action
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: link_aggregation
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Link Aggregation
+    section: 1.1; 3.4
+    source_pages:
+    - manual_page: 1
+      pdf_page: 5
+    - manual_page: 26
+      pdf_page: 30
+    - manual_page: 27
+      pdf_page: 31
+    settings:
+    - name: Link Aggregation Mode
+      description: ''
+      options:
+      - Disable
+      - LACP
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: LACP mode
+      description: ''
+      options:
+      - Passive
+      - Active
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Link Group Status
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - LACP determines active member ports from candidates assigned to dynamic LAG.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Overview describes static aggregation, while section 3.4 describes LACP. Do not invent a static
+      mode enum, group limit or port-membership rules.
+    - Manual describes Passive/Active as inactive/active member port; do not replace with assumed protocol
+      semantics.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_link_aggregation
+    operation_class: configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: vlan
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - VLAN
+    section: 1.1; 3.5
+    source_pages:
+    - manual_page: 1
+      pdf_page: 5
+    - manual_page: 27
+      pdf_page: 31
+    - manual_page: 28
+      pdf_page: 32
+    settings:
+    - name: PVID
+      description: Tags incoming untagged frames for forwarding in a VLAN.
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: VLAN ID
+      description: ''
+      options: null
+      documented_default: null
+      documented_range:
+        min: 1
+        max: 4094
+      sensitive: false
+    - name: Apply PVID
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: VLAN List
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Create New VLAN
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Modify
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Tag Member
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Untag Member
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Delete
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Supports eight active VLANs.
+    - Modify opens 802.1Q tagging membership; Delete removes a user-defined VLAN.
+    constraints: []
+    prerequisites: []
+    notes:
+    - VLAN ID range comes from overview; do not assume separate PVID validation, reserved-VLAN deletion
+      rules or cross-port membership constraints.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_vlan
+    operation_class: configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: multicast
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Multicast
+    section: '3.6'
+    source_pages:
+    - manual_page: 28
+      pdf_page: 32
+    settings:
+    - name: Blocking Unknown Multicast
+      description: ''
+      options:
+      - Enable
+      - Disable
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Enable IGMP Snooping
+      description: ''
+      options:
+      - Enable
+      - Disable
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: IGMP Snooping Status
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Multicast Group
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Port
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: VLAN
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Page configures unknown multicast blocking and IGMP snooping and displays group/port/VLAN status.
+    constraints: []
+    prerequisites: []
+    notes:
+    - 'Prose says unknown-multicast Enable drops all multicast; Disable passes all. IGMP prose says Enable
+      blocks multicast and Disable drops all: this is ambiguous and must not be treated as a reliable
+      forwarding contract.'
+    - 'Visually checked PDF p32: screenshot qualifies all-multicast dropping when unknown multicast blocking
+      is enabled AND IGMP snooping is disabled. Preserve this qualification; do not infer the complete
+      forwarding matrix.'
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_multicast
+    operation_class: configuration_requires_semantic_verification
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: qos
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - QoS
+    section: '3.7'
+    source_pages:
+    - manual_page: 29
+      pdf_page: 33
+    - manual_page: 30
+      pdf_page: 34
+    settings:
+    - name: Mode
+      description: ''
+      options:
+      - Disable
+      - 802.1p CoS
+      - Port-based
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Scheduler Method
+      description: ''
+      options:
+      - WFQ
+      - Strict Priority
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Port queue
+      description: ''
+      options:
+      - Low Priority Queue
+      - Normal Priority Queue
+      - Medium Priority Queue
+      - High Priority Queue
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Weight
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Apply
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Applies QoS by mode; WFQ apportions capacity using weights; Strict Priority favours higher queues.
+    - Apply saves settings.
+    constraints:
+    - Weight values are dropdown choices, but their numeric range is not stated.
+    prerequisites: []
+    notes:
+    - Page 30 says ports 1-10, conflicting with eight physical ports on pp1/23/25. Do not generate ports
+      9/10.
+    - DSCP is mentioned in overview only; no DSCP mapping control is specified in this section.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_qos
+    operation_class: configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: rate_limiting
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Rate Limiting
+    section: '3.8'
+    source_pages:
+    - manual_page: 31
+      pdf_page: 35
+    settings:
+    - name: Port
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Ingress rate
+      description: ''
+      options:
+      - Unlimited
+      - rate selection
+      documented_default: null
+      documented_range:
+        min_as_documented: 512kbps
+        max_as_documented: 512Mbps
+      sensitive: false
+    - name: Egress rate
+      description: ''
+      options:
+      - Unlimited
+      - rate selection
+      documented_default: null
+      documented_range:
+        min_as_documented: 512kbps
+        max_as_documented: 512Mbps
+      sensitive: false
+    - name: Apply
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Ingress limit restricts received bits per second; excess ingress bandwidth is discarded.
+    - Unlimited removes the rate limitation; Apply saves.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Dropdown range does not prove all intermediate rates or numeric step size are accepted. No default
+      or egress excess-packet policy is supplied.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_rate_limiting
+    operation_class: configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: storm_control
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Storm Control
+    section: '3.9'
+    source_pages:
+    - manual_page: 32
+      pdf_page: 36
+    settings:
+    - name: Broadcast
+      description: ''
+      options:
+      - Unlimited
+      - rate selection
+      documented_default: null
+      documented_range:
+        min_as_documented: 512kbps
+        max_as_documented: 512Mbps
+      sensitive: false
+    - name: Multicast
+      description: ''
+      options:
+      - Unlimited
+      - rate selection
+      documented_default: null
+      documented_range:
+        min_as_documented: 512kbps
+        max_as_documented: 512Mbps
+      sensitive: false
+    - name: Unicast
+      description: ''
+      options:
+      - Unlimited
+      - rate selection
+      documented_default: null
+      documented_range:
+        min_as_documented: 512kbps
+        max_as_documented: 512Mbps
+      sensitive: false
+    - name: Apply
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Sets rates for unknown broadcast, multicast and unicast packets as described in the manual.
+    - Unlimited removes storm-rate limitation; Apply saves.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Preserve source wording unknown broadcast. Exact selectable rate list and defaults are not established.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_storm_control
+    operation_class: configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: loop_prevention
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Loop Prevention
+    section: 3.2; 3.10; 4.2
+    source_pages:
+    - manual_page: 25
+      pdf_page: 29
+    - manual_page: 33
+      pdf_page: 37
+    - manual_page: 37
+      pdf_page: 41
+    settings:
+    - name: Loop Control
+      description: ''
+      options:
+      - 'Off'
+      - Loop Detection Only
+      - Loop Detection&Prevention
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Apply
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Sends detection frames to identify loops.
+    - Off disables loop control.
+    - Manual says Loop Detection Only automatically shuts down a looped port and reactivates it when loop
+      disappears.
+    - Manual says Loop Detection&Prevention automatically shuts down a looped port.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Recovery behaviour for Detection&Prevention is not stated. Do not assume STP/RSTP equivalence.
+    - Troubleshooting claims loop detection is enabled by default but points to STP menus absent from
+      Chapter 3. Default mode and those menu paths require verification; not adopted as actionable G1080
+      settings.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_loop_prevention
+    operation_class: potentially_disruptive_configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: port_mirroring
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Port Mirroring
+    section: '3.11'
+    source_pages:
+    - manual_page: 34
+      pdf_page: 38
+    settings:
+    - name: Port Mirroring
+      description: ''
+      options:
+      - Disable
+      - Enable
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Mirroring Port
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Direction of Mirrored Stream
+      description: ''
+      options:
+      - Ingress
+      - Egress
+      - Both
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Mirrored Port
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Apply
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Enables port-based mirroring; Ingress is RX, Egress is TX, Both selects both directions.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Source says Mirroring Port Port1-Port10, inconsistent with eight-port hardware. Do not expose ports
+      9/10.
+    - Mirroring/Mirrored Port source-versus-destination labels are ambiguous; validate before implementing.
+      No unsupported assumptions about monitor-port normal forwarding.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_port_mirroring
+    operation_class: configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: management_ip
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Management IP Address
+    section: Chapter 3; 3.12
+    source_pages:
+    - manual_page: 23
+      pdf_page: 27
+    - manual_page: 35
+      pdf_page: 39
+    settings:
+    - name: DHCP
+      description: ''
+      options:
+      - Enable
+      - Disable
+      documented_default: Enable
+      documented_range: null
+      sensitive: false
+    - name: IP Address
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Subnet Mask
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Apply IP address
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Enables/disables DHCP client; Apply IP address saves management IP/mask.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No gateway/DNS controls are established by this table, despite generic introductory IP discussion.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_management_ip
+    operation_class: connection_affecting_configuration
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: management_password
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Management Password
+    section: '3.12'
+    source_pages:
+    - manual_page: 35
+      pdf_page: 39
+    settings:
+    - name: New Password
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: true
+    - name: Reconfirm New Password
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: true
+    - name: Apply password change
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: true
+    behaviours:
+    - Confirmation repeats new password; Apply password change saves it.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Length, character limits, account name and session invalidation are unspecified.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_management_password
+    operation_class: credential_change
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: configuration_backup
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Device Configuration
+    section: '3.12'
+    source_pages:
+    - manual_page: 35
+      pdf_page: 39
+    settings:
+    - name: Backup
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Restore
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Backup stores configuration as a file; Restore applies a previously saved configuration.
+    constraints: []
+    prerequisites: []
+    notes:
+    - File format, encryption, compatibility and restore reboot behaviour are unspecified.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_configuration_backup
+    operation_class: backup_restore
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: firmware_upgrade
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Firmware Upgrade
+    section: '3.12'
+    source_pages:
+    - manual_page: 35
+      pdf_page: 39
+    - manual_page: 36
+      pdf_page: 40
+    settings:
+    - name: Enter Upgrade Mode
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Upgrade
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Enter Upgrade Mode opens firmware selection; choose new firmware and Upgrade.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No upload endpoint, filename requirement, upgrade transport or recovery contract inferred.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_firmware_upgrade
+    operation_class: disruptive_action
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.
+- id: reboot_reset
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Reboot or Reset
+    section: '3.12'
+    source_pages:
+    - manual_page: 36
+      pdf_page: 40
+    settings:
+    - name: Reset
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    - name: Reboot
+      description: ''
+      options: null
+      documented_default: null
+      documented_range: null
+      sensitive: false
+    behaviours:
+    - Reset returns to factory defaults; Reboot uses current settings.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Reboot prose says Vigor router inside this switch guide; treated as source wording error, not evidence
+      for router behaviour.
+    - Timing, readiness criteria and persistence details are not specified.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorswitch_g1080_reboot_reset
+    operation_class: disruptive_action
+    transport: null
+    readback: null
+    idempotency: not_established
+    check_mode: not_established
+    implementation_gate: Obtain documented or authorised lab transport evidence and verify exact model/firmware,
+      readback and side effects before implementation.

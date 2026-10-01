@@ -360,17 +360,15 @@ Do not continue and hope compatible commands work.
 
 ### Implementation status
 
-As of milestone 1 (PR #5), this is **not implemented**. `plugins/cliconf/drayos.py`
-reports only a static `network_os` identifier (which cliconf plugin is in use,
-not which physical device is connected). `plugins/module_utils/network/drayos/models.py`
-defines the `PlatformInfo` structure and an `unknown_platform()` placeholder as
-the interface real detection should populate.
+`drayos_facts` now collects model, firmware, hostname, interfaces and WAN/LAN
+facts. Vigor2927Lac 4.5.2.2 has passed read-only live AWX validation (job #970),
+including complete paginated output and no router changes; see the
+[support matrix](../supported_devices.md). Documentation-derived Vigor2927Vac
+4.4.0 examples provide parser regression coverage only.
 
-Real detection is blocked on discovery work (section 65): it requires
-identifying the actual DrayOS command(s) that reveal model/platform/firmware
-from official documentation or a real device, then capturing fixtures, before
-any parser is written. Tracked in
-[issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6).
+`plugins/cliconf/drayos.py` still reports a static `network_os` identifier.
+General platform capability detection and broader live firmware coverage remain
+outstanding; facts support must not be inferred for every model from the Lac run.
 
 ---
 
@@ -1852,6 +1850,59 @@ Before implementing each resource module:
 
 Never implement a write operation from undocumented assumptions.
 
+### Finding: official documentation and self-discovery both exist
+
+Correcting an earlier (wrong) note here: DrayTek does document the CLI.
+
+- Each product's Command Reference is published alongside its User Guide on
+  DrayTek's regional Downloads pages.
+- The CLI is self-documenting on the device itself: `?` lists available
+  commands, and `<command> ?` shows sub-commands/syntax for that command.
+- CLI login uses the same admin account as the web UI (SSH/Telnet, per
+  https://www.draytek.co.uk/support/guides/kb-draytek-cli-win).
+- A "Web Console" is available from the web UI (the sliders icon) that
+  provides CLI access without a separate SSH/Telnet login, since it reuses
+  the existing authenticated web session — useful when SSH/Telnet is
+  disabled, locked out, or otherwise unavailable.
+
+Fixture capture from a real device (step 3) is still required before writing
+any parser — published references and `?` output describe syntax, not this
+collection's normalised internal representation — but it is not the *only*
+source of truth. Community-contributed fixtures (see
+[CONTRIBUTING.md](../../CONTRIBUTING.md#contributing-drayos-device-fixtures))
+remain valuable for breadth across the Vigor range regardless; see also
+[section 32](#32-supported-device-matrix).
+
+### Documented `sys` command evidence (confidence: legacy, unverified on current firmware)
+
+A DrayTek-authored Telnet/Logs manual (mirrored at
+https://manuals.plus/draytek/telnet-logs-commands-manual; original covers the
+Vigor 2600/2900-era ISDN/ADSL routers) documents this real, DrayTek-written
+command syntax:
+
+    sys version   : show router version information
+    sys admin <ASCII string>
+    sys cfg default
+    sys cfg status
+    sys cmdlog    : show the latest command
+    sys domainname <name>
+    sys iface     : show every interface status
+    sys name <ASCII string, max 20 chars>
+    sys passwd <ASCII string, max 23 chars>
+    sys reboot
+    sys tftpd
+    ip addr       : show or set NAT local IP address
+    log -c / -p / -i / -w / -F : call/PPP/ISDN/WAN log display and flush
+
+This is genuine documented evidence, not a guess — but it is explicitly for
+legacy firmware. DrayTek's current DrayOS 5 CLI guide
+(https://faq.draytek.com.au/docs/how-to-use-cli-commands-on-drayos-5-routers/)
+exists but is video-only; no text-extractable current-firmware command
+listing was recorded in the original catalogue work. Subsequent live AWX
+validation confirmed `sys version` on Vigor2927Lac 4.5.2.2 only. Other model
+and firmware combinations still require their own captured evidence, per
+section 65 rule 3.
+
 ---
 
 # 66. First Development Milestone
@@ -1902,6 +1953,11 @@ Acceptance criteria:
 - malformed fixture handling is tested
 - multiple firmware fixtures are represented
 - no configuration mutation occurs
+
+Status: structured facts and the `PlatformInfo` model are implemented and
+validated live on Vigor2927Lac 4.5.2.2. General capability detection and live
+coverage of multiple firmware versions remain outstanding. See the
+[support matrix](../supported_devices.md) for evidence boundaries.
 
 ---
 

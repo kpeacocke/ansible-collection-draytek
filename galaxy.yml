@@ -31,3 +31,4 @@ build_ignore:
   - .cache
 
   - tests/awx/collections
+  - docs/command-reference/sources

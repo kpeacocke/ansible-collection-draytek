@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - Add vendor-derived evidence catalogues for VigorAP 1060C and 918R and
+    VigorSwitch P2100/G2100 and G1080, with model/firmware boundaries and
+    explicit transport limitations.

@@ -1,0 +1,854 @@
+schema_version: '1.0'
+source:
+  vendor: DrayTek
+  product: VigorAP 1060C
+  document: VigorAP 1060C User's Guide
+  manual_version: '1.4'
+  firmware_version: V1.4.9
+  date: '2023-07-17'
+  evidence_type: web-ui-management
+  important_limitation: The manual confirms Telnet server enablement but does not
+    provide a Telnet CLI command reference. No CLI commands, HTTP endpoints, private
+    APIs, or request payloads are inferred here.
+records:
+- id: operation-mode
+  menu_path: Operation Mode
+  category: connectivity
+  purpose: Select the operating role of the VigorAP 1060C.
+  documented_values:
+  - AP
+  - Mesh Root
+  - Mesh Node
+  - Range Extender
+  behaviour:
+    AP: Wireless clients connect to the AP and exchange data with devices on the wired
+      network.
+    Mesh Root: Must connect to a gateway using Ethernet.
+    Mesh Node: Connects to a mesh root or another mesh node, wirelessly or via Ethernet
+      where supported.
+    Range Extender: Acts as station and AP simultaneously to extend a root AP.
+  source_pages:
+  - 32
+  - 33
+  ansible_mapping:
+    status: proposed
+    resource: operation_mode
+- id: wlan-general
+  menu_path: Wireless LAN (2.4GHz/5GHz) > General Setup
+  category: wireless
+  purpose: Configure radio enablement, client limits, mode, channel, SSIDs, isolation,
+    VLANs and WDS peer information.
+  settings:
+    enable_wireless_lan: boolean
+    client_limit:
+      range: 3-128
+    client_limit_per_ssid:
+      range: 3-128
+    channel: channel or AutoSelect
+    ssid_count:
+      maximum: 8
+    hide_ssid: boolean
+    isolate_lan: boolean
+    isolate_member: boolean
+    vlan_id:
+      range: 3-4095
+      default: 0
+      default_meaning: VLAN disabled for SSID
+    security_algorithm:
+    - WEP
+    - TKIP
+    - AES
+    peer_mac_address: MAC address for WDS peer
+  source_pages:
+  - 38
+  - 39
+  - 40
+  ansible_mapping:
+    status: proposed
+    resource: wireless_ssids
+- id: wlan-security
+  menu_path: Wireless LAN (2.4GHz/5GHz) > Security
+  category: wireless
+  purpose: Configure per-SSID wireless authentication and encryption.
+  documented_values:
+    modes:
+    - WPA3 Personal
+    - WPA3/WPA2 Personal
+    - WPA2 Personal
+    - WPA2/WPA Personal
+    - WPA3 Enterprise
+    - WPA3/WPA2 Enterprise
+    - WPA2 Enterprise
+    - WPA2/WPA Enterprise
+    - OWE
+    - WPA Personal
+    - WPA Enterprise
+    - WEP Personal
+    - WEP Enterprise
+    - None
+    wpa_algorithms:
+    - TKIP
+    - AES
+    - TKIP/AES
+  settings:
+    pass_phrase: 8-63 ASCII characters or 64 hexadecimal digits prefixed by 0x
+    key_renewal_interval:
+      default_seconds: 3600
+      zero_meaning: disable re-key
+    eapol_key_retry: enable/disable
+    wep_keys: Four keys; one active at a time
+  source_pages:
+  - 41
+  - 42
+  ansible_mapping:
+    status: proposed
+    resource: wireless_security
+- id: wireless-radius-client
+  menu_path: Wireless LAN > Security > RADIUS Server
+  category: authentication
+  purpose: Use the internal or an external RADIUS server for WLAN authentication.
+  settings:
+    use_internal_radius_server: boolean
+    external_radius_ip: IPv4 address
+    external_radius_port:
+      default: 1812
+    shared_secret: string
+    session_timeout: seconds; zero triggers immediate re-authentication after success
+  source_pages:
+  - 43
+  ansible_mapping:
+    status: proposed
+    resource: radius_client
+- id: wlan-access-control
+  menu_path: Wireless LAN > Access Control
+  category: wireless
+  purpose: Control WLAN access by MAC address and device objects/groups.
+  settings:
+    policy:
+    - disabled
+    - activate MAC address filter
+    - blocked MAC address filter
+    mac_address_filter: add/delete/edit
+    device_group: reference existing device group
+    device_object: reference existing device object
+    backup_restore: supported
+  source_pages:
+  - 44
+  - 45
+  ansible_mapping:
+    status: proposed
+    resource: wireless_access_control
+- id: wps
+  menu_path: Wireless LAN > WPS
+  category: wireless
+  purpose: Configure Wi-Fi Protected Setup.
+  settings:
+    enable_wps: boolean
+    supported_auth_modes:
+    - WPA2/PSK
+    - WPA/PSK
+    methods:
+    - Push Button (PBC)
+    - Client PIN
+  source_pages:
+  - 46
+  ansible_mapping:
+    status: proposed
+    resource: wps
+- id: wlan-advanced
+  menu_path: Wireless LAN > Advanced Setting
+  category: wireless
+  purpose: Configure channel width, power, thresholds, multicast and isolation behaviour.
+  settings:
+    channel_bandwidth:
+    - 20 MHz
+    - Auto 20/40 MHz
+    - 40 MHz
+    - Auto 20/40/80 MHz
+    - Auto 20/40/80/160 MHz
+    tx_power_default: 100%
+    fragment_length_default: 2346
+    rts_threshold_default: 2347
+    country_code: 802.11d country code
+    igmp_snooping: enable/disable
+    isolate_ssids_default: Enable
+    isolate_members_with_ip_default: Disable
+    wmm_capable: enable/disable
+    apsd_capable_default: Disable
+    mac_clone: 2.4GHz only
+  source_pages:
+  - 47
+  - 48
+  ansible_mapping:
+    status: proposed
+    resource: wireless_radio_settings
+- id: ap-discovery
+  menu_path: Wireless LAN > AP Discovery
+  category: diagnostics
+  purpose: Scan regulatory channels for neighbouring APs and assist WDS selection.
+  notes:
+  - Scan takes about 5 seconds.
+  - Clients cannot connect during the scan.
+  observed_fields:
+  - SSID
+  - BSSID
+  - RSSI
+  - Channel
+  - Encryption
+  - Authentication
+  source_pages:
+  - 49
+  - 50
+  ansible_mapping:
+    status: proposed
+    resource: ap_discovery_facts
+- id: wds-status
+  menu_path: Wireless LAN > WDS AP Status
+  category: diagnostics
+  purpose: Display WDS peer status.
+  notes:
+  - Available for 5GHz only.
+  source_pages:
+  - 50
+  ansible_mapping:
+    status: proposed
+    resource: wds_facts
+- id: airtime-fairness
+  menu_path: Wireless LAN > Airtime Fairness
+  category: wireless
+  purpose: Control airtime allocation between clients and SSIDs.
+  settings:
+    mode:
+    - Basic
+    - Advanced
+    - Disable
+    advanced_ssid_airtime:
+      range: 0-100
+  source_pages:
+  - 50
+  - 51
+  - 52
+  ansible_mapping:
+    status: proposed
+    resource: airtime_fairness
+- id: station-control
+  menu_path: Wireless LAN > Station Control
+  category: wireless
+  purpose: Limit client connection and reconnection durations by SSID.
+  notes:
+  - Up to 300 wireless station records are supported.
+  settings:
+    enable: boolean
+    connection_time: predefined or user-defined duration
+    reconnection_time: predefined or user-defined duration
+  source_pages:
+  - 52
+  - 53
+  ansible_mapping:
+    status: proposed
+    resource: station_control
+- id: roaming
+  menu_path: Wireless LAN > Roaming
+  category: wireless
+  purpose: Configure 802.11r and AP-assisted roaming thresholds.
+  settings:
+    enable_802_11r: available for WPA2 Enterprise, WPA2 Personal, WPA3/WPA2 Enterprise,
+      WPA3/WPA2 Personal
+    minimum_basic_rate: Mbps threshold
+    rssi_requirement:
+    - disabled
+    - strict minimum RSSI
+    - minimum RSSI with adjacent AP threshold
+    fast_roaming_wpa2_enterprise:
+    - PMK caching
+    - pre-authentication
+  source_pages:
+  - 54
+  - 55
+  ansible_mapping:
+    status: proposed
+    resource: roaming
+- id: band-steering
+  menu_path: Wireless LAN (2.4GHz) > Band Steering
+  category: wireless
+  purpose: Steer capable clients from 2.4GHz to 5GHz.
+  prerequisites:
+  - SSID and security configured on 2.4GHz must also be broadcast on 5GHz.
+  settings:
+    check_time_default_seconds: 15
+    5ghz_minimum_rssi: dBm threshold
+    2_4ghz_utilisation_overload_threshold_default: 70%
+    5ghz_utilisation_overload_threshold_default: 70%
+  source_pages:
+  - 56
+  - 57
+  - 58
+  - 59
+  - 60
+  ansible_mapping:
+    status: proposed
+    resource: band_steering
+- id: station-list
+  menu_path: Wireless LAN > Station List
+  category: facts
+  purpose: Show connected clients, statistics, block list and white list.
+  observed_fields:
+  - Name/MAC
+  - Up Time
+  - Link Speed
+  - RSSI
+  - SSID
+  - OS
+  - Usage
+  - Channel
+  - Action
+  source_pages:
+  - 61
+  - 62
+  - 63
+  - 64
+  - 65
+  - 66
+  ansible_mapping:
+    status: proposed
+    resource: wireless_client_facts
+- id: mesh-setup
+  menu_path: Mesh > Mesh Setup
+  category: mesh
+  purpose: Configure mesh root/node roles and mesh-group membership.
+  constraints:
+    maximum_devices: 8
+    composition: 1 mesh root plus 0-7 mesh nodes
+    maximum_hops: 3
+    recommended_hops: <=2
+  settings:
+    role:
+    - Mesh Root
+    - Mesh Node
+    log_level:
+    - Basic
+    - Detailed
+    auto_reselect_default: selected
+    wired_uplink: available for Mesh Node
+    backup_restore: supported
+  source_pages:
+  - 67
+  - 68
+  - 69
+  - 70
+  - 71
+  - 72
+  - 73
+  ansible_mapping:
+    status: proposed
+    resource: mesh
+- id: mesh-status
+  menu_path: Mesh > Mesh Status
+  category: facts
+  purpose: Display mesh topology, hops, uplinks and client counts.
+  observed_fields:
+  - Index
+  - Status
+  - Device Name
+  - IP Address
+  - MAC Address
+  - Hop
+  - Uplink
+  - Total number of Clients
+  source_pages:
+  - 74
+  ansible_mapping:
+    status: proposed
+    resource: mesh_facts
+- id: mesh-discovery
+  menu_path: Mesh > Mesh Discovery
+  category: diagnostics
+  purpose: Discover surrounding mesh-capable APs.
+  source_pages:
+  - 76
+  ansible_mapping:
+    status: proposed
+    resource: mesh_discovery_facts
+- id: mesh-config-sync
+  menu_path: Mesh > Basic Configuration Sync / Advanced Config Sync
+  category: mesh
+  purpose: Synchronise selected root configuration to connected mesh nodes.
+  notes:
+  - Basic sync is available from Mesh Root.
+  - Advanced sync uses feature-specific setting selection.
+  source_pages:
+  - 77
+  - 78
+  - 80
+  ansible_mapping:
+    status: proposed
+    resource: mesh_config_sync
+- id: mesh-syslog
+  menu_path: Mesh > Mesh Syslog
+  category: diagnostics
+  purpose: Display mesh synchronisation logs.
+  source_pages:
+  - 81
+  ansible_mapping:
+    status: proposed
+    resource: mesh_log_facts
+- id: range-extender
+  menu_path: Wireless LAN > Universal Repeater
+  category: wireless
+  purpose: Configure Range Extender/Universal Repeater behaviour.
+  settings:
+    ssid: string
+    peer_mac: optional
+    channel: manual or AutoSelect
+    security_mode: mode-dependent
+    connection_type:
+    - DHCP
+    - Static IP
+    static_ip_fields:
+    - IP Address
+    - Subnet Mask
+    - Default Gateway
+  source_pages:
+  - 82
+  - 83
+  - 84
+  - 85
+  ansible_mapping:
+    status: proposed
+    resource: range_extender
+- id: monitor-radio-dashboard
+  menu_path: Monitor Radio > Dashboard
+  category: security-monitoring
+  purpose: Provide RF analytics, channel recommendations and rogue AP detection.
+  observed_fields:
+  - Channel Load
+  - AP Count
+  - RSSI
+  - Threat
+  source_pages:
+  - 86
+  - 87
+  - 88
+  ansible_mapping:
+    status: proposed
+    resource: rf_monitor_facts
+- id: monitor-radio-setup
+  menu_path: Monitor Radio > Monitor Setup
+  category: security-monitoring
+  purpose: Configure rogue AP monitoring, monitored channels, network monitoring and
+    packet capture.
+  settings:
+    mail_alert_medium_high: boolean
+    channels: selectable 2.4GHz/5GHz channels; all selected by default
+    network_monitor:
+    - Start
+    - Clear
+    - Download
+    packet_capture:
+    - Start
+    - Clear
+    - Download
+  source_pages:
+  - 89
+  - 90
+  ansible_mapping:
+    status: proposed
+    resource: rf_monitor
+- id: rogue-ap-whitelist
+  menu_path: Monitor Radio > Rogue AP White List
+  category: security-monitoring
+  purpose: Maintain rogue-AP MAC whitelist.
+  constraints:
+    maximum_entries: 64
+  source_pages:
+  - 91
+  ansible_mapping:
+    status: proposed
+    resource: rogue_ap_whitelist
+- id: lan-general
+  menu_path: LAN > General Setup
+  category: network
+  purpose: Configure AP management IP, management VLAN and DHCP server/relay settings.
+  settings:
+    dhcp_client: boolean
+    ip_address_default: 192.168.1.2
+    subnet_mask_default: 255.255.255.0/24
+    management_vlan: tag-based VLAN
+    vlan_id_zero_meaning: no VLAN tag
+    dhcp_server:
+    - Enable Server
+    - Relay Agent
+    - Disable Server
+    primary_dns_fallback: 194.109.6.66
+    secondary_dns_fallback: 194.98.0.1
+  source_pages:
+  - 93
+  - 94
+  - 95
+  ansible_mapping:
+    status: proposed
+    resource: lan
+- id: hotspot-portal
+  menu_path: LAN > Hotspot Web Portal
+  category: network
+  purpose: Configure captive portal, RADIUS authentication and whitelist behaviour.
+  settings:
+    portal_server:
+    - Captive Portal URL
+    - Redirection URL
+    landing_page: Fixed URL
+    applied_interfaces:
+    - LAN
+    - SSID1-SSID8
+    radius_authentication_port_default: 1812
+    radius_secret_max_length: 36
+    nas_identifier_max_length: 31
+    whitelists:
+    - Destination Domain
+    - Destination IP
+  source_pages:
+  - 96
+  - 97
+  - 98
+  - 99
+  ansible_mapping:
+    status: proposed
+    resource: hotspot_portal
+- id: port-control
+  menu_path: LAN > Port Control
+  category: network
+  purpose: Disable the physical Ethernet port via web configuration.
+  source_pages:
+  - 100
+  ansible_mapping:
+    status: proposed
+    resource: ethernet_port
+- id: system-status
+  menu_path: System Maintenance > System Status
+  category: facts
+  purpose: Display model, firmware, uptime, operation mode, memory and interface information.
+  source_pages:
+  - 103
+  ansible_mapping:
+    status: proposed
+    resource: system_facts
+- id: tr069
+  menu_path: System Maintenance > TR-069
+  category: management
+  purpose: Manage the AP through a TR-069 ACS such as VigorACS.
+  settings:
+    acs_enable: boolean
+    acs_url_username_password: required according to ACS
+    test_with_inform: supported
+    ssl_https_mode: supported
+    periodic_inform_default: Enable
+    stun_default: Disable
+    stun_min_keepalive_default_seconds: 60
+    stun_max_keepalive_no_max_value: -1
+    xmpp: supported
+  source_pages:
+  - 104
+  - 105
+  ansible_mapping:
+    status: proposed
+    resource: tr069
+- id: administrator-password
+  menu_path: System Maintenance > Administrator Password
+  category: management
+  purpose: Change administrator login credentials.
+  source_pages:
+  - 106
+  ansible_mapping:
+    status: proposed
+    resource: administrator_credentials
+    sensitive: true
+- id: user-mode
+  menu_path: System Maintenance > User Password
+  category: management
+  purpose: Enable restricted User Mode with separate credentials.
+  constraints:
+    password_max_length: 31
+  source_pages:
+  - 107
+  ansible_mapping:
+    status: proposed
+    resource: user_mode
+    sensitive: true
+- id: configuration-backup
+  menu_path: System Maintenance > Configuration Backup
+  category: management
+  purpose: Backup and restore AP configuration.
+  notes:
+  - Backup file can be password-protected.
+  - Certificate information is not included and must be backed up independently.
+  source_pages:
+  - 108
+  - 109
+  ansible_mapping:
+    status: proposed
+    resource: configuration_backup
+- id: syslog-mail
+  menu_path: System Maintenance > Syslog/Mail Alert
+  category: management
+  purpose: Configure remote syslog and e-mail alerts.
+  settings:
+    syslog_destination_port_default: 514
+    syslog_log_level: selectable
+    smtp_tls: optional
+    admin_login_alert: supported for web or telnet login
+  source_pages:
+  - 110
+  - 111
+  ansible_mapping:
+    status: proposed
+    resource: logging_alerts
+- id: time-date
+  menu_path: System Maintenance > Time and Date
+  category: management
+  purpose: Configure NTP, timezone and daylight saving.
+  source_pages:
+  - 111
+  - 112
+  ansible_mapping:
+    status: proposed
+    resource: ntp
+- id: snmp
+  menu_path: System Maintenance > SNMP
+  category: management
+  purpose: Configure SNMPv1/v2 and SNMPv3 agents.
+  settings:
+    snmpv1_v2_agent: enable/disable
+    snmpv3_agent: enable/disable
+    usm_user_max_length: 23
+    auth_password_max_length: 23
+    auth_algorithm: selectable; manual gives MD5 as example
+  source_pages:
+  - 113
+  ansible_mapping:
+    status: proposed
+    resource: snmp
+- id: management-services
+  menu_path: System Maintenance > Management
+  category: management
+  purpose: Control management services, ports, TLS, WLAN management access and panel
+    behaviour.
+  settings:
+    http_server: enable/disable
+    https_server: enable/disable
+    enforce_https: enable/disable
+    allow_management_from_wlan: enable/disable
+    enable_telnet_server: enable/disable
+    enable_ssh_server: shown in UI screenshot; not described in parsed setting text
+    http_port_default: 80
+    https_port_default: 443
+    tls_versions:
+    - TLS 1.0
+    - TLS 1.1
+    - TLS 1.2
+    - TLS 1.3
+    disable_reset_button: boolean
+    disable_led: boolean
+  critical_note: The manual confirms Telnet server enablement but does not document
+    the Telnet CLI command set. Do not infer or invent CLI syntax.
+  source_pages:
+  - 114
+  - 115
+  ansible_mapping:
+    status: proposed
+    resource: management_services
+- id: reboot-reset
+  menu_path: System Maintenance > Reboot System
+  category: management
+  purpose: Reboot using current configuration or restore factory defaults.
+  settings:
+    modes:
+    - Using current configuration
+    - Using factory default configuration
+  source_pages:
+  - 116
+  - 176
+  ansible_mapping:
+    status: proposed
+    resource: reboot
+- id: firmware-upgrade
+  menu_path: System Maintenance > Firmware Upgrade
+  category: management
+  purpose: Upgrade AP firmware through the web interface/utility.
+  source_pages:
+  - 117
+  ansible_mapping:
+    status: proposed
+    resource: firmware
+    risk: disruptive
+- id: central-ap-management
+  menu_path: Central AP Management > General Setup
+  category: management
+  purpose: Allow management by a Vigor router/RootAP and optionally manage other VigorAPs.
+  settings:
+    enable_node_ap: boolean
+    enable_auto_provision: boolean
+    check_account_password_for_set_group_key: boolean
+    enable_root_ap: boolean
+  source_pages:
+  - 118
+  - 119
+  ansible_mapping:
+    status: proposed
+    resource: central_ap_management
+- id: mobile-device-management
+  menu_path: Mobile Device Management
+  category: policy
+  purpose: Control and observe mobile/PC/unknown devices using station lists, nearby
+    stations and policies.
+  settings:
+    policies:
+    - Block Mobile Connections
+    - Block PC Connections
+    - Block Unknown Connections
+    ssid_scope: 2.4GHz and 5GHz SSIDs
+  notes:
+  - Applying policies triggers an automatic reboot.
+  source_pages:
+  - 123
+  - 124
+  - 125
+  - 126
+  - 127
+  - 128
+  - 129
+  - 130
+  - 131
+  - 132
+  ansible_mapping:
+    status: proposed
+    resource: mobile_device_policy
+- id: internal-radius-server
+  menu_path: RADIUS Setting > RADIUS Server
+  category: authentication
+  purpose: Run the AP as an internal RADIUS server.
+  settings:
+    enable_radius_server: boolean
+    eap_types:
+    - PEAP
+    - EAP-TLS
+    user_profiles: add/delete
+    authentication_clients: client IP + secret key
+    backup_restore: supported
+  source_pages:
+  - 134
+  - 135
+  ansible_mapping:
+    status: proposed
+    resource: radius_server
+- id: certificate-management
+  menu_path: RADIUS Setting > Certificate Management
+  category: authentication
+  purpose: Generate and manage a root CA for EAP-TLS and HTTPS use.
+  settings:
+    key_type: RSA only
+    subject_fields:
+    - Country
+    - State
+    - Location
+    - Organization
+    - Organization Unit
+    - Common Name
+    - Email
+    apply_to_web_https: boolean
+  source_pages:
+  - 135
+  - 136
+  - 137
+  ansible_mapping:
+    status: proposed
+    resource: certificates
+- id: schedules
+  menu_path: Applications > Schedule
+  category: automation
+  purpose: Create time-based schedules for AP actions.
+  constraints:
+    maximum_schedules: 15
+  settings:
+    fields:
+    - Enable
+    - Name
+    - Start Date
+    - Start Time
+    - Duration Time
+    - Action
+    - How Often
+    - Weekday
+    actions_shown:
+    - Auto Reboot
+    - Wi-Fi UP
+    - Wi-Fi DOWN
+    - LED Disable
+    - LED Enable
+    - Internet Pause
+  source_pages:
+  - 138
+  - 139
+  - 140
+  ansible_mapping:
+    status: proposed
+    resource: schedule
+- id: wifi-auto-on-off
+  menu_path: Applications > Wi-Fi Auto On/Off
+  category: automation
+  purpose: Turn Wi-Fi on/off automatically based on reachability of a configured host.
+  settings:
+    enable_connection_detection: boolean
+    ping_host: IP address or domain name
+  source_pages:
+  - 141
+  ansible_mapping:
+    status: proposed
+    resource: wifi_health_switch
+- id: device-objects
+  menu_path: Objects Setting > Device Object
+  category: objects
+  purpose: Define reusable client objects by MAC address.
+  sources:
+  - Wireless Station Table
+  - Wireless Neighbor Table
+  - ARP Table
+  - manual entry
+  source_pages:
+  - 142
+  - 143
+  - 144
+  ansible_mapping:
+    status: proposed
+    resource: device_object
+- id: device-groups
+  menu_path: Objects Setting > Device Group
+  category: objects
+  purpose: Group device objects for reuse by other functions.
+  source_pages:
+  - 144
+  - 145
+  ansible_mapping:
+    status: proposed
+    resource: device_group
+- id: diagnostics
+  menu_path: Diagnostics
+  category: diagnostics
+  purpose: Expose system log, traffic graph, alert events, WLAN statistics and support
+    area.
+  features:
+  - System Log
+  - Traffic Graph
+  - Alert Event
+  - WLAN 2.4GHz Statistics
+  - WLAN 5GHz Statistics
+  - Support Area
+  source_pages:
+  - 164
+  - 165
+  - 166
+  - 167
+  - 168
+  - 169
+  ansible_mapping:
+    status: proposed
+    resource: diagnostic_facts

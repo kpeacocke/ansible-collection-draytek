@@ -1,0 +1,5697 @@
+schema_version: '1.0'
+catalogue_kind: management_evidence_not_command_reference
+source:
+  vendor: DrayTek
+  product: VigorAP 918R Series
+  document: VigorAP 918R User's Guide
+  version: '1.6'
+  firmware: V1.4.6
+  date: '2023-07-05'
+  filename: DrayTek_UG_VigorAP 918R_V1.6.pdf
+  sha256: 5294aa03889efee6f98b6c81885f31ad355a7880da59e9841b13a137d4a3ba6d
+  pdf_page_count: 183
+  identity_pdf_page: 2
+  page_convention: manual_page is printed Arabic page; pdf_page is 1-based physical page. PDF page = manual
+    page + 8.
+scope:
+  status: manual_derived_not_device_tested
+  earlier_package: Equivalent requested file layout and evidence/proposal separation; earlier 1060C generated
+    files unavailable for exact schema comparison.
+  coverage: Management/configuration section catalogue; screenshot-only pages are explicitly partial.
+    Not a transcription of every screenshot field.
+  unknown_value_policy: null means not established from cited evidence; never means zero, disabled, unlimited,
+    optional or supported.
+  page_inheritance: Each setting, behavior, constraint and prerequisite inherits its record source_pages;
+    section is the locator within those pages.
+transport_evidence:
+  web_ui: Documented management surface, manual p15.
+  telnet: Enablement and CLI existence documented on p108; commands not documented.
+  cli_syntax: null
+  http_endpoints: null
+  cgi_paths: null
+  api_contract: null
+  tr069: Service setup documented; parameter tree and ACS API not supplied.
+  snmp: Agent setup documented; OIDs/MIBs and writable objects not supplied.
+  mobile_app: User workflow documented; protocol and API not supplied.
+records:
+- id: web_access
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Web User Interface
+    section: I-4
+    source_pages:
+    - manual_page: 15
+      pdf_page: 23
+    - manual_page: 16
+      pdf_page: 24
+    - manual_page: 17
+      pdf_page: 25
+    settings:
+    - name: Management address
+      description: DHCP-provided address when DHCP exists; otherwise 192.168.1.2.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Auto Logout
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: Auto Logout after 5 minutes inactivity
+      documented_range: null
+      unit: minutes
+      sensitive: false
+    behaviours:
+    - The manual directs configuration of all functions and settings through the Web UI.
+    - Wireless access may use the documented hostname vigorap.com.
+    constraints: []
+    prerequisites:
+    - PC has network reachability; use DHCP or an address in the same subnet.
+    notes:
+    - The manual documents initial admin/admin credentials; do not use them as an automation credential
+      fallback.
+    - A browser entry address is not a configuration endpoint or API.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_web_access
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: dashboard
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Dashboard
+    section: I-6
+    source_pages:
+    - manual_page: 19
+      pdf_page: 27
+    settings:
+    - name: Connected clients
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Throughput
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Gateway
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Physical connection
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Radio status
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Backhaul network
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Recent activities
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wireless network usage
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Displays an overview of AP status.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_dashboard
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: operation_mode
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Operation Mode
+    section: I-7; II-1
+    source_pages:
+    - manual_page: 20
+      pdf_page: 28
+    - manual_page: 36
+      pdf_page: 44
+    - manual_page: 37
+      pdf_page: 45
+    settings:
+    - name: Mode
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - AP
+      - Mesh Root
+      - Mesh Node
+      - Range Extender
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Selecting a mode and OK automatically configures required settings.
+    - Wireless settings and available pages vary by mode.
+    constraints: []
+    prerequisites:
+    - Mesh Root needs Ethernet connectivity to a gateway.
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_operation_mode
+    operation_class: disruptive_configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: quick_start
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Quick Start Wizard
+    section: I-7
+    source_pages:
+    - manual_page: 20
+      pdf_page: 28
+    - manual_page: 21
+      pdf_page: 29
+    - manual_page: 22
+      pdf_page: 30
+    - manual_page: 23
+      pdf_page: 31
+    - manual_page: 24
+      pdf_page: 32
+    - manual_page: 25
+      pdf_page: 33
+    - manual_page: 26
+      pdf_page: 34
+    - manual_page: 27
+      pdf_page: 35
+    - manual_page: 28
+      pdf_page: 36
+    - manual_page: 29
+      pdf_page: 37
+    - manual_page: 30
+      pdf_page: 38
+    - manual_page: 31
+      pdf_page: 39
+    - manual_page: 32
+      pdf_page: 40
+    - manual_page: 33
+      pdf_page: 41
+    settings:
+    - name: WiFi Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WiFi Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Enable 2nd WiFi
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: 2nd WiFi Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: 2nd WiFi Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Enable Bandwidth Limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Upload Limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Download Limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable Station Control
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Connection Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Reconnection Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Admin Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Confirm Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    behaviours:
+    - Guides AP, Mesh Root, Mesh Node and Range Extender setup.
+    - Mesh Root workflow searches and adds nodes after Finish; Range Extender searches a parent AP.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Guest duration examples and slider illustrations do not establish numeric ranges or defaults.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_quick_start
+    operation_class: workflow
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wlan_general
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - General Setup
+    section: II-3-1
+    source_pages:
+    - manual_page: 41
+      pdf_page: 49
+    - manual_page: 42
+      pdf_page: 50
+    - manual_page: 43
+      pdf_page: 51
+    settings:
+    - name: Enable Wireless LAN
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable Client Limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        min: 3
+        max: 128
+      unit: null
+      sensitive: false
+    - name: Enable Client Limit per SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        min: 3
+        max: 128
+      unit: null
+      sensitive: false
+    - name: Mode
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - 11n only
+      - Mixed (11b+11g)
+      - Mixed (11b+11g+11n)
+      - 11a only
+      - 11n only(5G)
+      - Mixed (11a+11n)
+      - Mixed (11a+11n+11ac)
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Channel
+      description: Supports AutoSelect; channel list is not transcribed as a universal regulatory range.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Extension Channel
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Hide SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default:
+      - DrayTek-LAN-A
+      - DrayTek-LAN-B
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Isolate LAN
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Isolate Member
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: VLAN ID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 0
+      documented_range:
+        enabled_min: 3
+        enabled_max: 4095
+        disabled_value: 0
+      unit: null
+      sensitive: false
+    behaviours:
+    - Four SSID sets are supported.
+    - SSID VLAN tags are applied on traffic transferred to LAN.
+    constraints:
+    - '2.4GHz modes: 11n only, Mixed (11b+11g), Mixed (11b+11g+11n). Other listed modes are 5GHz.'
+    - Extension channel choices depend on the selected channel.
+    - LAN-A/LAN-B selection per SSID is described conditionally on Enable 2 Subnet; do not infer a separate
+      enablement control here.
+    prerequisites:
+    - AP-mode documentation; Range Extender refers back to this section.
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wlan_general
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wds
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (5GHz)
+    - General Setup
+    section: II-3-1
+    source_pages:
+    - manual_page: 42
+      pdf_page: 50
+    - manual_page: 43
+      pdf_page: 51
+    settings:
+    - name: PHY Mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Security
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Peer MAC Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - WDS peer configuration is shown for 5GHz Access Point mode.
+    - PHY mode is HTMIX; peers must use the same PHY mode.
+    constraints:
+    - 5GHz only.
+    prerequisites: []
+    notes:
+    - Security text lists WEP, TKIP and AES and a passphrase description; do not infer unsupported combinations.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wds
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wlan_security
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Security
+    section: II-3-2
+    source_pages:
+    - manual_page: 44
+      pdf_page: 52
+    - manual_page: 45
+      pdf_page: 53
+    - manual_page: 46
+      pdf_page: 54
+    settings:
+    - name: Mode
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - WPA3 Personal
+      - WPA3/WPA2 Personal
+      - WPA2 Personal
+      - WPA2/WPA Personal
+      - WPA Personal
+      - WPA3 Enterprise
+      - WPA3/WPA2 Enterprise
+      - WPA2 Enterprise
+      - WPA2/WPA Enterprise
+      - WPA Enterprise
+      - OWE
+      - WEP Personal
+      - None
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WPA Algorithms
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - TKIP
+      - AES
+      - TKIP/AES
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Pass Phrase
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        ascii_min_length: 8
+        ascii_max_length: 63
+        alternative: 64 hexadecimal digits prefixed with 0x
+      unit: null
+      sensitive: true
+    - name: Key Renewal Interval
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 3600
+      documented_range:
+        disable_rekey_value: 0
+      unit: seconds
+      sensitive: false
+    - name: EAPOL Key Retry
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Key 1 - Key 4
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        64_bit: 5 ASCII or 10 hex
+        128_bit: 13 ASCII or 26 hex
+        ascii_codes: '33-126 excluding # and comma'
+      unit: null
+      sensitive: true
+    behaviours:
+    - Security is configured independently for SSID 1-4.
+    - OWE is described as passwordless per-client encrypted access.
+    constraints:
+    - Only one of four WEP keys is selected at a time.
+    - Controls depend on selected security mode; the manual says WPA3 algorithms are AES.
+    prerequisites: []
+    notes:
+    - The text repeats WPA2 Enterprise, mixes PSK/802.1x descriptions, and refers to Vigor router. Preserve
+      uncertainty rather than deriving a complete valid-combination matrix.
+    - EAPOL Key Retry description is retained as a named control; actual retry/security semantics require
+      verification.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wlan_security
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: external_radius
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Security
+    - RADIUS Server
+    section: II-3-2
+    source_pages:
+    - manual_page: 46
+      pdf_page: 54
+    settings:
+    - name: Use internal RADIUS Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Port
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 1812
+      documented_range: null
+      unit: UDP port
+      sensitive: false
+    - name: Shared Secret
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Session Timeout
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: seconds
+      sensitive: false
+    behaviours:
+    - Select internal server or leave that choice unchecked to use external RADIUS.
+    constraints:
+    - Shared secret must match at both ends.
+    prerequisites: []
+    notes:
+    - The manual says timeout zero immediately authenticates again after successful authentication; do
+      not silently reinterpret zero as unlimited.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_external_radius
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: access_control
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Access Control
+    section: II-3-3
+    source_pages:
+    - manual_page: 47
+      pdf_page: 55
+    - manual_page: 48
+      pdf_page: 56
+    settings:
+    - name: Policy
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Disable
+      - Activate MAC address filter
+      - Blocked MAC address filter
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: MAC Address Filter
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Client’s MAC Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Device Group
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Device Object
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Add
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Delete
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Edit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Backup
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Restore
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Allows manually supplied MAC addresses or additions from device objects/groups.
+    - Blocked MAC address filter denies listed devices; OK saves settings.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Do not conflate this ACL with Central AP Management overload lists.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_access_control
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wps
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - WPS
+    section: II-3-4
+    source_pages:
+    - manual_page: 48
+      pdf_page: 56
+    - manual_page: 49
+      pdf_page: 57
+    settings:
+    - name: Enable WPS
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WPS Configured
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WPS SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WPS Auth Mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WPS Encrypt Type
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Start PBC
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Client PinCode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Start PIN
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - PBC and PIN enrollment windows last approximately two minutes.
+    constraints:
+    - Manual states only WPA2/PSK and WPA/PSK support WPS.
+    prerequisites:
+    - Wireless station supports WPS.
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wps
+    operation_class: configuration_and_action
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wlan_advanced
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Advanced Setting
+    section: II-3-5
+    source_pages:
+    - manual_page: 49
+      pdf_page: 57
+    - manual_page: 50
+      pdf_page: 58
+    - manual_page: 51
+      pdf_page: 59
+    settings:
+    - name: Channel Width
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - 20 MHz
+      - Auto 20/40 MHz
+      - 40 MHz
+      - Auto 20/40/80 MHz
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Antenna
+      description: 2.4GHz only; choose 1T1R when only one antenna is attached.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Tx Power
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 100
+      documented_range: null
+      unit: percent
+      sensitive: false
+    - name: Fragment Length
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 2346
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: RTS Threshold
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 2347
+      documented_range: null
+      unit: bytes
+      sensitive: false
+    - name: Country Code
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Auto Channel Filtered Out List
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: IGMP Snooping
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Isolate 2.4GHz and 5GHz bands
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: Enable
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Isolate members with IP
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: Disable
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WMM Capable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: APSD Capable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: Disable
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: MAC Clone
+      description: 2.4GHz only; SSID1 address changes other SSID addresses based on it.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Auto 20/40 uses 20MHz if more than ten nearby APs are detected, otherwise 40MHz.
+    - IGMP snooping forwards multicast to group-member ports; disabled treats multicast as broadcast.
+    constraints:
+    - 40MHz fixed choice is described for 2.4GHz only; 80MHz applies to 5GHz.
+    - With the same SSID on both bands, Isolate Member determines inter-client isolation regardless of
+      inter-band isolation setting.
+    - Filtered channels are excluded only when General Setup Channel is AutoSelect.
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wlan_advanced
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: ap_discovery
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - AP Discovery
+    section: II-3-6
+    source_pages:
+    - manual_page: 51
+      pdf_page: 59
+    - manual_page: 52
+      pdf_page: 60
+    settings:
+    - name: SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: BSSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: RSSI
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Channel
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Encryption
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Authentication
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Scan
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: AP’s MAC Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: AP’s SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Add
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Scan discovers neighboring APs.
+    - Add places selected AP into WDS peer settings.
+    constraints:
+    - During approximately five seconds of scanning no client is allowed to connect.
+    - WDS Add requires the same channel width.
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_ap_discovery
+    operation_class: active_diagnostic_and_configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wds_status
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (5GHz)
+    - WDS AP Status
+    section: II-3-7
+    source_pages:
+    - manual_page: 52
+      pdf_page: 60
+    settings:
+    - name: MAC address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Physical mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Power save
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Bandwidth
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Refresh
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Displays connected WDS peer status.
+    constraints:
+    - 5GHz only.
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wds_status
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: bandwidth_management
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Bandwidth Management
+    section: II-3-8; II-3-9
+    source_pages:
+    - manual_page: 52
+      pdf_page: 60
+    - manual_page: 53
+      pdf_page: 61
+    - manual_page: 55
+      pdf_page: 63
+    settings:
+    - name: SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Upload Limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Download Limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Auto Adjustment
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Total Upload Limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Total Download Limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Upload/download rates can be chosen from a list or entered using User defined.
+    - With Auto Adjustment enabled, total upload/download limits are shared by all wireless stations with
+      the same SSID.
+    - OK saves settings.
+    constraints:
+    - Bandwidth Limit and Airtime Fairness must not be enabled simultaneously.
+    prerequisites: []
+    notes:
+    - Numeric rate ranges, units and defaults are not established by the prose; do not substitute router
+      limits or screenshot examples.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_bandwidth_management
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: airtime_fairness
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Airtime Fairness
+    section: II-3-9
+    source_pages:
+    - manual_page: 54
+      pdf_page: 62
+    - manual_page: 55
+      pdf_page: 63
+    settings:
+    - name: Enable Airtime Fairness
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Triggering Client Number
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Controls TX traffic to allocate similar airtime; activates when active station count reaches the
+      trigger.
+    - 2.4GHz and 5GHz operate independently; SSIDs sharing a channel participate together.
+    constraints:
+    - Mutually exclusive with Bandwidth Limit.
+    prerequisites: []
+    notes:
+    - 'Described suitability: many stations, mainly download traffic, wireless bottleneck; improvement
+      is conditional.'
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_airtime_fairness
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: station_control
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Station Control
+    section: II-3-10
+    source_pages:
+    - manual_page: 55
+      pdf_page: 63
+    - manual_page: 56
+      pdf_page: 64
+    settings:
+    - name: SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Connection Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Reconnection Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Display All Station Control List
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Controls connection and reconnection duration per SSID with presets or User defined.
+    - Up to 300 wireless station records are supported.
+    constraints: []
+    prerequisites: []
+    notes:
+    - One hour/one day is a use-case example, not a default or complete allowed range.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_station_control
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: roaming
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Roaming
+    section: II-3-11
+    source_pages:
+    - manual_page: 57
+      pdf_page: 65
+    - manual_page: 58
+      pdf_page: 66
+    settings:
+    - name: Enable 802.11r
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Minimum Basic Rate
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Disable RSSI Requirement
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Strictly Minimum RSSI
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Minimum RSSI
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: With Adjacent AP RSSI over
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Fast Roaming Enable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: PMK Caching
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Pre-Authentication
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Low link rate or RSSI can terminate a station connection to encourage roaming.
+    - Strictly Minimum RSSI disconnects below threshold; Minimum RSSI also requires a stronger adjacent
+      AP.
+    constraints:
+    - Adjacent AP must be DrayTek and support the feature.
+    - PMK caching is described for WPA2/802.1x; pre-authentication is only valid in WPA2.
+    prerequisites: []
+    notes:
+    - 'Threshold units: basic rate Mbps; RSSI dBm. Numeric bounds are not given in the prose.'
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_roaming
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: band_steering
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz)
+    - Band Steering
+    section: II-3-12
+    source_pages:
+    - manual_page: 59
+      pdf_page: 67
+    - manual_page: 60
+      pdf_page: 68
+    - manual_page: 62
+      pdf_page: 70
+    - manual_page: 63
+      pdf_page: 71
+    settings:
+    - name: Enable Band Steering
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Check Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 15
+      documented_range: null
+      unit: seconds
+      sensitive: false
+    - name: Wait Full Time to Check 5G Capability
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: 5GHz Minimum RSSI
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Overloaded
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: 2.4GHz Utilization Overload Threshold
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 70
+      documented_range: null
+      unit: percent
+      sensitive: false
+    - name: 5GHz Utilization Overload Threshold
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 70
+      documented_range: null
+      unit: percent
+      sensitive: false
+    behaviours:
+    - Steers dual-band stations toward 5GHz; insufficient 5GHz RSSI permits 2.4GHz.
+    - Overload steering applies when 2.4GHz exceeds its threshold and 5GHz is below its threshold.
+    constraints:
+    - Menu is under 2.4GHz only.
+    prerequisites:
+    - Same SSID and security must be broadcast on both bands.
+    notes:
+    - Page 60 contains a VigorAP 920RP reference within 918R text; device validation is required.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_band_steering
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: station_list
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Station List
+    section: II-3-13; III-3-1
+    source_pages:
+    - manual_page: 64
+      pdf_page: 72
+    - manual_page: 65
+      pdf_page: 73
+    - manual_page: 66
+      pdf_page: 74
+    - manual_page: 67
+      pdf_page: 75
+    - manual_page: 68
+      pdf_page: 76
+    - manual_page: 69
+      pdf_page: 77
+    - manual_page: 117
+      pdf_page: 125
+    - manual_page: 118
+      pdf_page: 126
+    - manual_page: 119
+      pdf_page: 127
+    - manual_page: 120
+      pdf_page: 128
+    - manual_page: 121
+      pdf_page: 129
+    - manual_page: 122
+      pdf_page: 130
+    settings:
+    - name: Connected Number
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Statistics
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Clients List
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Name / MAC
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Up Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Link Speed
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: RSSI
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: OS
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Usage
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: CH
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Action
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Block List
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: White List
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: +Access Control
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: +Device Object
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Device Object list
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Shows client counts, usage and OS/policy statistics.
+    - Selecting a client enables ACL and device-object creation; Block List offers Unblock and White List
+      offers Block.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Also documented at Mobile Device Management > Station List. These views contain write actions and
+      are not wholly read-only.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_station_list
+    operation_class: facts_and_configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mesh_setup
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mesh
+    - Mesh Setup
+    section: II-4; II-4-1
+    source_pages:
+    - manual_page: 70
+      pdf_page: 78
+    - manual_page: 71
+      pdf_page: 79
+    - manual_page: 72
+      pdf_page: 80
+    - manual_page: 73
+      pdf_page: 81
+    - manual_page: 74
+      pdf_page: 82
+    - manual_page: 75
+      pdf_page: 83
+    - manual_page: 76
+      pdf_page: 84
+    settings:
+    - name: Role
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Mesh Root
+      - Mesh Node
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Log Level
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Basic
+      - Detailed
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wireless Downlink Band
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Group Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Auto Reselect
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: true
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wired Uplink
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wireless Uplink/Downlink Band
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Mesh Group
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Reset
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Delete
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Add Mesh Node
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Search
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Apply
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Backup Mesh Config
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Backup
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Browse/Restore
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Only root adds nodes; disconnected nodes attempt reconnection within their group.
+    - Restore fails if device MAC is absent from restored mesh group.
+    constraints:
+    - One root plus zero to seven nodes; eight total devices; maximum three wireless hops.
+    prerequisites:
+    - Root connects to gateway over Ethernet.
+    - Auto Reselect requires successful CFG Sync and CFG Check for nodes.
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mesh_setup
+    operation_class: disruptive_configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mesh_status
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mesh
+    - Mesh Status
+    section: II-4-2
+    source_pages:
+    - manual_page: 77
+      pdf_page: 85
+    settings:
+    - name: Local Status
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Index
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Status
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Device Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: MAC Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Hop
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Uplink
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Total number of Clients
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Hop 0 denotes Ethernet backhaul; hops 1-3 denote wireless levels.
+    - Lists devices and clients across the mesh group.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mesh_status
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mesh_discovery
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mesh
+    - Mesh Discovery
+    section: II-4-3; II-4-4
+    source_pages:
+    - manual_page: 78
+      pdf_page: 86
+    - manual_page: 80
+      pdf_page: 88
+    settings:
+    - name: Scan
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Link Status
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Operation Mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Discovers nearby mesh devices including those not yet connected.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Search/Apply/Discover requests performed too quickly or with empty results may be rejected; manual
+      advises retry.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mesh_discovery
+    operation_class: active_diagnostic
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mesh_basic_sync
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mesh
+    - Basic Configuration Sync
+    section: II-4-4
+    source_pages:
+    - manual_page: 79
+      pdf_page: 87
+    - manual_page: 80
+      pdf_page: 88
+    - manual_page: 81
+      pdf_page: 89
+    settings:
+    - name: System Maintenance
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wireless LAN (2.4GHz)
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wireless LAN (5GHz)
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Apply
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Adding a node sends basic configuration; Apply distributes selected root configuration to connected
+      nodes.
+    - Resetting a root informs connected nodes to reset and clears group list/key; unreachable nodes need
+      manual reset.
+    - Resetting a node clears group list/key and changes link status to New.
+    constraints:
+    - Apply is available only in Mesh Root mode.
+    prerequisites: []
+    notes:
+    - Setup guidance recommends uplink RSSI greater than -65dBm and at most two hops; these are recommendations,
+      not the three-hop hard limit.
+    - Measured throughput examples are not guaranteed performance.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mesh_basic_sync
+    operation_class: disruptive_configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mesh_advanced_sync
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mesh
+    - Advanced Config Sync
+    section: II-4-5
+    source_pages:
+    - manual_page: 82
+      pdf_page: 90
+    settings:
+    - name: Select All
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Bridge VLAN to Mesh
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Root synchronizes advanced configuration to added nodes according to selections.
+    - Bridge VLAN to Mesh transmits VLAN-tagged packets to mesh nodes.
+    constraints: []
+    prerequisites:
+    - Mesh Root and mesh group.
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mesh_advanced_sync
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mesh_support
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mesh
+    - Support List
+    section: II-4-6
+    source_pages:
+    - manual_page: 82
+      pdf_page: 90
+    - manual_page: 83
+      pdf_page: 91
+    settings: []
+    behaviours:
+    - Manual includes a Support List page.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Screenshot-led section; no model compatibility matrix has been transcribed or inferred.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mesh_support
+    operation_class: reference
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mesh_syslog
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mesh
+    - Mesh Syslog
+    section: II-4-7
+    source_pages:
+    - manual_page: 83
+      pdf_page: 91
+    settings: []
+    behaviours:
+    - Manual includes a Mesh Syslog page.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No text-defined fields or log format; do not invent parser fixtures.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mesh_syslog
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: universal_repeater
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Wireless LAN (2.4GHz/5GHz)
+    - Universal Repeater
+    section: II-5
+    source_pages:
+    - manual_page: 84
+      pdf_page: 92
+    - manual_page: 85
+      pdf_page: 93
+    - manual_page: 86
+      pdf_page: 94
+    - manual_page: 87
+      pdf_page: 95
+    settings:
+    - name: SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: MAC Address (Optional)
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Channel
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Security Mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Encryption Type
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Pass Phrase
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Range Extender Band
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Connection Type
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - DHCP
+      - Static IP
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Device Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Subnet Mask
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Default Gateway
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Runs station and AP functions concurrently to extend a root AP.
+    - Range Extender Band indicates 2.4G/5G or None for no connection.
+    constraints:
+    - Device Name is available with DHCP; address/mask/gateway with Static IP.
+    - Static address must be unique and in LAN subnet; mask and gateway match LAN settings.
+    prerequisites:
+    - Range Extender operation mode.
+    notes:
+    - Open/Shared encryption and WEP key formats are described on p86; WPA Personal/WPA2 Personal use
+      TKIP or AES and 8-63 ASCII or 64 hex prefixed 0x.
+    - DHCP prose describes station assignment; do not infer backend client/server behavior solely from
+      the Connection Type label.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_universal_repeater
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: lan_addressing
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - LAN
+    - General Setup
+    section: II-6-1
+    source_pages:
+    - manual_page: 88
+      pdf_page: 96
+    - manual_page: 89
+      pdf_page: 97
+    - manual_page: 90
+      pdf_page: 98
+    settings:
+    - name: Enable DHCP Client
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 192.168.1.2
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Subnet Mask
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 255.255.255.0/24
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Default Gateway
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable Management VLAN
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: VLAN ID
+      description: Zero means no VLAN tag.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Management VLAN restricts AP access to clients with specified VLAN ID.
+    - DHCP client permits AP management by Vigor router.
+    constraints:
+    - Page changes by operation mode; example is AP mode.
+    prerequisites: []
+    notes:
+    - Do not copy SSID VLAN range 3-4095 into Management VLAN; no range is established here.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_lan_addressing
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: dhcp
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - LAN
+    - General Setup
+    - DHCP Server Configuration
+    section: II-6-1
+    source_pages:
+    - manual_page: 89
+      pdf_page: 97
+    - manual_page: 90
+      pdf_page: 98
+    settings:
+    - name: DHCP mode
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Enable Server
+      - Relay Agent
+      - Disable Server
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Start IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: End IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Subnet Mask
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 255.255.255.0/24
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Default Gateway
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Lease Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Primary DNS Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 194.109.6.66
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Secondary DNS Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 194.98.0.1
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: DHCP Relay Agent
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WLAN Trusted DHCP Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Supports local DHCP service, relay to a specified server, or disabling server.
+    - Trusted DHCP server is described under Disable Server to avoid interference from multiple DHCP servers.
+    constraints:
+    - If AP address is 192.168.1.2, starting pool address must be at least 192.168.1.3 and less than 192.168.1.254.
+    prerequisites: []
+    notes:
+    - DNS values are manual-described fallbacks if ISP provides none, not recommended resolvers.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_dhcp
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: hotspot_portal
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - LAN
+    - Hotspot Web Portal
+    section: II-6-2
+    source_pages:
+    - manual_page: 91
+      pdf_page: 99
+    - manual_page: 92
+      pdf_page: 100
+    - manual_page: 93
+      pdf_page: 101
+    - manual_page: 94
+      pdf_page: 102
+    settings:
+    - name: Enable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Comments
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Captive Portal URL
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Redirection URL
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Landing page Fixed URL
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Applied Interfaces
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - LAN
+      - SSID1
+      - SSID2
+      - SSID3
+      - SSID4
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Primary Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Secret
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        max_length: 36
+      unit: null
+      sensitive: true
+    - name: Authentication Port
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 1812
+      documented_range: null
+      unit: UDP port
+      sensitive: false
+    - name: Retry
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: NAS-Identifier
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Domain Whitelist
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: IP Whitelist
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Wizard covers portal, external RADIUS and whitelist settings; Finish saves.
+    - Traffic satisfying whitelist entries is not redirected.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Portal URL fields are user configuration values, not management API endpoints.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_hotspot_portal
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: system_status
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - System Status
+    section: III-1-1
+    source_pages:
+    - manual_page: 97
+      pdf_page: 105
+    settings:
+    - name: Model /Device Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Firmware Version
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Build Date/Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: System Uptime
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Operation Mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Memory total
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Memory left
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: LAN MAC Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: LAN IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: LAN IP Mask
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wireless LAN MAC Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Channel
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Displays identification, running firmware and network status.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Manual labels wireless MAC description as WAN; do not infer a WAN interface on this AP.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_system_status
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: tr069
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - TR-069
+    section: III-1-2
+    source_pages:
+    - manual_page: 98
+      pdf_page: 106
+    - manual_page: 99
+      pdf_page: 107
+    settings:
+    - name: TR-069 Enable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wizard
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: URL
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Username
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Test With Inform
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Event Code
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Last Inform Response Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SSL(HTTPS) Mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: CPE Port
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: CPE Username
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: CPE Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Periodic Inform
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: Enable
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Interval Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: seconds
+      sensitive: false
+    - name: STUN
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: Disable
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: STUN Server Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: STUN Server Port
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Minimum Keep Alive Period
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 60
+      documented_range: null
+      unit: seconds
+      sensitive: false
+    - name: Maximum Keep Alive Period
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        no_maximum_value: -1
+      unit: null
+      sensitive: false
+    - name: XMPP Settings
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Supports management through TR-069/VigorACS.
+    - Test With Inform sends the selected event to ACS; XMPP is described for management behind NAT.
+    constraints: []
+    prerequisites:
+    - ACS-specific connection and authentication information.
+    notes:
+    - No TR-069 parameter tree, handler path, ACS API or XMPP option schema is established.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_tr069
+    operation_class: configuration_and_action
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: admin_account
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Administrator Password
+    section: III-1-3
+    source_pages:
+    - manual_page: 100
+      pdf_page: 108
+    settings:
+    - name: Account
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Old Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: New Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Confirm Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Password Strength
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - weak
+      - medium
+      - strong
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - OK changes credentials and prompts for login with the new password.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Do not apply the User Password 31-character bound to the administrator password.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_admin_account
+    operation_class: credential_change
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: user_account
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - User Password
+    section: III-1-4
+    source_pages:
+    - manual_page: 101
+      pdf_page: 109
+    settings:
+    - name: Enable User Mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Account
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        max_length: 31
+      unit: null
+      sensitive: true
+    - name: Confirm Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    behaviours:
+    - User Mode exposes fewer, basic configuration options than Admin Mode.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_user_account
+    operation_class: credential_change
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: configuration_backup
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Configuration Backup
+    section: III-1-5
+    source_pages:
+    - manual_page: 102
+      pdf_page: 110
+    - manual_page: 103
+      pdf_page: 111
+    settings:
+    - name: Protect with password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Confirm Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Backup
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Browse
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Restore
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Backup downloads config.cfg; optional password protection encrypts the backup.
+    - Restore uploads a configuration file; password is optional in the UI.
+    constraints:
+    - Configuration backup does not include certificates; certificate backup must be independent.
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_configuration_backup
+    operation_class: backup_restore
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: syslog_mail
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Syslog/Mail Alert
+    section: III-1-6
+    source_pages:
+    - manual_page: 104
+      pdf_page: 112
+    - manual_page: 105
+      pdf_page: 113
+    settings:
+    - name: Syslog Enable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Server IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Destination Port
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: 514
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Log Level
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Mail Alert Enable
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SMTP Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SMTP Server Port
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Mail To
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Mail From
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: User Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: SSL
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: StartTLS
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable E-Mail Alert
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: When Admin Login AP
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Can log events to syslog and send email for Web/Telnet access or admin login.
+    constraints: []
+    prerequisites:
+    - Configured mail server must support selected SSL/TLS method to deliver encrypted alert mail.
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_syslog_mail
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: time
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Time and Date
+    section: III-1-7; IV-2-1
+    source_pages:
+    - manual_page: 105
+      pdf_page: 113
+    - manual_page: 106
+      pdf_page: 114
+    - manual_page: 132
+      pdf_page: 140
+    settings:
+    - name: Current System Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Inquire Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable NTP Client
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Time Zone
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: NTP Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Use Default
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Daylight Saving
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: NTP synchronization
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Sets or queries time and optionally synchronizes with NTP.
+    - Schedule instructions describe Inquire Time as obtaining PC time and state the clock resets on power-down/reset.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No NTP server hostname, timezone enum or synchronization interval list is established.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_time
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: snmp
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - SNMP
+    section: III-1-8
+    source_pages:
+    - manual_page: 107
+      pdf_page: 115
+    settings:
+    - name: Enable SNMPv1 /SNMPv2c Agent
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Get Community
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: public
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Enable SNMPV3 Agent
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: USM User
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        max_length: 23
+      unit: null
+      sensitive: false
+    - name: Auth Algorithm
+      description: MD5 appears as an example; no exhaustive choice list established.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Auth Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        max_length: 23
+      unit: null
+      sensitive: true
+    behaviours:
+    - Configures SNMP v1/v2c and v3 services.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No MIB/OID catalogue, SET capability or privacy algorithm is established by this section.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_snmp
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: management_services
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Management
+    section: III-1-9
+    source_pages:
+    - manual_page: 108
+      pdf_page: 116
+    - manual_page: 109
+      pdf_page: 117
+    settings:
+    - name: Device Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: VigorAP 918R
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: HTTP Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: HTTPS Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enforce HTTPS Access
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Allow management from WLAN
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable Telnet Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Disable Reset Button
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable access list
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: HTTP port
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: HTTPS port
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Disable LED
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable Default Configuration Wizard
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: true
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Telnet enablement provides remote CLI access for administrator/user; no command set is documented.
+    - Enforce HTTPS permits HTTPS-only administration.
+    - Access list restricts login to configured hosts/networks; up to five IP/subnet-mask entries.
+    - Disable LED turns LEDs off after OK.
+    - Default wizard is disabled after configuring operation mode, WLAN General Setup/Bandwidth Management/Station
+      Control, or administration password.
+    constraints: []
+    prerequisites: []
+    notes:
+    - HTTP/HTTPS server controls and port fields do not imply an API.
+    - Telnet commands, HTTP endpoint paths and payloads remain undocumented.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_management_services
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: reboot_reset
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Reboot System
+    section: III-1-10; VI-5
+    source_pages:
+    - manual_page: 110
+      pdf_page: 118
+    - manual_page: 173
+      pdf_page: 181
+    - manual_page: 174
+      pdf_page: 182
+    settings:
+    - name: Configuration
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Using current configuration
+      - Using factory default configuration
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - OK reboots with selected configuration; factory-default choice resets settings.
+    - Manual states reboot takes five seconds; this is not a validated readiness timeout.
+    constraints:
+    - When a configuration change presents Reboot System, manual directs reboot to ensure normal operation.
+    prerequisites: []
+    notes:
+    - Page 173 says factory password is null, conflicting with admin/admin on p15. Treat post-reset credentials
+      as unresolved; do not select either as an automation fallback.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_reboot_reset
+    operation_class: disruptive_action
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: firmware_upgrade
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - System Maintenance
+    - Firmware Upgrade
+    section: III-1-11
+    source_pages:
+    - manual_page: 111
+      pdf_page: 119
+    settings:
+    - name: Browse
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Upgrade
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Describes Modem Tools/Firmware Upgrade Utility and selecting a firmware file to upgrade.
+    constraints: []
+    prerequisites:
+    - Manual procedure uses Windows and installed Modem Tools.
+    notes:
+    - No upload endpoint, file compatibility rule or API is supplied.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_firmware_upgrade
+    operation_class: disruptive_action
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: central_ap_general
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Central AP Management
+    - General Setup
+    section: III-2-1
+    source_pages:
+    - manual_page: 112
+      pdf_page: 120
+    - manual_page: 113
+      pdf_page: 121
+    settings:
+    - name: Enable NodeAP
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable Auto Provision
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Enable Check Account Password For Set Group Key
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Enable RootAP
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Auto Provision applies a router WLAN profile immediately when AP registers, if enabled on router
+      and AP.
+    - RootAP mode manages other APs; NodeAP enables AP management.
+    constraints:
+    - When account-password checking is disabled RootAP can manage without node credentials. When enabled
+      credentials are required except nodes using default admin/admin.
+    prerequisites: []
+    notes:
+    - Central AP RootAP/NodeAP roles must not be assumed identical to Mesh Root/Mesh Node.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_central_ap_general
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: apm_log
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Central AP Management
+    - APM Log
+    section: III-2-2
+    source_pages:
+    - manual_page: 114
+      pdf_page: 122
+    settings: []
+    behaviours:
+    - Shows station/AP-management logs, also delivered to Vigor router Central AP Management Event Log.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_apm_log
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: overload_management
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Central AP Management
+    - Overload Management
+    section: III-2-3
+    source_pages:
+    - manual_page: 115
+      pdf_page: 123
+    - manual_page: 116
+      pdf_page: 124
+    settings:
+    - name: White List
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Black List
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Client’s MAC Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Apply to
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Comment
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Add
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Delete
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Edit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Cancel
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Blacklisted stations are disconnected first when overload occurs and Force Overload Disassociation
+      is enabled.
+    - AP page manages membership of overload white/black lists.
+    constraints: []
+    prerequisites:
+    - Router-side load balancing and Force Overload Disassociation govern the described disconnection
+      behavior.
+    notes:
+    - Do not infer that the whitelist guarantees never being disconnected, or that this page sets router
+      load thresholds.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_overload_management
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: status_of_settings
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Central AP Management
+    - Status of Settings
+    section: III-2-4
+    source_pages:
+    - manual_page: 116
+      pdf_page: 124
+    settings:
+    - name: By Station Number
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: By Traffic
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Force Overload Disassociation
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Displays load-balance settings configured on Vigor router.
+    - X means disabled OR AP has not registered to any Vigor router.
+    constraints: []
+    prerequisites: []
+    notes:
+    - X is ambiguous; it is not proof of either condition alone.
+    - Router settings are observations here, not AP-local writable controls.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_status_of_settings
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: station_statistics
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mobile Device Management
+    - Station Statistics
+    section: III-3-2
+    source_pages:
+    - manual_page: 123
+      pdf_page: 131
+    settings:
+    - name: Show Chart
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Nearby & Connected Number
+      - Visiting & Passing Number
+      - Visiting Time
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Provides debug/observation charts for station traffic and quality.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_station_statistics
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: station_nearby
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mobile Device Management
+    - Station Nearby
+    section: III-3-3
+    source_pages:
+    - manual_page: 124
+      pdf_page: 132
+    - manual_page: 125
+      pdf_page: 133
+    settings:
+    - name: +Access Control
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SSID Policy
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Device MAC
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Apply to SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Save changes
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Selected nearby stations can be passed or blocked per SSID 1-4; policy can be disable, white list
+      or black list.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_station_nearby
+    operation_class: facts_and_configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mdm_policies
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mobile Device Management
+    - Policies
+    section: III-3-4
+    source_pages:
+    - manual_page: 125
+      pdf_page: 133
+    settings:
+    - name: Block Mobile Connections
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Block PC Connections
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Block Unknown Connections
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WiFi(2.4GHz)
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WiFi(5GHz)
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Policies target selected SSIDs by device classification.
+    - PC block includes PC, Mac and Linux platforms.
+    - Clicking OK automatically reboots AP to activate the new policy.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mdm_policies
+    operation_class: disruptive_configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: station_control_list
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Mobile Device Management
+    - Station Control List
+    section: III-3-5
+    source_pages:
+    - manual_page: 126
+      pdf_page: 134
+    settings: []
+    behaviours:
+    - Displays information about wireless stations connected to AP.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Screenshot-led page; detailed columns/actions are not transcribed.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_station_control_list
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: internal_radius
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - RADIUS Setting
+    - RADIUS Server
+    section: IV-1-1
+    source_pages:
+    - manual_page: 128
+      pdf_page: 136
+    - manual_page: 129
+      pdf_page: 137
+    settings:
+    - name: Enable RADIUS Server
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Radius EAP Type
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - PEAP
+      - EAP TLS
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Username
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Confirm Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Client IP
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Secret Key
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Confirm Secret Key
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Add
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Delete Selected
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Delete All
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Backup Radius Cfg
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Upload From File
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Restore
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Manages internal authentication users and clients; supports independent backup/restore.
+    - AP internal RADIUS can serve other devices as an external server.
+    constraints: []
+    prerequisites:
+    - EAP TLS requires an installed/trusted certificate.
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_internal_radius
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: certificates
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - RADIUS Setting
+    - Certificate Management
+    section: IV-1-2
+    source_pages:
+    - manual_page: 129
+      pdf_page: 137
+    - manual_page: 130
+      pdf_page: 138
+    - manual_page: 131
+      pdf_page: 139
+    settings:
+    - name: Country (C)
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        length: 2
+      unit: null
+      sensitive: false
+    - name: State / Location / Organization / Organization Unit / Common Name / Email
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range:
+        max_length_exclusive: 32
+      unit: null
+      sensitive: false
+    - name: Key Type
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - RSA
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Key Size
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Apply to Web HTTPS
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Create Root CA
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Root CA can be deleted but not edited; changes require deletion and recreation.
+    - Apply to Web HTTPS substitutes the user-defined certificate for original web certificate.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Key-size choices are not transcribed.
+    - Manual says Common Name must match router WAN IP/domain; this router wording is ambiguous for an
+      AP. Do not invent a WAN setting.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_certificates
+    operation_class: certificate_lifecycle
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: schedule
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Applications
+    - Schedule
+    section: IV-2-1
+    source_pages:
+    - manual_page: 132
+      pdf_page: 140
+    - manual_page: 133
+      pdf_page: 141
+    - manual_page: 134
+      pdf_page: 142
+    settings:
+    - name: Enable Schedule
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Start Date
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Start Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Duration Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: End Time
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Action
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WiFi(2.4GHz)
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WiFi(5GHz)
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: How Often
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Once
+      - Weekdays
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Weekday
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Set to Factory Default
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Up to 15 schedules; End Time is start plus duration.
+    - Set to Factory Default removes all schedule profiles.
+    constraints:
+    - Duration only for WIFI UP, WIFI Down or Internet Pause.
+    - For WiFi UP/DOWN select Radio or SSID2-4, mutually exclusively; disabled SSIDs cannot be selected.
+    prerequisites:
+    - Set system time before creating schedules.
+    notes:
+    - Action list in prose is not exhaustive; no router dial-up capability is inferred from introductory
+      boilerplate.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_schedule
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: apple_ios_keep_alive
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Applications
+    - Apple iOS Keep Alive
+    section: IV-2-2
+    source_pages:
+    - manual_page: 134
+      pdf_page: 142
+    - manual_page: 135
+      pdf_page: 143
+    settings:
+    - name: Enable Apple iOS Keep Alive
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Index
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Apple iOS Keep Alive IP Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Sends UDP packets to port 5353 at specified IP addresses every five seconds to maintain iOS Wi-Fi
+      connection.
+    - Index opens IP address configuration; OK saves.
+    constraints: []
+    prerequisites: []
+    notes:
+    - 5353 and five seconds describe behavior, not editable port/interval controls. No entry-count or
+      IP range inferred.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_apple_ios_keep_alive
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wifi_auto_on_off
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Applications
+    - Wi-Fi Auto On/Off
+    section: IV-2-3
+    source_pages:
+    - manual_page: 135
+      pdf_page: 143
+    settings:
+    - name: Enable Connection Detection
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Ping Host
+      description: IP address or domain name.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wi-Fi failure action
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Wi-Fi Off
+      - No Change
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: LED failure action
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - LED Off
+      - No Change
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Monitors host reachability and can turn Wi-Fi/LED off on ping failure; No Change preserves existing
+      state.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Example ping host is not a default; poll interval, failure count and recovery timing are not specified.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wifi_auto_on_off
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: sensor
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Applications
+    - Sensor
+    section: IV-2-4
+    source_pages:
+    - manual_page: 136
+      pdf_page: 144
+    - manual_page: 137
+      pdf_page: 145
+    - manual_page: 104
+      pdf_page: 112
+    - manual_page: 105
+      pdf_page: 113
+    settings:
+    - name: Enable Sensor Graph
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Alerts once/per min
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Once
+      - Per min.
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Alert Method
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Syslog
+      - Mail
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Alert Criteria
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Inside case
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: 2.4GHz Wi-Fi
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Upper limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Lower limit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Calibration / current val
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: C°/F°
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Celsius
+      - Fahrenheit
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Humidity Sensor
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Describes supported USB thermometers for environmental monitoring.
+    - Alerts fire when values are outside configured range; once or every minute.
+    - Inside-case reading uses internal chip data; 2.4GHz reading is estimated by Wi-Fi module.
+    constraints: []
+    prerequisites:
+    - External thermometer must be compatible; verify actual model/USB hardware and sensor presence.
+    - Syslog must be enabled for syslog alarm delivery; mail requires working mail configuration.
+    notes:
+    - Heading is Sensor; prose also names Applications > Sensor Setting > Sensor Graph. Preserve alias
+      rather than invent a URL.
+    - Humidity field is mentioned but does not establish built-in humidity hardware or supported accessory
+      models.
+    - Numeric sensor bounds and calibration units/ranges are not specified in prose.
+    - 'PDF page 145 visually reviewed: screenshot caption says Applications >> Sensor Graph, with Sensor
+      Graph / Sensor Settings tabs. This is another navigation-label variant.'
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_sensor
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: device_objects
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Objects Setting
+    - Device Object
+    section: IV-3-1
+    source_pages:
+    - manual_page: 138
+      pdf_page: 146
+    - manual_page: 139
+      pdf_page: 147
+    - manual_page: 140
+      pdf_page: 148
+    settings:
+    - name: Create from Wireless Station Table
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Create from Wireless Neighbor Table
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Create from ARP Table
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Mac Address
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Attribute
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Set to Factory Default
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Back ACL Cfg
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Upload From File
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Restore
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Creates objects manually or from station/neighbor/ARP tables.
+    - Attribute checkbox bypasses Isolate LAN for the device.
+    - Factory default removes all device-object profiles.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_device_objects
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: device_groups
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Objects Setting
+    - Device Group
+    section: IV-3-3
+    source_pages:
+    - manual_page: 140
+      pdf_page: 148
+    - manual_page: 141
+      pdf_page: 149
+    settings:
+    - name: Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Available Device Objects
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Selected Device Objects
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Set to Factory Default
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Groups device objects for other applications; add/remove membership with arrow controls.
+    - Factory default removes all device-group profiles.
+    constraints: []
+    prerequisites:
+    - Device objects exist for selection.
+    notes:
+    - Section numbering skips IV-3-2 in source; preserved IV-3-3.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_device_groups
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mobile_app_access
+  manual_evidence:
+    surface: mobile_app
+    menu_path:
+    - DrayTek Wireless
+    - Login
+    section: V-1; V-4; V-4-1; V-4-2
+    source_pages:
+    - manual_page: 144
+      pdf_page: 152
+    - manual_page: 151
+      pdf_page: 159
+    - manual_page: 152
+      pdf_page: 160
+    - manual_page: 153
+      pdf_page: 161
+    settings:
+    - name: Network
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Connect
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Search
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Support
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: About
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SSID
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Encryption mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Scan
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Manual documents Android/iOS app setup and status access.
+    - Connect accepts Wi-Fi details or packaging QR code; Network opens selected device dashboard.
+    constraints: []
+    prerequisites:
+    - Phone Wi-Fi enabled and connected to a network in same subnet as AP.
+    notes:
+    - Describes the app as of this manual, not verified current app-store availability.
+    - No mobile-app API, discovery protocol or authentication payload is established.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mobile_app_access
+    operation_class: workflow
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mobile_app_network
+  manual_evidence:
+    surface: mobile_app
+    menu_path:
+    - DrayTek Wireless
+    - Network
+    section: V-2; V-3
+    source_pages:
+    - manual_page: 145
+      pdf_page: 153
+    - manual_page: 146
+      pdf_page: 154
+    - manual_page: 147
+      pdf_page: 155
+    - manual_page: 148
+      pdf_page: 156
+    - manual_page: 149
+      pdf_page: 157
+    - manual_page: 150
+      pdf_page: 158
+    settings:
+    - name: Create Network
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Search
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wizard
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Group Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: VigorMesh
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: WiFi Name
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: 2nd WiFi
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Admin Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Apply
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Create network by + or search; long-press network to select Wizard/Edit/Delete.
+    - Wizard configures root then searches and names ungrouped nodes, applies general configuration and
+      displays status.
+    constraints:
+    - Chosen mesh nodes must not belong to another mesh group.
+    - Wi-Fi password should match security configured in device WUI.
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mobile_app_network
+    operation_class: workflow
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mobile_app_dashboard
+  manual_evidence:
+    surface: mobile_app
+    menu_path:
+    - DrayTek Wireless
+    - Connect
+    - Dashboard
+    section: V-4-2-1; V-4-2-2
+    source_pages:
+    - manual_page: 154
+      pdf_page: 162
+    - manual_page: 155
+      pdf_page: 163
+    - manual_page: 156
+      pdf_page: 164
+    settings:
+    - name: Dashboard
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Devices
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Icon view / List view
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: +
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: INFORMATION
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: SYSTEM SETTINGS > Reboot Device
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Dashboard connects to responsive device WUI.
+    - Devices shows mesh root/nodes; + adds nodes; AP mode shows IP, gateway and MAC.
+    - Reboot Device reboots immediately.
+    constraints:
+    - Mesh group contains at most eight devices.
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mobile_app_dashboard
+    operation_class: facts_and_disruptive_action
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mobile_app_clients
+  manual_evidence:
+    surface: mobile_app
+    menu_path:
+    - DrayTek Wireless
+    - Connect
+    - Clients / Groups
+    section: V-4-2-3
+    source_pages:
+    - manual_page: 157
+      pdf_page: 165
+    - manual_page: 158
+      pdf_page: 166
+    settings:
+    - name: Search
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Clients +
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: My Clients
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Clients
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Groups
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Edit
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Pause Schedule
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Organizes clients into groups, adds/removes members and changes group connection schedules.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Do not assume app groups equal Objects Setting Device Group records without validation.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mobile_app_clients
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: mobile_app_setup
+  manual_evidence:
+    surface: mobile_app
+    menu_path:
+    - DrayTek Wireless
+    - Connect
+    - Setup
+    section: V-4-2-4
+    source_pages:
+    - manual_page: 155
+      pdf_page: 163
+    - manual_page: 158
+      pdf_page: 166
+    settings:
+    - name: TR-069
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Admin Password
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: true
+    - name: Wireless LAN
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wi-Fi Blocklist
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Setup exposes these configuration categories for connected AP.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No app field-level limits or write protocol inferred.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_mobile_app_setup
+    operation_class: configuration
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: system_log
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Diagnostics
+    - System Log
+    section: VI-1-1
+    source_pages:
+    - manual_page: 161
+      pdf_page: 169
+    settings:
+    - name: System Log Information
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Clear
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Refresh
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Line wrap
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Displays system log; screenshot shows Clear, Refresh and Line wrap controls.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Controls transcribed from visually reviewed PDF page 169. Log contents are examples, not stable
+      parser output.
+    - Prose says only System Log is offered, contradicted by other diagnostics sections; do not remove
+      those documented sections.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_system_log
+    operation_class: facts_and_action
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: speed_test
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Diagnostics
+    - Speed Test
+    section: VI-1-2
+    source_pages:
+    - manual_page: 161
+      pdf_page: 169
+    settings:
+    - name: Start
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Start tests speed to help select AP installation position.
+    - Screenshot says performance result is for reference.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Visually reviewed PDF page 169. No server address, test duration, transport, throughput guarantee
+      or CLI inferred.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_speed_test
+    operation_class: active_diagnostic
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: traffic_graph
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Diagnostics
+    - Traffic Graph
+    section: VI-1-3
+    source_pages:
+    - manual_page: 162
+      pdf_page: 170
+    settings:
+    - name: Access Point
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: LAN
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - LAN-A
+      - LAN-B
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Period
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - daily
+      - weekly
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Refresh
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Plots time against transmission rate in kbps for selected managed AP/LAN.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_traffic_graph
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: alert_event
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Diagnostics
+    - Alert Event
+    section: VI-1-4
+    source_pages:
+    - manual_page: 162
+      pdf_page: 170
+    settings: []
+    behaviours:
+    - Manual includes an Alert Event page.
+    constraints: []
+    prerequisites: []
+    notes:
+    - Screenshot-led section; event schema and actions not inferred.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_alert_event
+    operation_class: facts_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wlan_statistics_2_4GHz
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Diagnostics
+    - WLAN (2.4GHz) Statistics
+    section: VI-1-5
+    source_pages:
+    - manual_page: 163
+      pdf_page: 171
+    settings: []
+    behaviours:
+    - Manual describes page as for RD debugging only.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No stable field schema, counters or support for declarative use inferred.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wlan_statistics_2_4GHz
+    operation_class: debug_only
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: wlan_statistics_5GHz
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Diagnostics
+    - WLAN (5GHz) Statistics
+    section: VI-1-6
+    source_pages:
+    - manual_page: 164
+      pdf_page: 172
+    settings: []
+    behaviours:
+    - Manual describes page as for RD debugging only.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No stable field schema, counters or support for declarative use inferred.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_wlan_statistics_5GHz
+    operation_class: debug_only
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: interference_monitor
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Diagnostics
+    - Interference Monitor
+    section: VI-1-7
+    source_pages:
+    - manual_page: 165
+      pdf_page: 173
+    - manual_page: 166
+      pdf_page: 174
+    settings:
+    - name: View
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - Current Channel
+      - All Channels
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Band
+      description: Named control or displayed field in the cited manual section.
+      options:
+      - 2.4G
+      - 5G
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Channel
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Transmission power
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Bandwidth
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Wireless mode
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Country code
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Channel status
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Utilization
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Energy
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    - name: Refresh
+      description: Named control or displayed field in the cited manual section.
+      options: null
+      documented_default: null
+      documented_range: null
+      unit: null
+      sensitive: false
+    behaviours:
+    - Current Channel presents selected band settings and channel status.
+    - All Channels presents utilization and energy results; Refresh updates interference information.
+    constraints: []
+    prerequisites: []
+    notes:
+    - No units/ranges for energy, scan timing or disruption guarantee documented; do not treat active
+      measurement as proven side-effect-free.
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_interference_monitor
+    operation_class: diagnostic_candidate
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
+- id: support_area
+  manual_evidence:
+    surface: web_ui
+    menu_path:
+    - Diagnostics
+    - Support Area
+    section: VI-1-8
+    source_pages:
+    - manual_page: 166
+      pdf_page: 174
+    settings: []
+    behaviours:
+    - Opens relevant DrayTek website support pages.
+    constraints: []
+    prerequisites: []
+    notes: []
+    evidence_basis: Manual prose/tables; screenshot-derived details only when explicitly identified in
+      notes.
+  proposed_ansible_mapping:
+    status: proposal_only_not_implemented
+    resource: vigorap_918r_support_area
+    operation_class: reference
+    transport: null
+    readback: null
+    check_mode: not_established
+    idempotency: not_established
+    implementation_gate: Validate an authorized device transport, exact model/firmware, readable state
+      and operation semantics before implementation.
