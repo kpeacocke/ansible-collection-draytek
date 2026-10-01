@@ -1,7 +1,0 @@
----
-# AWX resolves collections before parsing playbooks. Pin the reviewed runtime
-# implementation; update this ref when changing collection code.
-collections:
-  - name: https://github.com/kpeacocke/ansible-collection-draytek.git
-    type: git
-    version: e69d4b525661e778b97c1ed8df5e8f0961805eb7
