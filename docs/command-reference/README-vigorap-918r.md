@@ -2,14 +2,16 @@
 
 This package documents management evidence, not an executable Ansible collection or a CLI reference. It is based on the attached DrayTek VigorAP 918R Series User's Guide v1.6, firmware V1.4.6, dated 5 July 2023 (183 PDF pages). It does not establish support on other firmware, AP models or current mobile-app releases.
 
-## Install
+## Repository files
 
-Extract the ZIP into the collection repository root. Its entries begin with `docs/` and `.github/`, so no extra parent directory must be moved. Preserve existing global Copilot instructions. The YAML belongs in documentation, not runtime plugins.
+The evidence is already installed in this repository. Preserve the model-scoped instructions and keep the YAML in documentation, not runtime plugins. Generated ZIPs and validation reports are not retained.
 
 - `docs/command-reference/draytek-vigorap-918r-management.yaml`: structured evidence and separately labelled proposals.
 - `docs/command-reference/README-vigorap-918r.md`: scope, conventions and implementation boundaries.
 - `.github/instructions/vigorap-918r.instructions.md`: scoped Copilot instructions.
-- `docs/command-reference/VALIDATION-vigorap-918r.txt`: actual checks and limitations.
+- `docs/command-reference/sources/DrayTek_UG_VigorAP 918R_V1.6.pdf`: retained source manual.
+
+Repository tests check YAML structure, unique record IDs and index coverage.
 
 ## Reading the YAML
 
@@ -17,7 +19,7 @@ Every record has a stable `id`, a `manual_evidence` object and a `proposed_ansib
 
 `manual_evidence` contains section and source pages, settings, documented defaults/ranges, constraints, prerequisites, behaviors and uncertainty notes. Each setting inherits the record's source-page list. `null` means not established in the cited evidence; it does not mean disabled, unlimited, absent or optional. Empty lists mean no detail was transcribed for that category, not that no constraints exist. Numeric bounds are not filled in from general networking knowledge. Dropdown options may be partial where the notes say so. Sensitive fields are flagged for handling, not populated with credentials.
 
-Printed Arabic page numbers and physical PDF page numbers are both recorded. Printed p1 is PDF p9; add eight throughout the numbered body. The document identity is on PDF p2. The source SHA-256 identifies the exact attached PDF; the PDF itself is not included in the ZIP.
+Printed Arabic page numbers and physical PDF page numbers are both recorded. Printed p1 is PDF p9; add eight throughout the numbered body. The document identity is on PDF p2. The source SHA-256 identifies the exact attached PDF; the PDF is retained under `sources/` in the source repository.
 
 `proposed_ansible_mapping` is engineering interpretation, not vendor evidence. Resource names are illustrative model-specific candidates, not real modules or an API promise. Operation classes distinguish facts candidates, configuration, active diagnostics, workflows, credentials, backup/restore and disruptive operations. Transport/readback remain null; check mode and idempotency are explicitly unestablished. Implementations must first validate a transport and demonstrate readback, comparison and verification. A facts candidate does not authorize every button on its page.
 

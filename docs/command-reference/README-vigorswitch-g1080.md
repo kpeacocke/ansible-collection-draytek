@@ -1,6 +1,6 @@
 # VigorSwitch G1080 management evidence
 
-Source: [User’s Guide v1.0](sources/DrayTek_UG_VigorSwitch%20G1080_V1.0.pdf), firmware V1.04.04, 5 June 2018. The 41-page PDF has four preliminary pages; printed page + 4 gives the physical PDF page. Identity is PDF p2; SHA-256 is in the YAML.
+Source: [User’s Guide v1.0](https://github.com/kpeacocke/ansible-collection-draytek/blob/main/docs/command-reference/sources/DrayTek_UG_VigorSwitch%20G1080_V1.0.pdf), firmware V1.04.04, 5 June 2018. The 41-page PDF has four preliminary pages; printed page + 4 gives the physical PDF page. Identity is PDF p2; SHA-256 is in the YAML.
 
 The [catalogue](draytek-vigorswitch-g1080-management.yaml) covers all twelve Chapter 3 management sections in 17 records, with additional access and hardware constraints. Each record separates `manual_evidence` from `proposed_ansible_mapping`. Settings include named controls, known options, explicit defaults/ranges, constraints, behaviours, prerequisites and printed/PDF page references. Null means not established, not unlimited or disabled. Each statement inherits its record page references. Paths are display labels; inner components may be page sections rather than sidebar menus.
 
@@ -17,4 +17,4 @@ This is Web UI evidence, not executable automation or a CLI reference. Do not us
 
 The guide is the evidence for historical documented behaviour, not proof on a current device. Capture authorised lab read/write evidence before implementing a resource; use real sanitised parser fixtures and prove read/compare/write/verify, a no-change second run and non-mutating check mode. Keep credentials out of logs; separate statistics from Clear Counters and other side-effecting actions.
 
-The ZIP contains YAML, README, Copilot instructions and validation. The original PDF is kept separately under `sources/`. Validation covers package structure and source references; no device test was run.
+The repository retains the YAML, this README, scoped Copilot instructions and the original PDF under `sources/`. Generated ZIPs and validation reports are not retained. Repository tests check YAML structure, unique record IDs and index coverage; no G1080 device test was run.

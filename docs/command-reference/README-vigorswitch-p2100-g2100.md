@@ -40,6 +40,11 @@ Fields under `source`, `purpose`, `syntax_items`, `related_syntax`, `examples`, 
 
 If the manual does not document a behaviour, do not fill the gap with Cisco/Arista/Juniper conventions or model intuition. Record the gap, capture behaviour from a test device, and add a fixture plus a traceable note before implementation.
 
-## Repository installation note
+## Repository provenance and validation
 
-The catalogue YAML is unchanged from the supplied package. Copilot instructions have an explicit model scope; 1060C frontmatter has been normalised. The accompanying ZIP matches these installed files. See the validation report for the original archive hash and the limits of this installation review.
+The VigorSwitch P2100/G2100 catalogue YAML is retained unchanged from the supplied package,
+with model-scoped Copilot instructions. The durable files are the catalogue,
+this README and its instruction file. Generated ZIPs and validation reports
+are not retained. Repository tests validate YAML structure, unique record IDs
+and index coverage; they do not independently re-audit the source manual or
+prove device behaviour.

@@ -38,3 +38,9 @@ def test_stderr_matches_unknown_command():
 
 def test_stderr_does_not_match_normal_output():
     assert not _matches(TerminalModule.terminal_stderr_re, b"WAN1 is up")
+
+
+def test_stdout_prompt_matches_live_lac_trailing_whitespace():
+    # AWX receive-window capture: sys iface finishes with two spaces after >.
+    assert _matches(TerminalModule.terminal_stdout_re, b"\r\nrouter>  ")
+    assert _matches(TerminalModule.terminal_stdout_re, b"\r\nrouter> \t ")

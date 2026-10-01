@@ -34,7 +34,7 @@ If you have access to a DrayTek device not yet listed in
 [docs/supported_devices.md](docs/supported_devices.md), you can help by:
 
 1. Capturing the raw output of relevant CLI commands (see existing fixtures
-   under `tests/fixtures/drayos/` for the shape once they exist) with any
+   under `tests/fixtures/drayos/` for the layout and shape) with any
    secrets/PII (serial numbers, WAN IPs, PPPoE credentials, PSKs) redacted.
 2. Opening a pull request adding the fixture plus your device's
    model/firmware to the supported-devices table.

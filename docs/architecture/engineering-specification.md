@@ -360,15 +360,15 @@ Do not continue and hope compatible commands work.
 
 ### Implementation status
 
-No facts parser or `drayos_facts` module is shipped yet. The documented
-Vigor2927 examples are retained as evidence, but section 65 requires a
-sanitised real-device capture before parser implementation. The current
-`PlatformInfo` model remains the intended target for that follow-up, tracked
-in [issue #6](https://github.com/kpeacocke/ansible-collection-draytek/issues/6).
+`drayos_facts` now collects model, firmware, hostname, interfaces and WAN/LAN
+facts. Vigor2927Lac 4.5.2.2 has passed read-only live AWX validation (job #970),
+including complete paginated output and no router changes; see the
+[support matrix](../supported_devices.md). Documentation-derived Vigor2927Vac
+4.4.0 examples provide parser regression coverage only.
 
-`plugins/cliconf/drayos.py` reports only a static `network_os` identifier;
-platform detection and capability detection remain blocked on transport and
-device-output validation.
+`plugins/cliconf/drayos.py` still reports a static `network_os` identifier.
+General platform capability detection and broader live firmware coverage remain
+outstanding; facts support must not be inferred for every model from the Lac run.
 
 ---
 
@@ -1898,11 +1898,10 @@ This is genuine documented evidence, not a guess — but it is explicitly for
 legacy firmware. DrayTek's current DrayOS 5 CLI guide
 (https://faq.draytek.com.au/docs/how-to-use-cli-commands-on-drayos-5-routers/)
 exists but is video-only; no text-extractable current-firmware command
-listing has been found yet. `sys version` is a *plausible* starting
-hypothesis for facts/platform detection given this history, not a confirmed
-one for current DrayOS. It must still be validated (does the command exist
-today, and in what output format) via `?`/`sys ?` self-discovery or a real
-device before any parser is implemented, per section 65 rule 3.
+listing was recorded in the original catalogue work. Subsequent live AWX
+validation confirmed `sys version` on Vigor2927Lac 4.5.2.2 only. Other model
+and firmware combinations still require their own captured evidence, per
+section 65 rule 3.
 
 ---
 
@@ -1955,11 +1954,10 @@ Acceptance criteria:
 - multiple firmware fixtures are represented
 - no configuration mutation occurs
 
-Status: the structured `PlatformInfo` model and documentation evidence
-catalogues are present, but the facts parser and `drayos_facts` remain
-deferred until a real-device fixture exists. Capability detection and
-multiple firmware fixtures are also outstanding (see issue #6 and
-CONTRIBUTING.md for contributing fixtures).
+Status: structured facts and the `PlatformInfo` model are implemented and
+validated live on Vigor2927Lac 4.5.2.2. General capability detection and live
+coverage of multiple firmware versions remain outstanding. See the
+[support matrix](../supported_devices.md) for evidence boundaries.
 
 ---
 

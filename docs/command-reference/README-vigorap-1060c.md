@@ -53,6 +53,11 @@ Source: *DrayTek VigorAP 1060C User's Guide*, Version 1.4, Firmware V1.4.9, date
 
 The `source_pages` in each YAML record refer to the printed manual page numbers shown in the guide.
 
-## Repository installation note
+## Repository provenance and validation
 
-The catalogue YAML is unchanged from the supplied package. Copilot instructions have an explicit model scope; 1060C frontmatter has been normalised. The accompanying ZIP matches these installed files. See the validation report for the original archive hash and the limits of this installation review.
+The VigorAP 1060C catalogue YAML is retained unchanged from the supplied package,
+with model-scoped Copilot instructions. The durable files are the catalogue,
+this README and its instruction file. Generated ZIPs and validation reports
+are not retained. Repository tests validate YAML structure, unique record IDs
+and index coverage; they do not independently re-audit the source manual or
+prove device behaviour.

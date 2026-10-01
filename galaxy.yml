@@ -29,4 +29,6 @@ build_ignore:
   - .mypy_cache
   - .venv
   - .cache
-  - docs/command-reference
+
+  - tests/awx/collections
+  - docs/command-reference/sources

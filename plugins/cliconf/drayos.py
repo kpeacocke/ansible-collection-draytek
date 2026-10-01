@@ -35,6 +35,13 @@ from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.u
 )
 
 
+# The captured Lac prompt explicitly documents Space Bar as Next Page.
+# Anchor at the current buffer end so an earlier page marker cannot match again.
+PAGER_PROMPT = r"--- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$"
+MAX_PAGE_ADVANCES = 64
+PAGED_COMMANDS = frozenset(("sys iface", "show status"))
+
+
 class Cliconf(CliconfBase):
     def get_device_info(self):
         return {
@@ -100,6 +107,15 @@ class Cliconf(CliconfBase):
             output = cmd.pop("output", None)
             if output:
                 raise ValueError("'output' value %s is not supported for run_commands" % output)
+
+            if cmd.get("command", "").strip() in PAGED_COMMANDS and not cmd.get("prompt"):
+                # check_all consumes one prompt/answer pair per page. A single
+                # prompt handles only the first page in network_cli. Fresh lists
+                # are essential because the receive loop mutates them in place.
+                # The persistent command timeout also bounds stalled/over-limit output.
+                cmd.update(prompt=[PAGER_PROMPT] * MAX_PAGE_ADVANCES,
+                           answer=[" "] * MAX_PAGE_ADVANCES,
+                           newline=False, check_all=True)
 
             try:
                 out = self.send_command(**cmd)

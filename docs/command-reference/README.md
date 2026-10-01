@@ -21,7 +21,7 @@ limits for each package.
 
 The catalogue is an evidence source for GitHub Copilot and human contributors. It is not itself an Ansible API and should not be exposed directly as the collection's public module interface.
 
-Each record contains:
+Telnet catalogue command records contain:
 
 - a unique `id`
 - the documented command heading
@@ -32,11 +32,13 @@ Each record contains:
 - examples
 - complete cleaned source text for the command section
 
-The complete source text is deliberately retained so that extraction heuristics do not become the sole source of truth.
+Management catalogue records instead contain `manual_evidence` (menu paths, settings, constraints and page references) and `proposed_ansible_mapping` (unverified engineering proposals). They do not supply CLI command headings, syntax or `source_text`.
+
+The complete Telnet source text is deliberately retained so that extraction heuristics do not become the sole source of truth.
 
 ## Important limitation
 
-The vendor manual documents a **Telnet command interface**. The catalogue does not assert that the same command behaviour is available over SSH. That must be validated independently before the Ansible collection uses `network_cli` over SSH for a given command family.
+The Telnet catalogue manuals document a **Telnet command interface**. The catalogue does not assert that the same command behaviour is available over SSH. That must be validated independently before the Ansible collection uses `network_cli` over SSH for a given command family.
 
 Likewise, the catalogue does not label commands as safely idempotent merely because they have read and write-looking syntax. Idempotency must be proven from an actual read/compare/write workflow.
 
@@ -74,8 +76,8 @@ docs/
 Before implementing a command family, Copilot should:
 
 1. locate its YAML records;
-2. read the full `source_text`;
-3. identify documented query operations;
+2. for Telnet records, read the full `source_text` and documented syntax; for management records, read `manual_evidence` and keep `proposed_ansible_mapping` separate;
+3. identify documented query operations for Telnet, or establish a transport and read path independently for management evidence;
 4. identify documented mutation operations;
 5. obtain real-device output fixtures if parsing behaviour is not sufficiently specified;
 6. implement parser tests;
