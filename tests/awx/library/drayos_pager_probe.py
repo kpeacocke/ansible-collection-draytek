@@ -10,8 +10,9 @@ def main():
             command=module.params['command'], prompt=r'(?!)', answer='', strip_prompt=False)])[0]
         markers = re.findall(r"--- MORE ---[^\r\n]{0,180}", output)
         module.exit_json(changed=False, markers=markers, marker_count=len(markers))
-    except Exception:
-        module.fail_json(msg='Pager probe failed; raw device output suppressed')
+    except Exception as exc:
+        match = re.search(r'PAGER_SHAPE:(.*)', str(exc))
+        module.exit_json(changed=False, diagnostic=match[1] if match else 'No receive-window diagnostic available')
 
 
 if __name__ == '__main__':
