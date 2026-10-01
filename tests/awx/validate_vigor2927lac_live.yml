@@ -1,4 +1,21 @@
 ---
+- name: Install transport dependency inside the temporary validation project
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Install declared collection dependencies into the portable layout
+      ansible.builtin.command:
+        argv:
+          - "{{ ansible_playbook_python | dirname }}/ansible-galaxy"
+          - collection
+          - install
+          - -r
+          - "{{ playbook_dir }}/../../requirements.yml"
+          - -p
+          - "{{ playbook_dir }}/collections"
+      changed_when: true
+
 - name: Validate read-only facts on the known Lac router
   hosts: HomeOne
   gather_facts: false
