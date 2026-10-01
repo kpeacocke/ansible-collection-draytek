@@ -30,10 +30,6 @@
     - name: Probe interface pager without advancing it
       drayos_pager_probe:
         command: sys iface
-      vars:
-        ansible_terminal_stdout_re:
-          - pattern: '[\r\n]?[\w\-.:/\[\]]+[>#] ?$'
-          - pattern: '--- MORE ---[^\r\n]*'
       register: pager_probe
       no_log: true
     - name: Report pager formatting only

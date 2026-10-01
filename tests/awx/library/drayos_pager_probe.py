@@ -9,7 +9,7 @@ def main():
         connection = Connection(module._socket_path)
         connection.get_capabilities()
         output = connection.run_commands(commands=[dict(
-            command=module.params['command'], prompt=r'(?!)', answer='', strip_prompt=False)])[0]
+            command=module.params['command'], prompt=r'(?!)', answer='')])[0]
         markers = re.findall(r"--- MORE ---[^\r\n]{0,180}", output)
         module.exit_json(changed=False, markers=markers, marker_count=len(markers))
     except Exception as exc:
