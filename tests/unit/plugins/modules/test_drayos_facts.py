@@ -94,8 +94,10 @@ def test_module_reports_connection_errors(monkeypatch):
         CommandError,
     )
 
-    monkeypatch.setattr(drayos_facts, "run_commands", lambda module, commands: (
-        _ for _ in ()).throw(CommandError("device unreachable")))
+    def fail_commands(module, commands):
+        raise CommandError("device unreachable")
+
+    monkeypatch.setattr(drayos_facts, "run_commands", fail_commands)
     _set_module_args({})
     with pytest.raises(AnsibleFailJson) as excinfo:
         drayos_facts.main()
