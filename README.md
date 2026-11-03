@@ -2,7 +2,7 @@
 
 TODO: describe this project.
 
-This repository is governed by engineering baseline **0.2.0** using the **ansible** profile.
+This repository is governed by engineering baseline **0.5.0** using the **ansible** profile.
 
 ## Normal workflow
 
@@ -27,6 +27,20 @@ python .\scripts\baseline.py doctor
 ```
 
 In VS Code, use `/plan`, `/implement`, `/debug`, `/verify`, `/review`, `/preflight`, and `/ship`. Durable methodology lives in `.github/skills/`; repository-specific guidance can extend the managed instructions without replacing it.
+
+## Scheduled baseline updates
+
+Configure the repository Actions secret `BASELINE_UPDATE_TOKEN` before publishing
+automated baseline updates. Use a fine-grained personal access token restricted to
+this repository with Contents, Pull requests, and Workflows read/write permissions,
+or a classic token with `repo` and `workflow` scopes. Do not put the token in Git.
+The updater uses this credential for checkout, Git pushes, and PR creation, so
+workflow-file updates are authorised and PR CI can run.
+
+`GITHUB_TOKEN` cannot be granted a `workflows` permission. Without
+`BASELINE_UPDATE_TOKEN`, a current baseline can still be checked, but publishing
+pending changes fails explicitly. For a private baseline source repository,
+configure a separate read-only `BASELINE_READ_TOKEN`.
 
 ## Repository-specific documentation
 

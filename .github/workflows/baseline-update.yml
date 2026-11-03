@@ -6,9 +6,7 @@ on:
     - cron: "17 1 * * 1"
 
 permissions:
-  contents: write
-  pull-requests: write
-  workflows: write
+  contents: read
 
 jobs:
   update:
@@ -17,6 +15,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          token: ${{ secrets.BASELINE_UPDATE_TOKEN || github.token }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.14"
@@ -42,12 +41,17 @@ jobs:
         run: python scripts/project_factory.py apply-update --source "$RUNNER_TEMP/engineering-baseline"
       - name: Open update pull request when required
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.BASELINE_UPDATE_TOKEN || github.token }}
+          BASELINE_UPDATE_TOKEN: ${{ secrets.BASELINE_UPDATE_TOKEN }}
         shell: bash
         run: |
           if git diff --cached --quiet; then
             echo "Baseline is current."
             exit 0
+          fi
+          if [ -z "$BASELINE_UPDATE_TOKEN" ]; then
+            echo "::error::Set BASELINE_UPDATE_TOKEN with repository contents, pull-request, and workflow write access to publish baseline updates."
+            exit 1
           fi
           version="$(cat .baseline/VERSION)"
           branch="chore/engineering-baseline-${version}"
