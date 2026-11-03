@@ -47,11 +47,6 @@ def values(
     ansible_namespace: str | None = None,
     ansible_collection: str | None = None,
 ) -> dict[str, str]:
-    openssf_project_url = (
-        normalize_openssf_project(openssf_project)
-        if openssf_project.strip()
-        else ""
-    )
     return {
         "PROJECT_NAME": name,
         "PROJECT_DESCRIPTION": description,
@@ -68,10 +63,10 @@ def values(
         or re.sub(r"[^a-z0-9_]", "_", owner.lower()),
         "ANSIBLE_COLLECTION": ansible_collection or slug_python(name),
         "SOURCE_REPOSITORY": source_repository,
-        "OPENSSF_PROJECT": openssf_project_url,
-        "OPENSSF_PROJECT_ID": openssf_project_url.rsplit("/", 1)[-1]
-        if openssf_project_url
-        else "",
+        "OPENSSF_PROJECT": normalize_openssf_project(openssf_project),
+        "OPENSSF_PROJECT_ID": normalize_openssf_project(
+            openssf_project
+        ).rsplit("/", 1)[-1],
     }
 
 

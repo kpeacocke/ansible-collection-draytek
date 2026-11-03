@@ -172,11 +172,9 @@ def values_from_args(
     openssf_project = getattr(args, "openssf_project", None) or existing.get(
         "openssf_project"
     )
-    normalized_openssf_project = (
-        normalize_openssf_project(openssf_project)
-        if openssf_project and openssf_project.strip()
-        else ""
-    )
+    if not openssf_project:
+        raise BaselineError("--openssf-project is required")
+    normalized_openssf_project = normalize_openssf_project(openssf_project)
     return {
         "PROJECT_NAME": project_name,
         "PROJECT_DESCRIPTION": description,
