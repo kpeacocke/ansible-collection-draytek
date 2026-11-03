@@ -16,7 +16,6 @@
     ".ansible-lint",
     ".github/workflows/baseline-conformance.yml",
     ".github/workflows/baseline-update.yml",
-    ".github/workflows/ci.yml",
-    "scripts/_project_factory/local.py"
+    ".github/workflows/ci.yml"
   ]
 }
