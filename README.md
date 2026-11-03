@@ -2,7 +2,7 @@
 
 TODO: describe this project.
 
-This repository is governed by engineering baseline **0.5.0** using the **ansible** profile.
+This repository is governed by engineering baseline **0.5.1** using the **ansible** profile.
 
 ## Normal workflow
 

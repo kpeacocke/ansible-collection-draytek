@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "installed_version": "0.5.0",
+  "installed_version": "0.5.1",
   "profile": "ansible",
   "project_name": "ansible-collection-draytek",
   "description": "TODO: describe this project.",
@@ -10,8 +10,9 @@
   "ansible_namespace": "kpeacocke",
   "ansible_collection": "draytek",
   "source_repository": "kpeacocke/engineering-baseline-template",
+  "openssf_project": "",
   "template_mode": false,
-  "last_reconciled": "2026-11-01T23:51:16+00:00",
+  "last_reconciled": "2026-11-03T12:17:58+00:00",
   "local_overrides": [
     ".ansible-lint",
     ".github/workflows/baseline-conformance.yml",
