@@ -8,4 +8,3 @@ exclude_paths:
   - .git/
   - .venv/
   - molecule/
-  - docs/command-reference/
