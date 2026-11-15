@@ -59,3 +59,9 @@ through its environment. The project's `ansible.cfg` disables automatic trust of
 unknown SSH keys for both transport backends. A missing or mismatched key must
 fail rather than falling back to an unverified connection. This setup changes only
 the job's execution environment, not the router.
+
+Preparation and policy checks are pre-tasks of the device play, with local work
+delegated to the execution environment. They still run with a device-only limit,
+and any failure stops that host before the facts tasks. Backend-specific
+host-key-checking settings are enforced alongside the generic settings; unsafe
+extra-variable overrides are rejected rather than silently taking precedence.

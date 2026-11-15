@@ -1,15 +1,43 @@
 ---
-- name: Install transport dependency inside the temporary validation project
-  hosts: localhost
-  connection: local
+- name: Validate read-only facts on the known Lac router
+  hosts: HomeOne
   gather_facts: false
   vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: kpeacocke.draytek.drayos
+    ansible_command_timeout: 60
+    ansible_connect_timeout: 30
+    ansible_host_key_checking: true
+    ansible_ssh_host_key_checking: true
+    ansible_libssh_host_key_checking: true
+    ansible_paramiko_host_key_checking: true
+    ansible_libssh_host_key_auto_add: false
+    ansible_paramiko_host_key_auto_add: false
+    ansible_network_cli_host_key_auto_add: false
     validation_host_key_name: >-
-      {{ hostvars['HomeOne'].ansible_host | default('HomeOne')
-         if hostvars['HomeOne'].ansible_port | default(22) | int == 22
-         else '[' ~ (hostvars['HomeOne'].ansible_host | default('HomeOne'))
-              ~ ']:' ~ (hostvars['HomeOne'].ansible_port | string) }}
-  tasks:
+      {{ hostvars[inventory_hostname].ansible_host | default(inventory_hostname)
+         if hostvars[inventory_hostname].ansible_port | default(22) | int == 22
+         else '[' ~ (hostvars[inventory_hostname].ansible_host | default(inventory_hostname))
+              ~ ']:' ~ (hostvars[inventory_hostname].ansible_port | string) }}
+  pre_tasks:
+    - name: Require fail-closed SSH host key policies before device access
+      ansible.builtin.assert:
+        that:
+          - ansible_host_key_checking | bool
+          - ansible_ssh_host_key_checking | bool
+          - ansible_libssh_host_key_checking | bool
+          - ansible_paramiko_host_key_checking | bool
+          - not ansible_libssh_host_key_auto_add | bool
+          - not ansible_paramiko_host_key_auto_add | bool
+          - not ansible_network_cli_host_key_auto_add | bool
+          - lookup('ansible.builtin.config', 'CONFIG_FILE') ==
+            (playbook_dir ~ '/../../ansible.cfg') | realpath
+          - lookup('ansible.builtin.env', 'ANSIBLE_HOST_KEY_AUTO_ADD') | lower
+            in ['', 'false', 'no', 'off', '0', 'n']
+          - lookup('ansible.builtin.env', 'ANSIBLE_LIBSSH_HOST_KEY_AUTO_ADD') | lower
+            in ['', 'false', 'no', 'off', '0', 'n']
+        fail_msg: Load the project ansible.cfg and remove unsafe SSH host key policy overrides.
+
     - name: Require a previously verified SSH host key
       ansible.builtin.assert:
         that:
@@ -26,6 +54,10 @@
         path: "{{ lookup('ansible.builtin.env', 'HOME') }}/.ssh"
         state: directory
         mode: "0700"
+      delegate_to: localhost
+      vars:
+        ansible_connection: local
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
     - name: Trust only the supplied router SSH host key
       ansible.builtin.known_hosts:
@@ -34,6 +66,10 @@
         key: "{{ drayos_validation_known_host }}"
         hash_host: true
       no_log: true
+      delegate_to: localhost
+      vars:
+        ansible_connection: local
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
     - name: Install declared collection dependencies into the portable layout
       ansible.builtin.command:
@@ -48,28 +84,10 @@
           - -p
           - "{{ playbook_dir }}/collections"
       changed_when: true
-
-    - name: Require fail-closed SSH host key policies before device access
-      ansible.builtin.assert:
-        that:
-          - lookup('ansible.builtin.config', 'CONFIG_FILE') ==
-            (playbook_dir ~ '/../../ansible.cfg') | realpath
-          - lookup('ansible.builtin.env', 'ANSIBLE_HOST_KEY_AUTO_ADD') | lower
-            in ['', 'false', 'no', 'off', '0', 'n']
-          - lookup('ansible.builtin.env', 'ANSIBLE_LIBSSH_HOST_KEY_AUTO_ADD') | lower
-            in ['', 'false', 'no', 'off', '0', 'n']
-        fail_msg: Load the project ansible.cfg and disable SSH host key auto-add overrides.
-
-- name: Validate read-only facts on the known Lac router
-  hosts: HomeOne
-  gather_facts: false
-  vars:
-    ansible_connection: ansible.netcommon.network_cli
-    ansible_network_os: kpeacocke.draytek.drayos
-    ansible_command_timeout: 60
-    ansible_connect_timeout: 30
-    ansible_host_key_checking: true
-    ansible_ssh_host_key_checking: true
+      delegate_to: localhost
+      vars:
+        ansible_connection: local
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
   tasks:
     - name: Load live validation using the project-synced collection
       ansible.builtin.include_tasks: tasks/validate_lac_facts.yml
