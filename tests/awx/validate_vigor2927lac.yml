@@ -31,6 +31,10 @@
             - tests
             - docs
             - conftest.py
+            - galaxy.yml
+            - scripts
+            - .baseline
+            - .github
 
         - name: Create isolated Python environment
           ansible.builtin.command:
@@ -52,6 +56,7 @@
               - "{{ validation_temp.path }}/venv/bin/ansible-galaxy"
               - collection
               - install
+              - --force-with-deps
               - -r
               - "{{ collection_source }}/requirements.yml"
               - -p
