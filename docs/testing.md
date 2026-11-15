@@ -39,3 +39,10 @@ and a separate read-only live facts check. Run the latter only on an
 authorised device, and record its model, firmware, job ID and checked-out
 revision. The live check collects sensitive facts with logging suppressed; it
 does not validate configuration changes.
+
+The fixture-only AWX playbook runs the full unit suite in a temporary Python
+environment. It copies the repository governance scripts, catalogue and workflows
+alongside the collection because the unit tests cover those files too. Collection
+dependencies are forcibly installed into that temporary layout, even when the
+execution environment already has them elsewhere; the isolated Python interpreter
+must be able to import them. The temporary layout is removed after the run.
