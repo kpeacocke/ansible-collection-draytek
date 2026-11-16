@@ -36,7 +36,12 @@ if changed and not module.check_mode:
     data['writes'].append(module.params['source'] + ':' + desired['hostname'])
     if data.pop('fail_after_apply', False):
         path.write_text(json.dumps(data))
-        module.fail_json(msg='Injected lost acknowledgement', changed=True)
+        module.fail_json(msg='Hostname apply failed (CommandError); device output suppressed',
+                         device_output='SECRET_DEVICE_OUTPUT', changed=True)
+    if data.pop('readback_mismatch', False):
+        path.write_text(json.dumps(data))
+        module.fail_json(msg='Hostname readback did not match the desired state',
+                         changed=True)
     path.write_text(json.dumps(data))
 commands = ['sys name ' + desired['hostname']] if changed else []
 module.exit_json(changed=changed, before=before, after=desired, commands=commands,
@@ -49,6 +54,7 @@ module.exit_json(changed=changed, before=before, after=desired, commands=command
     (True, True, "", True, ["ssh:HomeOne-test", "https:original-router"]),
     (True, False, "", False, ["ssh:HomeOne-test", "ssh:original-router"]),
     (False, False, "fail_after_apply", False, ["ssh:HomeOne-test", "ssh:original-router"]),
+    (False, False, "readback_mismatch", False, ["ssh:HomeOne-test", "ssh:original-router"]),
     (False, False, "reject_original", False, []),
     (False, False, "fail_restore", False, ["ssh:HomeOne-test"]),
 ])
@@ -107,6 +113,10 @@ def test_real_qualification_tasks_restore_or_fail_explicitly(
     assert final["writes"] == expected_writes
     assert final["hostname"] == ("HomeOne-test" if failure == "fail_restore" else "original-router")
     assert ("Hostname qualification passed via" in result.stdout) is success
+    if failure in ("fail_after_apply", "readback_mismatch"):
+        category = "apply command failure" if failure == "fail_after_apply" else "readback mismatch"
+        assert f"Hostname qualification failed: {category}." in result.stdout
+        assert "SECRET_DEVICE_OUTPUT" not in result.stdout + result.stderr
 
 
 @pytest.mark.parametrize("missing", [

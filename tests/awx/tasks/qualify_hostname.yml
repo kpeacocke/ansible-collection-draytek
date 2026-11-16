@@ -111,6 +111,18 @@
         fail_msg: Independent HTTPS restoration was not observed within the recovery window.
       no_log: true
       when: drayos_hostname_recovery_rehearsal | default(false) | bool
+  rescue:
+    - name: Report only a bounded qualification failure category
+      ansible.builtin.fail:
+        msg: >-
+          Hostname qualification failed: {{
+          'readback mismatch' if
+          ansible_failed_result.msg | default('') is search('^Hostname readback did not match the desired state')
+          else 'apply command failure' if
+          ansible_failed_result.msg | default('') is search('^Hostname apply failed')
+          else 'verification read failure' if
+          ansible_failed_result.msg | default('') is search('^Hostname verification failed')
+          else 'other failure; detailed device output suppressed' }}.
   always:
     - name: Restore and verify the captured original hostname
       kpeacocke.draytek.drayos_hostname:
