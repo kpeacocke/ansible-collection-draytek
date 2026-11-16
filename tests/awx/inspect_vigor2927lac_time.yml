@@ -13,6 +13,7 @@
         commands:
           - sys time show
           - sys time ?
+          - sys time server ?
       register: time_settings
       no_log: true
 
@@ -49,13 +50,17 @@
           static_server_usage: >-
             {{ time_settings.stdout[1] |
                regex_findall('(?im)^[ \t]*(sys time server <[a-z0-9 /]{1,12}> <[a-z0-9 /]{1,12}>)[ \t\r]*$') }}
+          server_help_shape: "{{ time_settings.stdout[2] | regex_replace('[^ :\n]', 'x') }}"
+          index_hints: >-
+            {{ time_settings.stdout[2] |
+               regex_findall('(?im)^[ \t]*([12][ \t:=.-]+(?:primary|secondary)(?:[ \t]+(?:server|ntp))*)[ \t\r]*$') }}
           secondary_empty_brackets: >-
             {{ time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$') | length == 1 }}
 
     - name: Require one recognised time-server line
       ansible.builtin.assert:
         that:
-          - time_settings.stdout | length == 2
+          - time_settings.stdout | length == 3
           - time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Primary NTP Server:') | length == 1
           - time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Secondary NTP Server:') | length == 1
       no_log: true
