@@ -26,6 +26,10 @@
             {{ time_settings.stdout[0] |
                regex_findall('(?m)^[ \t]*Time Server:[ \t]*\[[^\]\r\n]+\][ \t\r]*$') |
                length }}
+          server_label_count: >-
+            {{ time_settings.stdout[0] | regex_findall('(?i)time[ ]*server') | length }}
+          redacted_shape: >-
+            {{ time_settings.stdout[0] | regex_replace('[^ :\n]', 'x') }}
 
     - name: Require one recognised time-server line
       ansible.builtin.assert:
