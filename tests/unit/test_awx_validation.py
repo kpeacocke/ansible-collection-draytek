@@ -12,6 +12,36 @@ import yaml
 REPO_ROOT = Path(__file__).parents[2]
 
 
+def test_portable_awx_layout_executes_hostname_payload(tmp_path):
+    collections = tmp_path / "collections"
+    shutil.copytree(
+        REPO_ROOT / "tests/awx/collections", collections,
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
+    tasks = yaml.safe_load(
+        (REPO_ROOT / "tests/integration/targets/drayos_hostname/tasks/main.yml").read_text()
+    )
+    playbook = tmp_path / "hostname.yml"
+    playbook.write_text(yaml.safe_dump([{
+        "name": "Exercise the portable AWX hostname payload without device access",
+        "hosts": "localhost",
+        "connection": "local",
+        "gather_facts": False,
+        "tasks": tasks,
+    }]))
+    result = subprocess.run(
+        [sys.executable, "-m", "ansible.cli.playbook", "-i", "localhost,", str(playbook)],
+        env={
+            **os.environ,
+            "ANSIBLE_COLLECTIONS_PATH": str(collections),
+            "ANSIBLE_COLLECTIONS_SCAN_SYS_PATH": "false",
+            "ANSIBLE_PYTHON_INTERPRETER": sys.executable,
+        },
+        text=True, capture_output=True, check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 @pytest.mark.parametrize("playbook_name", [
     "validate_vigor2927lac_live.yml", "qualify_vigor2927lac_hostname.yml",
 ])
