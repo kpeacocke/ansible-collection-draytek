@@ -12,6 +12,7 @@
       kpeacocke.draytek.drayos_command:
         commands:
           - sys time show
+          - sys time ?
       register: time_settings
       no_log: true
 
@@ -30,10 +31,17 @@
             {{ time_settings.stdout[0] | regex_findall('(?i)time[ ]*server') | length }}
           redacted_shape: >-
             {{ time_settings.stdout[0] | regex_replace('[^ :\n]', 'x') }}
+          primary_ntp_label_count: >-
+            {{ time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Primary NTP Server:') | length }}
+          secondary_ntp_label_count: >-
+            {{ time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Secondary NTP Server:') | length }}
+          documented_subcommands: >-
+            {{ time_settings.stdout[1] | regex_findall('(?i)sys time (?:server|show|inquire|wan|zone|pseudo)') | unique | list }}
 
     - name: Require one recognised time-server line
       ansible.builtin.assert:
         that:
-          - time_settings.stdout | length == 1
-          - time_settings.stdout[0] | regex_findall('(?m)^[ \t]*Time Server:[ \t]*\[[^\]\r\n]*\][ \t\r]*$') | length == 1
+          - time_settings.stdout | length == 2
+          - time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Primary NTP Server:') | length == 1
+          - time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Secondary NTP Server:') | length == 1
       no_log: true
