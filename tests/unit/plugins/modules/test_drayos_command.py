@@ -108,7 +108,7 @@ def test_command_error_is_reported_via_fail_json(monkeypatch):
     )
 
     def _raise(module, commands):
-        raise CommandError("device unreachable")
+        raise CommandError("SECRET_DEVICE_OUTPUT")
 
     monkeypatch.setattr(drayos_command, "run_commands", _raise)
     _set_module_args({"commands": ["show system"]})
@@ -116,7 +116,8 @@ def test_command_error_is_reported_via_fail_json(monkeypatch):
     with pytest.raises(AnsibleFailJson) as excinfo:
         drayos_command.main()
 
-    assert excinfo.value.kwargs["msg"] == "device unreachable"
+    assert excinfo.value.kwargs["msg"] == "Command execution failed (CommandError); device output suppressed"
+    assert "SECRET_DEVICE_OUTPUT" not in json.dumps(excinfo.value.kwargs)
 
 
 def test_wait_for_unknown_operator_fails_cleanly():

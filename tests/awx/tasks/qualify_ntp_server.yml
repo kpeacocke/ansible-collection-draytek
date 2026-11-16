@@ -1,0 +1,116 @@
+---
+- name: Capture the NTP baseline
+  kpeacocke.draytek.drayos_command:
+    commands: [sys time show]
+  register: ntp_baseline
+  no_log: true
+
+- name: Validate the baseline before any write
+  ansible.builtin.assert:
+    that:
+      - ntp_baseline.stdout | length == 1
+      - ntp_baseline.stdout[0] | regex_findall('(?m)^[ \t]*Primary NTP Server:') | length == 1
+      - ntp_baseline.stdout[0] | regex_findall('(?m)^[ \t]*Secondary NTP Server:') | length == 1
+      - primary | length == 1
+      - secondary_empty | length == 1
+      - primary[0] | lower != 'time.cloudflare.com'
+    fail_msg: The NTP baseline is not eligible for this specific test.
+  vars:
+    primary: "{{ ntp_baseline.stdout[0] | regex_findall(primary_pattern) }}"
+    secondary_empty: "{{ ntp_baseline.stdout[0] | regex_findall(secondary_empty_pattern) }}"
+    primary_pattern: '(?m)^[ \t]*Primary NTP Server:[ \t]*\[([A-Za-z0-9][A-Za-z0-9.-]{0,38})\][ \t\r]*$'
+    secondary_empty_pattern: '(?m)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$'
+  no_log: true
+
+- name: Retain the original primary server privately
+  ansible.builtin.set_fact:
+    ntp_original_primary: >-
+      {{ (ntp_baseline.stdout[0] |
+          regex_findall('(?m)^[ \t]*Primary NTP Server:[ \t]*\[([A-Za-z0-9][A-Za-z0-9.-]{0,38})\][ \t\r]*$'))[0] }}
+    ntp_primary_changed: false
+  no_log: true
+
+- name: Apply the exact approved test and restore the baseline
+  block:
+    - name: Apply the temporary server to index 1
+      kpeacocke.draytek.drayos_command:
+        commands: [sys time server 1 time.cloudflare.com]
+      changed_when: true
+      no_log: true
+  always:
+    - name: Read back and restore when the observed state is safe
+      block:
+        - name: Read both NTP servers after the attempt
+          kpeacocke.draytek.drayos_command:
+            commands: [sys time show]
+          register: ntp_after_attempt
+          no_log: true
+
+        - name: Identify the observed primary and secondary state
+          ansible.builtin.set_fact:
+            ntp_primary_matches_test: >-
+              {{ ntp_after_attempt.stdout[0] |
+                 regex_findall('(?m)^[ \t]*Primary NTP Server:[ \t]*\[time\.cloudflare\.com\][ \t\r]*$') | length == 1 }}
+            ntp_primary_matches_original: >-
+              {{ ntp_after_attempt.stdout[0] |
+                 regex_findall('(?m)^[ \t]*Primary NTP Server:[ \t]*\[([A-Za-z0-9][A-Za-z0-9.-]{0,38})\][ \t\r]*$')
+                 == [ntp_original_primary] }}
+            ntp_secondary_still_empty: >-
+              {{ ntp_after_attempt.stdout[0] |
+                 regex_findall('(?m)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$') | length == 1 }}
+          no_log: true
+
+        - name: Stop if the observed state cannot be restored safely with CLI
+          ansible.builtin.assert:
+            that:
+              - ntp_after_attempt.stdout[0] | regex_findall('(?m)^[ \t]*Primary NTP Server:') | length == 1
+              - ntp_after_attempt.stdout[0] | regex_findall('(?m)^[ \t]*Secondary NTP Server:') | length == 1
+              - ntp_secondary_still_empty | bool
+              - ntp_primary_matches_test | bool or ntp_primary_matches_original | bool
+            fail_msg: NTP state changed unexpectedly; restore the original settings through HTTPS.
+
+        - name: Record whether index 1 changed the primary server
+          ansible.builtin.set_fact:
+            ntp_primary_changed: "{{ ntp_primary_matches_test | bool }}"
+
+        - name: Restore the original primary server
+          kpeacocke.draytek.drayos_command:
+            commands:
+              - "sys time server 1 {{ ntp_original_primary }}"
+          when: ntp_primary_changed | bool
+          changed_when: true
+          no_log: true
+
+        - name: Verify both original NTP settings after restoration
+          kpeacocke.draytek.drayos_command:
+            commands: [sys time show]
+          register: ntp_after_restore
+          no_log: true
+
+        - name: Require the original primary and empty secondary
+          ansible.builtin.assert:
+            that:
+              - ntp_after_restore.stdout[0] | regex_findall('(?m)^[ \t]*Primary NTP Server:') | length == 1
+              - ntp_after_restore.stdout[0] | regex_findall('(?m)^[ \t]*Secondary NTP Server:') | length == 1
+              - >-
+                ntp_after_restore.stdout[0] |
+                regex_findall('(?m)^[ \t]*Primary NTP Server:[ \t]*\[([A-Za-z0-9][A-Za-z0-9.-]{0,38})\][ \t\r]*$')
+                == [ntp_original_primary]
+              - >-
+                ntp_after_restore.stdout[0] |
+                regex_findall('(?m)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$') | length == 1
+          no_log: true
+      rescue:
+        - name: Require independent recovery after an unsafe or failed restoration
+          ansible.builtin.fail:
+            msg: NTP restoration could not be verified; restore the original settings through HTTPS.
+
+- name: Require evidence that index 1 changed the primary server
+  ansible.builtin.assert:
+    that:
+      - ntp_primary_changed | bool
+    fail_msg: The approved command did not change the primary server; no capability is qualified.
+
+- name: Report qualification without exposing server values
+  ansible.builtin.debug:
+    msg: Index 1 changed the primary NTP server and the original settings were restored.
