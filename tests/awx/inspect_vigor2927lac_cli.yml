@@ -8,6 +8,19 @@
     - name: Prepare verified live validation
       ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
   tasks:
+    - name: Gather hostname without changing router configuration
+      kpeacocke.draytek.drayos_hostname:
+        state: gathered
+      register: gathered_hostname
+      no_log: true
+
+    - name: Require a populated unchanged hostname result
+      ansible.builtin.assert:
+        that:
+          - not gathered_hostname.changed
+          - gathered_hostname.gathered.hostname | length > 0
+      no_log: true
+
     - name: Read documented TR-069 parameter names privately
       kpeacocke.draytek.drayos_command:
         commands:
