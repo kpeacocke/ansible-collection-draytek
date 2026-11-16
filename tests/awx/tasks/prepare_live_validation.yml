@@ -1,0 +1,70 @@
+---
+- name: Require fail-closed SSH host key policies before device access
+  ansible.builtin.assert:
+    that:
+      - ansible_host_key_checking | bool
+      - ansible_ssh_host_key_checking | bool
+      - ansible_libssh_host_key_checking | bool
+      - ansible_paramiko_host_key_checking | bool
+      - not ansible_libssh_host_key_auto_add | bool
+      - not ansible_paramiko_host_key_auto_add | bool
+      - not ansible_network_cli_host_key_auto_add | bool
+      - not ansible_network_single_user_mode | bool
+      - lookup('ansible.builtin.config', 'CONFIG_FILE') ==
+        (playbook_dir ~ '/../../ansible.cfg') | realpath
+      - lookup('ansible.builtin.env', 'ANSIBLE_HOST_KEY_AUTO_ADD') | lower
+        in ['', 'false', 'no', 'off', '0', 'n']
+      - lookup('ansible.builtin.env', 'ANSIBLE_LIBSSH_HOST_KEY_AUTO_ADD') | lower
+        in ['', 'false', 'no', 'off', '0', 'n']
+    fail_msg: Load the project ansible.cfg and remove unsafe SSH or command-cache overrides.
+
+- name: Require a previously verified SSH host key
+  ansible.builtin.assert:
+    that:
+      - drayos_validation_known_host is defined
+      - drayos_validation_known_host is string
+      - drayos_validation_known_host | trim | length > 0
+      - drayos_validation_known_host.split() | length >= 3
+      - drayos_validation_known_host.split()[0] == validation_host_key_name
+    fail_msg: Supply drayos_validation_known_host from a previously verified known_hosts entry.
+  no_log: true
+
+- name: Create the execution environment SSH directory
+  ansible.builtin.file:
+    path: "{{ lookup('ansible.builtin.env', 'HOME') }}/.ssh"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+- name: Trust only the supplied router SSH host key
+  ansible.builtin.known_hosts:
+    path: "{{ lookup('ansible.builtin.env', 'HOME') }}/.ssh/known_hosts"
+    name: "{{ validation_host_key_name }}"
+    key: "{{ drayos_validation_known_host }}"
+    hash_host: true
+  no_log: true
+  delegate_to: localhost
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+- name: Install declared collection dependencies into the portable layout
+  ansible.builtin.command:
+    argv:
+      - "{{ ansible_playbook_python }}"
+      - -m
+      - ansible.cli.galaxy
+      - collection
+      - install
+      - -r
+      - "{{ playbook_dir }}/../../requirements.yml"
+      - -p
+      - "{{ playbook_dir }}/collections"
+  changed_when: true
+  delegate_to: localhost
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"

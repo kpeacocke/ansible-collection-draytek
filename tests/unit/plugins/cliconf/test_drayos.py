@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib
 
 import pytest
 
@@ -81,6 +82,7 @@ def test_cached_commands_cannot_bypass_fresh_resource_readback(cliconf, monkeypa
 @pytest.mark.parametrize("backend", ["paramiko", "libssh"])
 @pytest.mark.parametrize("command", ["sys iface", "show status"])
 def test_pager_advances_multiple_pages_through_network_cli(cliconf, monkeypatch, backend, command):
+    importlib.import_module("paramiko" if backend == "paramiko" else "pylibsshext.session")
     from ansible_collections.ansible.netcommon.plugins.connection.network_cli import Connection
     from ansible_collections.kpeacocke.draytek.plugins.terminal.drayos import TerminalModule
 

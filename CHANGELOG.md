@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add a three-combination runtime matrix with both SSH bindings, plus a
+  separately approved bounded hostname qualification/recovery playbook with
+  shared verified-key preparation and tested cleanup/failure paths.
 - Add `drayos_hostname` gathered/parsed/merged states with input and platform
   guards, check/diff support, idempotent comparison and verified readback.
   Configuration is offline-tested only and initially limited to

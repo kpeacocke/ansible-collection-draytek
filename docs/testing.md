@@ -81,3 +81,71 @@ delegated to the execution environment. They still run with a device-only limit,
 and any failure stops that host before the facts tasks. Backend-specific
 host-key-checking settings are enforced alongside the generic settings; unsafe
 extra-variable overrides are rejected rather than silently taking precedence.
+
+## Runtime and SSH backend matrix
+
+CI runs the complete unit suite on these explicit combinations:
+
+| Python | ansible-core | ansible.netcommon |
+| --- | --- | --- |
+| 3.11 | latest 2.19.x | 6.0.0 |
+| 3.12 | latest 2.20.x | 8.7.1 |
+| 3.14 | latest 2.21.x | 8.7.1 |
+
+Each row installs both Paramiko and ansible-pylibssh, imports the actual
+backend binding, and exercises the netcommon Paramiko and libssh receive
+loops. These are offline transport/parser tests, not live SSH handshakes
+or a promise about every cross-product of the declared dependency ranges.
+Hardware evidence must record the execution environment and selected backend
+separately. Missing bindings fail tests instead of silently skipping coverage.
+
+## Approved hostname qualification and recovery rehearsal
+
+`tests/awx/qualify_vigor2927lac_hostname.yml` is a separate **write-capable**
+playbook. The existing live facts playbook remains read-only. Both share the
+same fail-closed key preparation as pre-tasks of their device play, so
+device-only limits do not bypass it.
+
+Before launching, an operator must approve the exact temporary name, confirm
+a current backup kept outside job output/shared workspaces, and be able to
+recover the router independently if both SSH and HTTPS fail. A backup
+attestation is not a tested restore. Never perform a reboot, backup restore,
+network change or deliberate management interruption as part of this test.
+
+Use the existing inventory/SSH credential and verified public host key in a
+dedicated template, limited to `HomeOne`, with verbosity 0, no stored facts,
+no schedule and a 900-second job timeout. Required extra variables are:
+
+```yaml
+drayos_hostname_change_approved: true
+drayos_hostname_recovery_ready: true
+drayos_hostname_test_name: HomeOne-test
+drayos_hostname_validation_backend: paramiko  # or libssh; binding must exist
+drayos_hostname_recovery_rehearsal: false
+```
+
+The original name is captured privately and must pass an unchanged check-mode
+prediction before writing. The job then checks a changed check/diff prediction,
+proves the prediction made no change, applies the temporary name, requires
+readback, and proves repeat/check-mode idempotency. An `always` block restores
+and rereads the captured original name. Failures remain failures even if
+cleanup succeeds; failed cleanup is never treated as successful qualification.
+
+For the independently approved HTTPS rehearsal, set
+`drayos_hostname_recovery_rehearsal: true`. Once the job reaches its explicit
+180-second recovery window, refresh the existing HTTPS management screen,
+change **only** Router Name back to the recorded original name, and submit
+the normal UI form. The job must observe the original name over SSH before
+its cleanup block. Otherwise it fails and attempts SSH restoration itself.
+Never leave the temporary name in place waiting for later approval.
+
+This rehearses an alternative management protocol, not recovery from a dead
+router, failed network, reboot or corrupted configuration. Ansible cleanup is
+best-effort: job cancellation, execution-node failure or an unreachable
+device can prevent it. The named operator must then restore the original
+name through the approved management/recovery route.
+
+Record source revision, job ID, model/firmware, execution environment, backend,
+individual resource/assertion outcomes and the final restored-name result.
+Only delegated controller setup should be ignored when interpreting a job's
+overall changed count; the expected temporary router writes are real changes.

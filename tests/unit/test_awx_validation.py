@@ -12,6 +12,9 @@ import yaml
 REPO_ROOT = Path(__file__).parents[2]
 
 
+@pytest.mark.parametrize("playbook_name", [
+    "validate_vigor2927lac_live.yml", "qualify_vigor2927lac_hostname.yml",
+])
 @pytest.mark.parametrize(
     "key_state,limit,extra_policy,environment,inventory_policy,success",
     [
@@ -28,12 +31,26 @@ REPO_ROOT = Path(__file__).parents[2]
     ],
 )
 def test_live_validation_cannot_bypass_host_key_preparation(
-    tmp_path, key_state, limit, extra_policy, environment, inventory_policy, success,
+    tmp_path, key_state, limit, extra_policy, environment, inventory_policy, success, playbook_name,
 ):
     source = yaml.safe_load(
-        (REPO_ROOT / "tests/awx/validate_vigor2927lac_live.yml").read_text()
+        (REPO_ROOT / "tests/awx" / playbook_name).read_text()
     )
     for play in source:
+        play["vars"] = {
+            **yaml.safe_load((REPO_ROOT / "tests/awx/vars/live_validation.yml").read_text()),
+            **play.get("vars", {}),
+        }
+        play.pop("vars_files")
+        expanded = []
+        for task in play["pre_tasks"]:
+            if "ansible.builtin.import_tasks" in task:
+                expanded.extend(yaml.safe_load(
+                    (REPO_ROOT / "tests/awx" / task["ansible.builtin.import_tasks"]).read_text()
+                ))
+            else:
+                expanded.append(task)
+        play["pre_tasks"] = expanded
         for task in [*play.get("pre_tasks", []), *play.get("tasks", [])]:
             if "ansible.builtin.include_tasks" in task:
                 task.clear()
@@ -57,7 +74,13 @@ def test_live_validation_cannot_bypass_host_key_preparation(
             "localhost": {"ansible_connection": "local"},
         }},
     }))
-    extra_vars = dict(extra_policy)
+    extra_vars = {
+        "drayos_hostname_change_approved": True,
+        "drayos_hostname_recovery_ready": True,
+        "drayos_hostname_test_name": "HomeOne-test",
+        "drayos_hostname_validation_backend": "paramiko",
+        **extra_policy,
+    }
     if key_state != "missing":
         key_path = tmp_path / "test-key"
         subprocess.run(

@@ -1,0 +1,37 @@
+---
+- name: Qualify an explicitly approved bounded hostname change
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  vars:
+    ansible_network_cli_ssh_type: "{{ drayos_hostname_validation_backend | default('paramiko') }}"
+  pre_tasks:
+    - name: Require exact change approval and an available recovery operator
+      ansible.builtin.assert:
+        that:
+          - drayos_hostname_change_approved | default(false) | bool
+          - drayos_hostname_recovery_ready | default(false) | bool
+          - drayos_hostname_test_name | default('') == 'HomeOne-test'
+          - drayos_hostname_validation_backend | default('') in ['paramiko', 'libssh']
+          - not ansible_check_mode
+        fail_msg: Approve the exact temporary name and confirm backup and operator recovery before launch.
+
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+
+    - name: Require the selected SSH backend binding before any device change
+      ansible.builtin.command:
+        argv:
+          - "{{ ansible_playbook_python }}"
+          - -c
+          - "import importlib, sys; importlib.import_module(sys.argv[1])"
+          - "{{ 'paramiko' if drayos_hostname_validation_backend == 'paramiko' else 'pylibsshext.session' }}"
+      changed_when: false
+      delegate_to: localhost
+      vars:
+        ansible_connection: local
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Exercise bounded hostname state transitions with best-effort restoration
+      ansible.builtin.include_tasks: tasks/qualify_hostname.yml
