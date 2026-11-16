@@ -46,6 +46,9 @@
             {{ time_settings.stdout[1] |
                regex_findall('(?i)sys time server[^\r\n]*') | join('\n') |
                regex_findall('(?i)<(?:server|server1|server2|domain|domain1|domain2|string|index|option|name|name1|name2)>') }}
+          static_server_usage: >-
+            {{ time_settings.stdout[1] |
+               regex_findall('(?im)^[ \t]*(sys time server <[a-z0-9 /]{1,12}> <[a-z0-9 /]{1,12}>)[ \t\r]*$') }}
           secondary_empty_brackets: >-
             {{ time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$') | length == 1 }}
 
