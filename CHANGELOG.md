@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Preserve baseline state bytes on no-op updates, exclude generated Python
+  bytecode from catalogue copies, and test real updates followed by clean
+  repeated updates with local overrides intact.
+
 ## 0.2.0
 
 - Hardened the project factory with manifest path-boundary enforcement, consistent optional GitHub API handling, and optimisation-proof self-tests.
