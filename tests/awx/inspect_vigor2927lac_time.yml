@@ -42,6 +42,10 @@
                map('regex_replace', '[^ <>/|\[\]()]', 'x') | list }}
           single_domain_usage: "{{ 'sys time server <domain>' in time_settings.stdout[1] | lower }}"
           two_domain_usage: "{{ 'sys time server <domain> <domain>' in time_settings.stdout[1] | lower }}"
+          known_usage_tokens: >-
+            {{ time_settings.stdout[1] |
+               regex_findall('(?i)sys time server[^\r\n]*') | join('\n') |
+               regex_findall('(?i)<(?:server|server1|server2|domain|domain1|domain2|string|index|option|name|name1|name2)>') }}
           secondary_empty_brackets: >-
             {{ time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$') | length == 1 }}
 
