@@ -1,5 +1,5 @@
 ---
-- name: Inspect system command help without changing router configuration
+- name: Inspect documented parameter names without changing router configuration
   hosts: HomeOne
   gather_facts: false
   vars_files:
@@ -8,24 +8,39 @@
     - name: Prepare verified live validation
       ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
   tasks:
-    - name: Read documented system command help privately
+    - name: Read documented TR-069 parameter names privately
       kpeacocke.draytek.drayos_command:
         commands:
-          - sys ?
-      register: system_help
+          - command: "sys tr069 get {{ item }} nextlevel"
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      loop:
+        - InternetGatewayDevice.DeviceInfo.
+        - InternetGatewayDevice.X_00507F_System.
+      register: parameter_names
       no_log: true
 
-    - name: Require a single populated help response
+    - name: Require complete names-only responses
       ansible.builtin.assert:
         that:
-          - system_help.stdout | length == 1
-          - system_help.stdout[0] | trim | length > 0
+          - item.stdout | length == 1
+          - names | length > 0
+          - totals | length == 1
+          - names | length == totals[0] | int
+      vars:
+        names: "{{ item.stdout[0] | regex_findall('(?m)^[ \\t]*(InternetGatewayDevice\\.[A-Za-z0-9_.]+)[ \\t\\r]*$') }}"
+        totals: "{{ item.stdout[0] | regex_findall('Total number of parameter is[ \\t]+([0-9]+)') }}"
+      loop: "{{ parameter_names.results }}"
       no_log: true
 
-    - name: Report only leading help identifiers rather than device output
+    - name: Report only strict parameter names rather than device output
       ansible.builtin.debug:
         msg:
-          system_help_identifiers: >-
-            {{ system_help.stdout[0] |
-               regex_findall('(?m)^[ \t]*(?:%[ \t]*)?(?:sys[ \t]+)?([a-z][a-z0-9_]*)(?:[ \t]+|$)') |
-               unique | list }}
+          parameter_names: >-
+            {{ parameter_names.results | map(attribute='stdout') | flatten |
+               join('\n') | regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$') }}
