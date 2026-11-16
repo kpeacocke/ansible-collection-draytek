@@ -52,8 +52,10 @@ notes:
     across reboot. Establish an approved recovery plan before write testing.
 attributes:
   check_mode:
+    description: Read current state and predict changes without configuration writes.
     support: full
   diff_mode:
+    description: Return before and after hostname dictionaries when diff mode is enabled.
     support: full
 """
 
