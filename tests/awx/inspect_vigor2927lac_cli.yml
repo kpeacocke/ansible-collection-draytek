@@ -1,0 +1,31 @@
+---
+- name: Inspect system command help without changing router configuration
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  pre_tasks:
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+  tasks:
+    - name: Read documented system command help privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - sys ?
+      register: system_help
+      no_log: true
+
+    - name: Require a single populated help response
+      ansible.builtin.assert:
+        that:
+          - system_help.stdout | length == 1
+          - system_help.stdout[0] | trim | length > 0
+      no_log: true
+
+    - name: Report only leading help identifiers rather than device output
+      ansible.builtin.debug:
+        msg:
+          system_help_identifiers: >-
+            {{ system_help.stdout[0] |
+               regex_findall('(?m)^[ \t]*(?:%[ \t]*)?(?:sys[ \t]+)?([a-z][a-z0-9_]*)(?:[ \t]+|$)') |
+               unique | list }}
