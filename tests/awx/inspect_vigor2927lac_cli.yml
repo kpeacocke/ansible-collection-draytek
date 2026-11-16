@@ -23,6 +23,7 @@
         - InternetGatewayDevice.DeviceInfo.
         - InternetGatewayDevice.X_00507F_System.
         - InternetGatewayDevice.X_00507F_System.Management.
+        - InternetGatewayDevice.X_00507F_System.Board.
       register: parameter_names
       no_log: true
 
@@ -41,6 +42,10 @@
           matched_names: >-
             {{ item.stdout[0] |
                regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$') | length }}
+          non_line_names: >-
+            {{ (item.stdout[0] | regex_findall('InternetGatewayDevice\.[A-Za-z0-9_.]+') | unique | list) |
+               difference(item.stdout[0] |
+                 regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$')) }}
       loop: "{{ parameter_names.results }}"
       loop_control:
         label: "{{ item.item }}"
