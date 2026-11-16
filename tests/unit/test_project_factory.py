@@ -178,7 +178,7 @@ def test_real_update_then_repeated_updates_leave_clean_index(script_root, tmp_pa
     assert state_path.read_bytes() != original_state
     commit("apply real same-version update")
     updated_state = state_path.read_bytes()
-    for _ in range(2):
-        assert update() == []
+    for repetition in range(2):
+        assert update() == [], repetition
         assert state_path.read_bytes() == updated_state
         assert run("git", "status", "--porcelain") == ""

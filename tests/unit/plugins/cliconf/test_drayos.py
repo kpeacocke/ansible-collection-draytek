@@ -4,6 +4,8 @@ import json
 
 import pytest
 
+from ansible.errors import AnsibleConnectionFailure
+
 from ansible_collections.kpeacocke.draytek.plugins.cliconf.drayos import Cliconf
 
 
@@ -16,6 +18,10 @@ class FakeConnection:
     def send(self, **kwargs):
         self._sent.append(kwargs)
         return "OK"
+
+    def get_option(self, option):
+        assert option == "single_user_mode"
+        return False
 
 
 @pytest.fixture
@@ -63,6 +69,13 @@ def test_run_commands_normalises_plain_strings(cliconf, monkeypatch):
 def test_run_commands_rejects_output_option(cliconf):
     with pytest.raises(ValueError):
         cliconf.run_commands(commands=[{"command": "show system", "output": "json"}])
+
+
+def test_cached_commands_cannot_bypass_fresh_resource_readback(cliconf, monkeypatch):
+    monkeypatch.setattr(cliconf._connection, "get_option", lambda option: True)
+    with pytest.raises(AnsibleConnectionFailure, match="does not support command caching"):
+        cliconf.run_commands(["sys version", "sys name branch-new", "sys version"])
+    assert cliconf._connection._sent == []
 
 
 @pytest.mark.parametrize("backend", ["paramiko", "libssh"])

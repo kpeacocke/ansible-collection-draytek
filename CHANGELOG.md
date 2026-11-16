@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add `drayos_hostname` gathered/parsed/merged states with input and platform
+  guards, check/diff support, idempotent comparison and verified readback.
+  Configuration is offline-tested only and initially limited to
+  Vigor2927Lac 4.5.2.2; no hardware write or reboot-persistence claim is made.
+- Reject unsupported `network_cli` single-user command caching so resource
+  readback cannot use stale command output.
 - Preserve baseline state bytes on no-op updates, exclude generated Python
   bytecode from catalogue copies, and test real updates followed by clean
   repeated updates with local overrides intact.

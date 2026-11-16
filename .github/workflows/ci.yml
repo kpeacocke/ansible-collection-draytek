@@ -23,6 +23,15 @@ jobs:
         run: ansible-lint
       - name: Build collection
         run: ansible-galaxy collection build --force
+      - name: Smoke-test installed hostname module without a device
+        shell: bash
+        run: |
+          smoke_root="$RUNNER_TEMP/hostname-smoke"
+          ansible-galaxy collection install kpeacocke-draytek-*.tar.gz \
+            --no-deps -p "$smoke_root/collections"
+          cd "$smoke_root"
+          ANSIBLE_COLLECTIONS_PATH="$smoke_root/collections" \
+            ansible-playbook "$GITHUB_WORKSPACE/tests/integration/hostname.yml" -i localhost,
 
   units:
     # Uses plain pytest, not `ansible-test units --docker`: the only maintained
