@@ -1,5 +1,10 @@
 # Hostname resource
 
+**Configuration is blocked by a failed hardware qualification. Do not use
+`merged`, including its check-mode command prediction, for production changes.**
+The original management name was independently verified after both failed
+attempts. PR #16 remains a draft while the correct write interface is investigated.
+
 `kpeacocke.draytek.drayos_hostname` implements one declarative resource using
 the existing `network_cli` connection. It supports:
 
@@ -18,7 +23,15 @@ additional resource fields to preserve or override, so redundant
 ## Evidence and support boundary
 
 The [DrayTek UK hostname/SNMP guide](https://www.draytek.co.uk/support/guides/kb-vigor-snmp-name)
-documents `sys name my.router` for DrayOS 4 routers. The read format comes
+documents `sys name my.router`, but that generic guidance does **not** establish
+management-hostname configuration on this model. The
+[Vigor2927 command manual](https://www.draytek.com/online-manuals/router/v2927/v4.4.6.2/command/)
+instead documents `sys name <wan1/wan2> <ASCII string>` as a WAN DHCP-name
+setting. AWX jobs 1946 and 1951 attempted the approved temporary management name
+and failed mandatory readback; cleanup and independent reads verified the
+original name. No successful management-hostname write is established.
+
+The read format comes
 from the sanitised Vigor2927Lac 4.5.2.2 `sys version`
 [fixture](../tests/fixtures/drayos/vigor2927lac/4.5.2.2/sys_version.txt),
 also exercised by read-only AWX qualification.
@@ -37,17 +50,21 @@ Vigor2927Lac/4.5.2.2 model/firmware pair. Other targets fail before any
 configuration command. Gathered/parsed states use the existing read format;
 other models still require separate parser/transport qualification.
 
-**The write workflow is offline-tested, not hardware-write-qualified.**
-The vendor command documentation and UI constraint do not prove SSH write
-behaviour, exact CLI limits or persistence on this firmware. No production
-write was used to develop this module. Before production use, complete
+**The write workflow is offline-tested and failed hardware qualification.**
+The generic command assumption was contradicted by the model-specific manual
+and device readback. The UI constraint does not prove SSH write
+behaviour, exact CLI limits or persistence on this firmware. Before production use,
+replace the incorrect command mapping with a verified interface and complete
 authorised write/readback/idempotency and recovery tests on an approved
 target. Keep the previous name and an independent management route available.
 
 The engineering specification originally proposed TR-069-backed resources.
-This first resource instead uses a documented direct command: TR-069 syntax
-and parameter mappings have not been verified. No speculative TR-069 service
-or generic resource engine is introduced.
+The model-specific manual documents `sys tr069 get <parm> nextlevel` for
+names-only discovery. The separate
+[read-only inspection playbook](../tests/awx/inspect_vigor2927lac_cli.yml)
+uses that grammar for the documented DeviceInfo and vendor System subtrees.
+Parameter mappings and a writable management-hostname leaf remain unverified.
+No speculative TR-069 service or generic resource engine is introduced.
 
 ## Example
 
@@ -67,8 +84,9 @@ Begin with a read and a check-mode prediction:
   diff: true
 ```
 
-Only after explicit change/recovery approval, run the second task without
-`check_mode: true`. A second identical execution must report `changed: false`
+Do not remove `check_mode: true` while the write-interface blocker remains.
+After a corrected interface is qualified and explicit change/recovery approval
+is obtained, a second identical execution must report `changed: false`
 and send no configuration command. Hostnames are compared case-sensitively;
 the module does not silently trim or case-fold desired values.
 

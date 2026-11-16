@@ -22,6 +22,7 @@
       loop:
         - InternetGatewayDevice.DeviceInfo.
         - InternetGatewayDevice.X_00507F_System.
+        - InternetGatewayDevice.X_00507F_System.Management.
       register: parameter_names
       no_log: true
 
