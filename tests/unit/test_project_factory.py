@@ -1,7 +1,9 @@
 import argparse
 import importlib.util
 import json
+import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -109,3 +111,74 @@ def test_legacy_state_supports_doctor_reconcile_and_recovery(script_root, tmp_pa
     snapshot = engine.create_recovery_snapshot(root)
     assert (snapshot / "recovery.json").is_file()
     assert json.loads((snapshot / "baseline/state.json").read_text())["openssf_project"] == ""
+
+
+@pytest.mark.parametrize("script_root", SCRIPT_ROOTS, ids=["installed", "catalogue"])
+def test_real_update_then_repeated_updates_leave_clean_index(script_root, tmp_path):
+    source = tmp_path / "source"
+    target = tmp_path / "target"
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
+    shutil.copytree(REPO_ROOT / ".baseline", source / ".baseline", ignore=ignore)
+    shutil.copytree(source / ".baseline", target / ".baseline")
+    (target / "scripts").mkdir()
+    shutil.copyfile(script_root / "baseline.py", target / "scripts/baseline.py")
+
+    def run(*args):
+        result = subprocess.run(
+            args, cwd=target, capture_output=True, text=True, timeout=60,
+            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            check=False,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        return result.stdout
+
+    run(sys.executable, "scripts/baseline.py", "bootstrap", "--profile", "ansible",
+        "--name", "test-project", "--owner", "test-owner", "--openssf-project", "12345")
+    shutil.copytree(script_root / "_project_factory", target / "scripts/_project_factory",
+                    dirs_exist_ok=True, ignore=ignore)
+    state_path = target / ".baseline/state.json"
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state["last_reconciled"] = "2000-01-01T00:00:00+00:00"
+    override_path = ".github/workflows/ci.yml"
+    override = target / override_path
+    override.write_text(override.read_text(encoding="utf-8") + "\n# Local override\n",
+                        encoding="utf-8")
+    original_override = override.read_bytes()
+    state["local_overrides"] = [override_path]
+    state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+
+    run("git", "init")
+    run("git", "add", ".")
+
+    def commit(message):
+        run("git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+            "-c", "commit.gpgsign=false", "commit", "-m", message)
+
+    commit("initial baseline")
+    cache = source / ".baseline/catalog/common/scripts/__pycache__"
+    cache.mkdir(exist_ok=True)
+    (cache / "generated.pyc").write_bytes(b"generated")
+
+    def update():
+        run(sys.executable, "scripts/project_factory.py", "apply-update",
+            "--source", str(source))
+        assert override.read_bytes() == original_override
+        staged = run("git", "diff", "--cached", "--name-only").splitlines()
+        assert not any("__pycache__" in path or path.endswith(".pyc") for path in staged)
+        return staged
+
+    original_state = state_path.read_bytes()
+    assert update() == []
+    assert state_path.read_bytes() == original_state
+
+    catalogue = source / ".baseline/catalog/common/CHANGELOG.md"
+    catalogue.write_text(catalogue.read_text(encoding="utf-8") + "\nReal update.\n",
+                         encoding="utf-8")
+    assert ".baseline/catalog/common/CHANGELOG.md" in update()
+    assert state_path.read_bytes() != original_state
+    commit("apply real same-version update")
+    updated_state = state_path.read_bytes()
+    for repetition in range(2):
+        assert update() == [], repetition
+        assert state_path.read_bytes() == updated_state
+        assert run("git", "status", "--porcelain") == ""

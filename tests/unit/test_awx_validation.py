@@ -12,6 +12,36 @@ import yaml
 REPO_ROOT = Path(__file__).parents[2]
 
 
+def test_portable_awx_layout_executes_hostname_payload(tmp_path):
+    collections = tmp_path / "collections"
+    shutil.copytree(
+        REPO_ROOT / "tests/awx/collections", collections,
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
+    tasks = yaml.safe_load(
+        (REPO_ROOT / "tests/integration/targets/drayos_hostname/tasks/main.yml").read_text()
+    )
+    playbook = tmp_path / "hostname.yml"
+    playbook.write_text(yaml.safe_dump([{
+        "name": "Exercise the portable AWX hostname payload without device access",
+        "hosts": "localhost",
+        "connection": "local",
+        "gather_facts": False,
+        "tasks": tasks,
+    }]))
+    result = subprocess.run(
+        [sys.executable, "-m", "ansible.cli.playbook", "-i", "localhost,", str(playbook)],
+        env={
+            **os.environ,
+            "ANSIBLE_COLLECTIONS_PATH": str(collections),
+            "ANSIBLE_COLLECTIONS_SCAN_SYS_PATH": "false",
+            "ANSIBLE_PYTHON_INTERPRETER": sys.executable,
+        },
+        text=True, capture_output=True, check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 @pytest.mark.parametrize(
     "key_state,limit,extra_policy,environment,inventory_policy,success",
     [
@@ -34,6 +64,20 @@ def test_live_validation_cannot_bypass_host_key_preparation(
         (REPO_ROOT / "tests/awx/validate_vigor2927lac_live.yml").read_text()
     )
     for play in source:
+        play["vars"] = {
+            **yaml.safe_load((REPO_ROOT / "tests/awx/vars/live_validation.yml").read_text()),
+            **play.get("vars", {}),
+        }
+        play.pop("vars_files")
+        expanded = []
+        for task in play["pre_tasks"]:
+            if "ansible.builtin.import_tasks" in task:
+                expanded.extend(yaml.safe_load(
+                    (REPO_ROOT / "tests/awx" / task["ansible.builtin.import_tasks"]).read_text()
+                ))
+            else:
+                expanded.append(task)
+        play["pre_tasks"] = expanded
         for task in [*play.get("pre_tasks", []), *play.get("tasks", [])]:
             if "ansible.builtin.include_tasks" in task:
                 task.clear()

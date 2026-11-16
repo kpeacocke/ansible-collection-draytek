@@ -30,7 +30,7 @@ output through the existing `network_cli` connection. It always reports
 
 | Model | Firmware | Evidence | Validation scope |
 | --- | --- | --- | --- |
-| Vigor2927Lac | 4.5.2.2 | Recovered sanitised device-output fixtures | Parser/module/transport regressions and read-only live AWX validation (job #970) |
+| Vigor2927Lac | 4.5.2.2 | Recovered sanitised device-output fixtures | Parser/module/transport regressions and verified-key read-only AWX validation (job #1936); hostname writes failed qualification |
 | Vigor2927Vac | 4.4.0 | Vendor documentation examples | Parser regression coverage only; not live-device validation |
 
 The recovered stash labels the Lac fixtures as live-device captures; this PR
@@ -47,6 +47,19 @@ interface 11 and WAN 6 were present, and the router reported `changed=false`.
 The live command prompt ends with two spaces after `>`; terminal matching
 accepts trailing horizontal whitespace, with receive-loop regression coverage.
 Do not infer support for other models or firmware from these fixtures.
+
+AWX job [#1936](https://awx.ambitiouscake.com/jobs/playbook/1936/output)
+requalified read-only facts at `1a583f0` with the device-only limit,
+independently verified host key and fail-closed SSH policies. Merged main
+`f84d182` has the same Git tree. Facts reported no device changes.
+
+On the experimental hostname branch, jobs 1946 and 1951 failed mandatory
+temporary-name readback. The original name was verified over SSH and HTTPS.
+This is **not** hostname-write support; the
+[hostname evidence](hostname.md) explains why configuration is not offered.
+Read-only explicit-Paramiko help job 1953 and names-only TR-069 discovery
+job 1956 succeeded. Discovery proves only those reads, not a writable
+parameter mapping or a live libssh connection.
 
 ## AWX fixture validation
 

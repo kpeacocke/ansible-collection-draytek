@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import importlib
 
 import pytest
+
+from ansible.errors import AnsibleConnectionFailure
 
 from ansible_collections.kpeacocke.draytek.plugins.cliconf.drayos import Cliconf
 
@@ -16,6 +19,10 @@ class FakeConnection:
     def send(self, **kwargs):
         self._sent.append(kwargs)
         return "OK"
+
+    def get_option(self, option):
+        assert option == "single_user_mode"
+        return False
 
 
 @pytest.fixture
@@ -65,9 +72,17 @@ def test_run_commands_rejects_output_option(cliconf):
         cliconf.run_commands(commands=[{"command": "show system", "output": "json"}])
 
 
+def test_cached_commands_cannot_bypass_fresh_resource_readback(cliconf, monkeypatch):
+    monkeypatch.setattr(cliconf._connection, "get_option", lambda option: True)
+    with pytest.raises(AnsibleConnectionFailure, match="does not support command caching"):
+        cliconf.run_commands(["sys version", "sys name branch-new", "sys version"])
+    assert cliconf._connection._sent == []
+
+
 @pytest.mark.parametrize("backend", ["paramiko", "libssh"])
 @pytest.mark.parametrize("command", ["sys iface", "show status"])
 def test_pager_advances_multiple_pages_through_network_cli(cliconf, monkeypatch, backend, command):
+    importlib.import_module("paramiko" if backend == "paramiko" else "pylibsshext.session")
     from ansible_collections.ansible.netcommon.plugins.connection.network_cli import Connection
     from ansible_collections.kpeacocke.draytek.plugins.terminal.drayos import TerminalModule
 

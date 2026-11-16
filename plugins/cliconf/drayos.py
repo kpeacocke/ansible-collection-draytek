@@ -96,6 +96,11 @@ class Cliconf(CliconfBase):
     def run_commands(self, commands=None, check_rc=True):
         if commands is None:
             raise ValueError("'commands' value is required")
+        if self._connection.get_option("single_user_mode"):
+            raise AnsibleConnectionFailure(
+                "DrayOS does not support command caching; "
+                "set ansible_network_single_user_mode=false for fresh readback"
+            )
 
         responses = []
         for cmd in to_list(commands):

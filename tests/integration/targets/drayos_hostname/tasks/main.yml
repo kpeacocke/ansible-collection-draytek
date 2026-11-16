@@ -1,0 +1,49 @@
+---
+- name: Parse hostname without contacting a device
+  kpeacocke.draytek.drayos_hostname:
+    state: parsed
+    running_config: |
+      Router Model: Vigor2927Lac    Version: 4.5.2.2 English
+      Router Name: fixture-router
+  register: parsed_hostname
+
+- name: Check parsed hostname contract
+  ansible.builtin.assert:
+    that:
+      - not parsed_hostname.changed
+      - parsed_hostname.parsed == {'hostname':'fixture-router'}
+
+- name: Reject unrecognised output rather than guessing a hostname
+  block:
+    - name: Parse malformed synthetic output
+      kpeacocke.draytek.drayos_hostname:
+        state: parsed
+        running_config: Unrecognised version output
+
+    - name: Require malformed parsing to fail
+      ansible.builtin.fail:
+        msg: Malformed hostname output was unexpectedly accepted
+  rescue:
+    - name: Check controlled parser failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - ansible_failed_result.msg == 'Cannot determine an unambiguous hostname from sys version'
+
+- name: Reject hostname configuration on the installed module
+  block:
+    - name: Attempt an unsupported merged state
+      kpeacocke.draytek.drayos_hostname:
+        state: merged
+        config:
+          hostname: fixture-router
+
+    - name: Require configuration to fail
+      ansible.builtin.fail:
+        msg: Unsupported hostname configuration was unexpectedly accepted
+  rescue:
+    - name: Check unsupported state failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'state must be one of' in ansible_failed_result.msg or 'Unsupported parameters' in ansible_failed_result.msg"

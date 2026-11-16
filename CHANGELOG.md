@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Add a three-combination runtime matrix with both SSH bindings.
+- Add `drayos_hostname` gathered and parsed states for read-only access.
+  Hostname configuration is not supported.
+- Reject unsupported `network_cli` single-user command caching so resource
+  readback cannot use stale command output.
+- Preserve baseline state bytes on no-op updates, exclude generated Python
+  bytecode from catalogue copies, and test real updates followed by clean
+  repeated updates with local overrides intact.
+
 ## 0.2.0
 
 - Hardened the project factory with manifest path-boundary enforcement, consistent optional GitHub API handling, and optimisation-proof self-tests.

@@ -6,9 +6,8 @@ Modules must translate these into Ansible-native failures (``fail_json``) at
 the module boundary; they must never leak into playbook output containing
 secrets (see engineering-specification.md, section 14).
 
-Only the errors required by milestone 1 (connectivity) are defined here.
-TR-069- and capability-specific errors are added when those features are
-implemented.
+Errors are added as services are implemented, rather than anticipating
+unimplemented TR-069 and capability behaviour.
 """
 from __future__ import annotations
 

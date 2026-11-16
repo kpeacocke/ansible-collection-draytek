@@ -1,0 +1,77 @@
+---
+- name: Inspect documented parameter names without changing router configuration
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  pre_tasks:
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+  tasks:
+    - name: Gather hostname without changing router configuration
+      kpeacocke.draytek.drayos_hostname:
+        state: gathered
+      register: gathered_hostname
+      no_log: true
+
+    - name: Require a populated unchanged hostname result
+      ansible.builtin.assert:
+        that:
+          - not gathered_hostname.changed
+          - gathered_hostname.gathered.hostname | length > 0
+      no_log: true
+
+    - name: Read documented TR-069 parameter names privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: "sys tr069 get {{ item }} nextlevel"
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      loop:
+        - InternetGatewayDevice.DeviceInfo.
+        - InternetGatewayDevice.X_00507F_System.
+        - InternetGatewayDevice.X_00507F_System.Board.
+        - InternetGatewayDevice.X_00507F_System.SNMP.
+      register: parameter_names
+      no_log: true
+
+    - name: Report only strict parameter names rather than device output
+      ansible.builtin.debug:
+        msg:
+          parameter_names: >-
+            {{ parameter_names.results | map(attribute='stdout') | flatten |
+               join('\n') | regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$') }}
+
+    - name: Report bounded completeness diagnostics
+      ansible.builtin.debug:
+        msg:
+          subtree: "{{ item.item }}"
+          declared_counts: "{{ item.stdout[0] | regex_findall('Total number of parameter is[ \\t]+([0-9]+)') }}"
+          matched_names: >-
+            {{ item.stdout[0] |
+               regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$') | length }}
+          non_line_names: >-
+            {{ (item.stdout[0] | regex_findall('InternetGatewayDevice\.[A-Za-z0-9_.]+') | unique | list) |
+               difference(item.stdout[0] |
+                 regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$')) }}
+      loop: "{{ parameter_names.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Require complete names-only responses
+      ansible.builtin.assert:
+        that:
+          - item.stdout | length == 1
+          - names | length > 0
+          - totals | length == 1
+          - names | length == totals[0] | int
+      vars:
+        names: "{{ item.stdout[0] | regex_findall('(?m)^[ \\t]*(InternetGatewayDevice\\.[A-Za-z0-9_.]+)[ \\t\\r]*$') }}"
+        totals: "{{ item.stdout[0] | regex_findall('Total number of parameter is[ \\t]+([0-9]+)') }}"
+      loop: "{{ parameter_names.results }}"
+      no_log: true
