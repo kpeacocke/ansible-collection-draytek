@@ -26,6 +26,25 @@
       register: parameter_names
       no_log: true
 
+    - name: Report only strict parameter names rather than device output
+      ansible.builtin.debug:
+        msg:
+          parameter_names: >-
+            {{ parameter_names.results | map(attribute='stdout') | flatten |
+               join('\n') | regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$') }}
+
+    - name: Report bounded completeness diagnostics
+      ansible.builtin.debug:
+        msg:
+          subtree: "{{ item.item }}"
+          declared_counts: "{{ item.stdout[0] | regex_findall('Total number of parameter is[ \\t]+([0-9]+)') }}"
+          matched_names: >-
+            {{ item.stdout[0] |
+               regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$') | length }}
+      loop: "{{ parameter_names.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
     - name: Require complete names-only responses
       ansible.builtin.assert:
         that:
@@ -38,10 +57,3 @@
         totals: "{{ item.stdout[0] | regex_findall('Total number of parameter is[ \\t]+([0-9]+)') }}"
       loop: "{{ parameter_names.results }}"
       no_log: true
-
-    - name: Report only strict parameter names rather than device output
-      ansible.builtin.debug:
-        msg:
-          parameter_names: >-
-            {{ parameter_names.results | map(attribute='stdout') | flatten |
-               join('\n') | regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$') }}

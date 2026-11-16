@@ -101,6 +101,13 @@ separately. Missing bindings fail tests instead of silently skipping coverage.
 
 ## Approved hostname qualification and recovery rehearsal
 
+**Blocked:** authorised jobs 1946 and 1951 failed temporary-name readback.
+The model-specific manual contradicts the current command mapping; see the
+[hostname evidence](hostname.md). Do not launch the write playbook until the
+mapping is corrected and qualified. The original name was verified over SSH
+and HTTPS. Independent HTTPS restoration and live libssh qualification have
+not yet passed. Stored write approvals on the inspection template are false.
+
 `tests/awx/qualify_vigor2927lac_hostname.yml` is a separate **write-capable**
 playbook. The existing live facts playbook remains read-only. Both share the
 same fail-closed key preparation as pre-tasks of their device play, so
