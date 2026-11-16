@@ -1,0 +1,35 @@
+---
+- name: Inspect the documented time-server read command without changing configuration
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  pre_tasks:
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+  tasks:
+    - name: Read current time-server settings privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - sys time show
+      register: time_settings
+      no_log: true
+
+    - name: Report only time-server format diagnostics
+      ansible.builtin.debug:
+        msg:
+          time_server_line_count: >-
+            {{ time_settings.stdout[0] |
+               regex_findall('(?m)^[ \t]*Time Server:[ \t]*\[[^\]\r\n]*\][ \t\r]*$') |
+               length }}
+          nonempty_server_line_count: >-
+            {{ time_settings.stdout[0] |
+               regex_findall('(?m)^[ \t]*Time Server:[ \t]*\[[^\]\r\n]+\][ \t\r]*$') |
+               length }}
+
+    - name: Require one recognised time-server line
+      ansible.builtin.assert:
+        that:
+          - time_settings.stdout | length == 1
+          - time_settings.stdout[0] | regex_findall('(?m)^[ \t]*Time Server:[ \t]*\[[^\]\r\n]*\][ \t\r]*$') | length == 1
+      no_log: true
