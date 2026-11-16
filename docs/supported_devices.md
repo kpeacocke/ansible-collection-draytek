@@ -56,7 +56,7 @@ independently verified host key and fail-closed SSH policies. Merged main
 On the experimental hostname branch, jobs 1946 and 1951 failed mandatory
 temporary-name readback. The original name was verified over SSH and HTTPS.
 This is **not** hostname-write support; the
-[write-interface blocker](hostname.md) must be resolved first.
+[hostname evidence](hostname.md) explains why configuration is not offered.
 Read-only explicit-Paramiko help job 1953 and names-only TR-069 discovery
 job 1956 succeeded. Discovery proves only those reads, not a writable
 parameter mapping or a live libssh connection.

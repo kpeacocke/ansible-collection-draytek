@@ -42,9 +42,6 @@ def test_portable_awx_layout_executes_hostname_payload(tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-@pytest.mark.parametrize("playbook_name", [
-    "validate_vigor2927lac_live.yml", "qualify_vigor2927lac_hostname.yml",
-])
 @pytest.mark.parametrize(
     "key_state,limit,extra_policy,environment,inventory_policy,success",
     [
@@ -61,10 +58,10 @@ def test_portable_awx_layout_executes_hostname_payload(tmp_path):
     ],
 )
 def test_live_validation_cannot_bypass_host_key_preparation(
-    tmp_path, key_state, limit, extra_policy, environment, inventory_policy, success, playbook_name,
+    tmp_path, key_state, limit, extra_policy, environment, inventory_policy, success,
 ):
     source = yaml.safe_load(
-        (REPO_ROOT / "tests/awx" / playbook_name).read_text()
+        (REPO_ROOT / "tests/awx/validate_vigor2927lac_live.yml").read_text()
     )
     for play in source:
         play["vars"] = {
@@ -104,13 +101,7 @@ def test_live_validation_cannot_bypass_host_key_preparation(
             "localhost": {"ansible_connection": "local"},
         }},
     }))
-    extra_vars = {
-        "drayos_hostname_change_approved": True,
-        "drayos_hostname_recovery_ready": True,
-        "drayos_hostname_test_name": "HomeOne-test",
-        "drayos_hostname_validation_backend": "paramiko",
-        **extra_policy,
-    }
+    extra_vars = dict(extra_policy)
     if key_state != "missing":
         key_path = tmp_path / "test-key"
         subprocess.run(

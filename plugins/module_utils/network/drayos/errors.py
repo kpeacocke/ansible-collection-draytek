@@ -42,7 +42,3 @@ class UnsupportedPlatformError(DrayTekError):
 
 class ValidationError(DrayTekError):
     """Raised when module arguments or resource configuration fail validation."""
-
-
-class VerificationError(DrayTekError):
-    """Raised when configuration readback does not match the desired state."""

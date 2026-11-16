@@ -29,3 +29,21 @@
         that:
           - not ansible_failed_result.changed
           - ansible_failed_result.msg == 'Cannot determine an unambiguous hostname from sys version'
+
+- name: Reject hostname configuration on the installed module
+  block:
+    - name: Attempt an unsupported merged state
+      kpeacocke.draytek.drayos_hostname:
+        state: merged
+        config:
+          hostname: fixture-router
+
+    - name: Require configuration to fail
+      ansible.builtin.fail:
+        msg: Unsupported hostname configuration was unexpectedly accepted
+  rescue:
+    - name: Check unsupported state failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'state must be one of' in ansible_failed_result.msg or 'Unsupported parameters' in ansible_failed_result.msg"
