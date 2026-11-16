@@ -37,6 +37,10 @@
             {{ time_settings.stdout[0] | regex_findall('(?im)^[ \t]*Secondary NTP Server:') | length }}
           documented_subcommands: >-
             {{ time_settings.stdout[1] | regex_findall('(?i)sys time (?:server|show|inquire|wan|zone|pseudo)') | unique | list }}
+          server_usage_shape: >-
+            {{ time_settings.stdout[1] | regex_findall('(?im)sys time server[^\r\n]*') |
+               map('regex_replace', '[^ <>/|\[\]()]', 'x') | list }}
+          single_domain_usage: "{{ 'sys time server <domain>' in time_settings.stdout[1] | lower }}"
 
     - name: Require one recognised time-server line
       ansible.builtin.assert:
