@@ -22,8 +22,8 @@
       loop:
         - InternetGatewayDevice.DeviceInfo.
         - InternetGatewayDevice.X_00507F_System.
-        - InternetGatewayDevice.X_00507F_System.Management.
         - InternetGatewayDevice.X_00507F_System.Board.
+        - InternetGatewayDevice.X_00507F_System.SNMP.
       register: parameter_names
       no_log: true
 
