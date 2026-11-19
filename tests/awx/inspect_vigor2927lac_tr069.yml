@@ -37,3 +37,32 @@
       loop: "{{ tr069_product_reads.results }}"
       loop_control:
         label: "{{ item.item }}"
+
+    - name: Read previously discovered product names privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: sys tr069 get InternetGatewayDevice.DeviceInfo. nextlevel
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      register: tr069_names_shape
+      no_log: true
+
+    - name: Report only names response structure and allowlisted metadata
+      ansible.builtin.debug:
+        msg:
+          declared_counts: >-
+            {{ tr069_names_shape.stdout[0] | regex_findall('Total number of parameter is[ \t]+([0-9]+)') }}
+          strict_names_count: >-
+            {{ tr069_names_shape.stdout[0] |
+               regex_findall('(?m)^[ \t]*(InternetGatewayDevice\.[A-Za-z0-9_.]+)[ \t\r]*$') | length }}
+          metadata_labels: >-
+            {{ tr069_names_shape.stdout[0] | regex_findall('(?m)^([A-Za-z][A-Za-z ]{0,40}):') }}
+          safe_metadata: >-
+            {{ tr069_names_shape.stdout[0] |
+               regex_findall('(?im)^([A-Za-z][A-Za-z ]{0,40}):[ \t]*([0-9a-f]{1,8}|true|false)[ \t\r]*$') }}
+          response_shape: "{{ tr069_names_shape.stdout[0] | regex_replace('[A-Za-z0-9_]+', 'x') }}"
