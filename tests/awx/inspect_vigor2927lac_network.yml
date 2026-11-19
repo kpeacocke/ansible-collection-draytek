@@ -82,3 +82,23 @@
     - name: Report only DNS rows with recognised labels
       ansible.builtin.debug:
         msg: "{{ network_dns_rows | default([]) | rejectattr('labels', 'equalto', []) | list }}"
+
+    - name: Gather LAN DNS through the public module
+      kpeacocke.draytek.drayos_dns:
+      register: lan_dns
+      no_log: true
+
+    - name: Gather LAN DNS again in check mode
+      kpeacocke.draytek.drayos_dns:
+      check_mode: true
+      register: lan_dns_check
+      no_log: true
+
+    - name: Verify that the module returns all LANs and check mode matches
+      ansible.builtin.assert:
+        that:
+          - not lan_dns.changed
+          - not lan_dns_check.changed
+          - lan_dns.gathered | length == 8
+          - lan_dns.gathered == lan_dns_check.gathered
+      no_log: true
