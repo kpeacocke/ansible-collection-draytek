@@ -14,8 +14,8 @@ tags:
   - network
 dependencies:
   ansible.netcommon: ">=6.0.0"
-repository: ""
-issues: ""
+repository: "https://github.com/kpeacocke/ansible-collection-draytek"
+issues: "https://github.com/kpeacocke/ansible-collection-draytek/issues"
 build_ignore:
   # Repository governance/tooling, not collection content.
   - .baseline
