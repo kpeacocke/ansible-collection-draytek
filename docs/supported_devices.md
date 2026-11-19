@@ -87,8 +87,17 @@ firmware, or other models.
 Live LAN DNS validation [job 2107](https://awx.ambitiouscake.com/jobs/playbook/2107/output)
 on Vigor2927Lac firmware 4.5.2.2 (`b4c923a`) used Paramiko and the verified SSH
 host key. `drayos_dns` returned matching primary/secondary IPv4 settings for
-all eight LANs in normal and check mode without changes. This proves readback
-only, not DNS setter behaviour or upstream resolver selection.
+all eight LANs in normal and check mode without changes.
+
+Separate, operator-approved Ansible playbook runs validated the CLI mapping
+for primary DNS on a disabled LAN7. [Job 2110](https://awx.ambitiouscake.com/jobs/playbook/2110/output)
+set a temporary address, and [job 2113](https://awx.ambitiouscake.com/jobs/playbook/2113/output)
+restored the field to unset using `srv dhcp dns1 lan7 0.0.0.0`. Both compared all
+LAN DNS fields before and after the operation. Independent read-only
+[job 2115](https://awx.ambitiouscake.com/jobs/playbook/2115/output) confirmed
+that both LAN7 DNS settings were unset. These tests do not qualify changes
+on active LANs, secondary DNS writes, effective resolver selection or reboot
+persistence. The public `drayos_dns` module remains read-only.
 
 ## AWX fixture validation
 
