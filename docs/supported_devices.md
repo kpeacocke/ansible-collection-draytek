@@ -75,6 +75,13 @@ These live checks used Paramiko. No secondary-server setter, clock
 synchronisation, unrelated time-setting preservation or reboot persistence is
 claimed. Other models and firmware fail the module's write-platform guard.
 
+## TR-069 reads
+
+The [read-only TR-069 module](tr069.md) passed single-leaf product reads,
+next-level DeviceInfo names and check-mode validation on Vigor2927Lac
+firmware 4.5.2.2 with Paramiko. This does not qualify TR-069 writes, other
+firmware, or other models.
+
 ## AWX fixture validation
 
 Use `tests/awx/validate_vigor2927lac.yml` in an AWX project pinned to the PR
