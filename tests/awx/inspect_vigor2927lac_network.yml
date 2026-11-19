@@ -1,0 +1,67 @@
+---
+- name: Inspect network response formats without changing router configuration
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  vars:
+    ansible_persistent_log_messages: false
+  pre_tasks:
+    - name: Require private transport settings
+      ansible.builtin.assert:
+        that:
+          - not ansible_persistent_log_messages | bool
+
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+
+  tasks:
+    - name: Run fixed read-only network probes privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: "{{ item }}"
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+        retries: 1
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      loop:
+        - show dns
+        - show lan
+        - wan status
+        - wan lte stus
+        - srv dhcp status
+        - vlan status
+        - ip route status
+        - ip6 route -a LAN1
+      register: network_probes
+      ignore_errors: true  # noqa: ignore-errors
+      no_log: true
+
+    - name: Extract only fixed format markers and aggregate counts
+      ansible.builtin.set_fact:
+        network_probe_summary: >-
+          {{ (network_probe_summary | default([])) + [
+            {'command': item.item, 'ok': usable, 'lines': text.splitlines() | length,
+             'markers': text | regex_findall(marker_regex | replace('\n', '')) | unique | list}] }}
+      vars:
+        usable: "{{ not (item.failed | default(false)) and (item.stdout | default([]) | length == 1) }}"
+        text: "{{ item.stdout[0] if usable else '' }}"
+        marker_regex: |-
+          (?im)^[ \t%]*(Domain name server settings|LAN[1-8] (?:Primary|Secondary) DNS|The LAN settings|WAN[1-6]|PVC_WAN[1-8]|
+          Mode|IP Pool|Default Gateway|Index IP Address|VLAN is|VLAN Enable|Codes|IPv6 Routing Table|LTE status|Signal Strength|
+          PREFIX/PREFIX-LEN|Access Tech|No entries|Unknown command|Invalid command|Usage)(?=[ \t:\r]|$)
+      loop: "{{ network_probes.results }}"
+      no_log: true
+
+    - name: Report only the bounded network-probe summary
+      ansible.builtin.debug:
+        var: network_probe_summary
+
+    - name: Require at least one usable network response
+      ansible.builtin.assert:
+        that:
+          - network_probe_summary | selectattr('ok') | selectattr('markers') | list | length > 0
