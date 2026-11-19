@@ -1,2 +1,3 @@
 minor_changes:
   - drayos_dns - Gather and parse per-LAN IPv4 DNS settings on Vigor2927Lac firmware 4.5.2.2 without configuration changes.
+  - drayos_dns - Set or clear primary IPv4 DNS on a disabled LAN7 on Vigor2927Lac firmware 4.5.2.2, with check mode and mandatory readback.

@@ -97,7 +97,10 @@ LAN DNS fields before and after the operation. Independent read-only
 [job 2115](https://awx.ambitiouscake.com/jobs/playbook/2115/output) confirmed
 that both LAN7 DNS settings were unset. These tests do not qualify changes
 on active LANs, secondary DNS writes, effective resolver selection or reboot
-persistence. The public `drayos_dns` module remains read-only.
+persistence. The public `drayos_dns` module restricts `state: merged` to
+disabled LAN7 on this exact firmware and verifies all eight LAN DNS pairs
+after a write. Use `primary_server: "0.0.0.0"` to clear the field. The CLI
+qualification is not a live module-write test.
 
 ## AWX fixture validation
 

@@ -102,3 +102,42 @@
           - lan_dns.gathered | length == 8
           - lan_dns.gathered == lan_dns_check.gathered
       no_log: true
+
+    - name: Require the restored LAN7 baseline before testing predictions
+      ansible.builtin.assert:
+        that:
+          - lan_dns.gathered.LAN7.primary is none
+
+    - name: Predict a change from the restored baseline without writing
+      kpeacocke.draytek.drayos_dns:
+        state: merged
+        lan: LAN7
+        primary_server: "192.0.2.53"
+      check_mode: true
+      diff: true
+      register: dns_prediction
+      no_log: true
+
+    - name: Predict no change when clearing the already unset resolver
+      kpeacocke.draytek.drayos_dns:
+        state: merged
+        lan: LAN7
+        primary_server: "0.0.0.0"
+      check_mode: true
+      register: dns_no_change
+      no_log: true
+
+    - name: Verify that both predictions left the device unchanged
+      kpeacocke.draytek.drayos_dns:
+      register: dns_after_predictions
+      no_log: true
+
+    - name: Assert predicted change and no change plus identical live readback
+      ansible.builtin.assert:
+        that:
+          - dns_prediction.changed
+          - dns_prediction.diff.before.primary_server is none
+          - dns_prediction.diff.after.primary_server == '192.0.2.53'
+          - not dns_no_change.changed
+          - dns_after_predictions.gathered == lan_dns.gathered
+      no_log: true
