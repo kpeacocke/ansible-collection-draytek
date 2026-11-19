@@ -114,3 +114,22 @@ failed and did not establish a correct management-hostname interface; see
 the [hostname evidence](hostname.md) before considering further device work.
 No independent HTTPS restoration rehearsal or live libssh qualification is
 claimed.
+
+## NTP validation
+
+The [NTP resource evidence](ntp.md#qualification-evidence) distinguishes command
+qualification from live module qualification. The installed-archive CI smoke
+also executes `tests/integration/ntp.yml` without a router.
+
+`tests/awx/check_vigor2927lac_ntp_module.yml` gathers the current servers,
+checks unchanged/different predictions with check mode forced on the merged
+tasks, and verifies that the actual configuration remains unchanged. It uses
+the same verified SSH trust preparation as the read-only facts check.
+
+`tests/awx/qualify_vigor2927lac_ntp_module.yml` is **not read-only**. It requires
+specific approval flags, the exact router/firmware/transport, an eligible
+baseline and independent recovery standby. It changes the primary temporarily,
+checks readback, a repeat and check mode, and restores with the independently
+qualified CLI command. Do not schedule it or treat historical approval as
+permission for a new run. AWX streaming failures can hide worker progress;
+always perform the separate read-only baseline check after a live cycle.

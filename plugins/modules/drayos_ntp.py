@@ -10,7 +10,7 @@ description:
   - Gather both NTP server fields or merge a primary server using C(sys time).
   - Configuration is restricted to Vigor2927Lac firmware 4.5.2.2.
   - The secondary server is preserved and verified, never configured.
-  - Does not change time zones, clock values, synchronisation mode or enablement.
+  - Time zones, clock values, synchronisation mode and enablement are not managed or verified.
 version_added: "0.1.0"
 author:
   - kpeacocke (@kpeacocke)

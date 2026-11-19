@@ -66,8 +66,13 @@ parameter mapping or a live libssh connection.
 The [NTP resource](ntp.md) is restricted to Vigor2927Lac firmware 4.5.2.2.
 Authorised AWX job 2055 proved the index-1 primary-server command, readback and
 restoration; independent checks 2053 and 2056 matched the original baseline.
-This command evidence does not yet qualify a live write through the new module.
-No secondary-server setter, clock synchronisation or reboot persistence is
+At `4ac10e8`, AWX fixture job 2059 passed 190 tests and live job 2060 verified
+gathering and both check-mode predictions without device changes. Separately
+approved job 2061 passed an actual module change, readback, identical repeat
+(`changed: false`), check-mode prediction without mutation, and restoration.
+Independent read-only job 2062 at the same revision matched the original baseline.
+These live checks used Paramiko. No secondary-server setter, clock
+synchronisation, unrelated time-setting preservation or reboot persistence is
 claimed. Other models and firmware fail the module's write-platform guard.
 
 ## AWX fixture validation

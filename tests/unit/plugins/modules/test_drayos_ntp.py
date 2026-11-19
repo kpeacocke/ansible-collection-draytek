@@ -213,6 +213,29 @@ def test_malformed_current_state_is_not_treated_as_an_empty_configuration(output
         parse_ntp(output)
 
 
+@pytest.mark.parametrize("response", [None, [], [None], [time_output(), time_output()], ["unrecognised"]])
+def test_invalid_read_responses_never_reach_a_configuration_command(monkeypatch, invoke, response):
+    calls = []
+
+    def execute(module, commands):
+        calls.extend(commands)
+        return [VERSION] if commands == ["sys version"] else response
+
+    monkeypatch.setattr(drayos_ntp, "run_commands", execute)
+    result = invoke(merged())
+    assert result["failed"] is True
+    assert result["changed"] is False
+    assert calls == ["sys version", "sys time show"]
+
+
+def test_dns_length_boundaries_accept_253_and_reject_254_characters():
+    longest = ".".join(["a" * 63] * 3 + ["b" * 61])
+    assert len(longest) == 253
+    assert normalise_server(longest) == longest
+    with pytest.raises(ValidationError):
+        normalise_server(longest + "b")
+
+
 def test_parser_preserves_explicit_empty_fields_and_normalises_dns_case():
     assert parse_ntp(time_output("TIME.Example", "SECONDARY.Example")) == {
         "primary_server": "time.example", "secondary_server": "secondary.example",

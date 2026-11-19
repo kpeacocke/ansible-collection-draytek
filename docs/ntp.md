@@ -2,8 +2,9 @@
 
 `kpeacocke.draytek.drayos_ntp` gathers both NTP server fields and manages the
 primary server over `ansible.netcommon.network_cli`. Configuration is restricted
-to **Vigor2927Lac firmware 4.5.2.2**. It does not configure the secondary server,
-clear servers, change the clock, time zone or synchronisation mode.
+to **Vigor2927Lac firmware 4.5.2.2**. Only the primary server is managed; the
+secondary field is read and verified. Server deletion, clock values, time zones,
+synchronisation mode and enablement are not managed or verified.
 
 ## Behaviour
 
@@ -45,9 +46,27 @@ Independent read-only jobs
 [2056](https://awx.ambitiouscake.com/jobs/playbook/2056/output) after the test
 matched the previously captured original baseline.
 
-This proves the command mapping and the bounded restoration, not yet a live
-write through the new resource module, secondary-server configuration, NTP
-reachability, successful clock synchronisation or persistence across reboot.
+The new resource passed AWX fixture job
+[2059](https://awx.ambitiouscake.com/jobs/playbook/2059/output), with 190 tests,
+and read-only module job
+[2060](https://awx.ambitiouscake.com/jobs/playbook/2060/output). The latter proved
+gathering, unchanged/different check-mode predictions and unchanged actual state.
+
+With separate explicit approval, job
+[2061](https://awx.ambitiouscake.com/jobs/playbook/2061/output) at
+`4ac10e856c35e003df2ec388a2b95eed90540270` configured the temporary primary through
+the resource, verified both server fields, repeated the desired state with
+`changed: false`, predicted restoration in check mode without changing actual
+state, and restored the original settings with the qualified CLI command.
+All those assertions passed. The transport was Paramiko.
+Separate read-only job
+[2062](https://awx.ambitiouscake.com/jobs/playbook/2062/output) at the same
+revision then matched both original server settings against the independent
+baseline.
+
+This qualifies primary-server configuration on that model/firmware, not
+secondary-server configuration, NTP reachability, successful clock
+synchronisation, unrelated time-setting preservation or persistence across reboot.
 The parser tests use synthetic server values with the label/bracket format
 checked by that live qualification; they are not unredacted device captures.
 
