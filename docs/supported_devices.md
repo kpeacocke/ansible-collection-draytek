@@ -61,6 +61,15 @@ Read-only explicit-Paramiko help job 1953 and names-only TR-069 discovery
 job 1956 succeeded. Discovery proves only those reads, not a writable
 parameter mapping or a live libssh connection.
 
+## Primary NTP server
+
+The [NTP resource](ntp.md) is restricted to Vigor2927Lac firmware 4.5.2.2.
+Authorised AWX job 2055 proved the index-1 primary-server command, readback and
+restoration; independent checks 2053 and 2056 matched the original baseline.
+This command evidence does not yet qualify a live write through the new module.
+No secondary-server setter, clock synchronisation or reboot persistence is
+claimed. Other models and firmware fail the module's write-platform guard.
+
 ## AWX fixture validation
 
 Use `tests/awx/validate_vigor2927lac.yml` in an AWX project pinned to the PR

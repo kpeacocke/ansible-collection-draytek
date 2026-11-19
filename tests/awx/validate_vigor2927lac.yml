@@ -30,6 +30,8 @@
             - plugins
             - tests
             - docs
+            - meta
+            - README.md
             - conftest.py
             - galaxy.yml
             - ansible.cfg

@@ -37,6 +37,61 @@
         commands: [sys time server 1 time.cloudflare.com]
       changed_when: true
       no_log: true
+      when: not (drayos_ntp_qualify_module | default(false) | bool)
+
+    - name: Qualify the resource module through a complete change and repeat cycle
+      when: drayos_ntp_qualify_module | default(false) | bool
+      block:
+        - name: Apply the temporary primary with the NTP resource module
+          kpeacocke.draytek.drayos_ntp:
+            state: merged
+            config:
+              primary_server: time.cloudflare.com
+          register: ntp_resource_changed
+          no_log: true
+
+        - name: Repeat the identical desired state
+          kpeacocke.draytek.drayos_ntp:
+            state: merged
+            config:
+              primary_server: time.cloudflare.com
+          register: ntp_resource_repeated
+          no_log: true
+
+        - name: Predict restoration without changing the temporary state
+          kpeacocke.draytek.drayos_ntp:
+            state: merged
+            config:
+              primary_server: "{{ ntp_original_primary }}"
+          check_mode: true
+          diff: true
+          register: ntp_resource_checked
+          no_log: true
+
+        - name: Gather actual state after the check-mode prediction
+          kpeacocke.draytek.drayos_ntp:
+            state: gathered
+          register: ntp_resource_gathered
+          no_log: true
+
+        - name: Require changed then idempotent and correct check mode
+          ansible.builtin.assert:
+            that:
+              - ntp_resource_changed.changed
+              - not ntp_resource_repeated.changed
+              - ntp_resource_changed.after.primary_server == 'time.cloudflare.com'
+              - ntp_resource_changed.after.secondary_server == ''
+              - ntp_resource_repeated.before == ntp_resource_repeated.after
+              - ntp_resource_repeated.after == ntp_resource_changed.after
+              - ntp_resource_checked.changed
+              - ntp_resource_checked.before == ntp_resource_changed.after
+              - ntp_resource_checked.after.primary_server == ntp_original_primary | lower
+              - ntp_resource_checked.after.secondary_server == ''
+              - ntp_resource_checked.diff.before == ntp_resource_checked.before
+              - ntp_resource_checked.diff.after == ntp_resource_checked.after
+              - not ntp_resource_gathered.changed
+              - ntp_resource_gathered.gathered == ntp_resource_changed.after
+          no_log: true
   always:
     - name: Read back and restore when the observed state is safe
       block:
@@ -113,4 +168,7 @@
 
 - name: Report qualification without exposing server values
   ansible.builtin.debug:
-    msg: Index 1 changed the primary NTP server and the original settings were restored.
+    msg: >-
+      {{ 'The NTP resource changed and verified the primary, repeated without changes, and passed check mode. '
+         if drayos_ntp_qualify_module | default(false) | bool else '' }}
+      Index 1 changed the primary NTP server and the original settings were restored.

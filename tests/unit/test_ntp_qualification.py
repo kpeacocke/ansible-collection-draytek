@@ -6,6 +6,7 @@ import sys
 
 import pytest
 import yaml
+from ansible import constants as C
 
 
 ROOT = Path(__file__).parents[2]
@@ -46,7 +47,11 @@ module.exit_json(changed=False, stdout=['OK'], stdout_lines=[['OK']])
 def run_playbook(tmp_path, playbook, library=None, check=False):
     source = tmp_path / "qualification.yml"
     source.write_text(yaml.safe_dump([playbook]), encoding="utf-8")
-    env = {**os.environ, "ANSIBLE_CONFIG": str(ROOT / "ansible.cfg")}
+    env = {
+        **os.environ,
+        "ANSIBLE_CONFIG": str(ROOT / "ansible.cfg"),
+        "ANSIBLE_COLLECTIONS_PATH": os.pathsep.join([str(ROOT / ".cache/collections"), *C.COLLECTIONS_PATHS]),
+    }
     if library:
         env["ANSIBLE_LIBRARY"] = str(library)
     command = [sys.executable, "-m", "ansible.cli.playbook", "-i", "localhost,", str(source)]

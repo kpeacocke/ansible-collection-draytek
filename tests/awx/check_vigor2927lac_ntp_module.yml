@@ -1,0 +1,59 @@
+---
+- name: Validate NTP gathering and check mode without router writes
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  pre_tasks:
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+  tasks:
+    - name: Gather both NTP servers privately
+      kpeacocke.draytek.drayos_ntp:
+        state: gathered
+      register: ntp_module_before
+      no_log: true
+
+    - name: Predict no change for the current primary server
+      kpeacocke.draytek.drayos_ntp:
+        state: merged
+        config:
+          primary_server: "{{ ntp_module_before.gathered.primary_server }}"
+      check_mode: true
+      register: ntp_module_unchanged
+      no_log: true
+
+    - name: Predict a different primary without applying it
+      kpeacocke.draytek.drayos_ntp:
+        state: merged
+        config:
+          primary_server: time.cloudflare.com
+      check_mode: true
+      diff: true
+      register: ntp_module_predicted
+      no_log: true
+
+    - name: Gather both NTP servers after check mode
+      kpeacocke.draytek.drayos_ntp:
+        state: gathered
+      register: ntp_module_after
+      no_log: true
+
+    - name: Require correct predictions and unchanged actual configuration
+      ansible.builtin.assert:
+        that:
+          - not ntp_module_before.changed
+          - not ntp_module_after.changed
+          - not ntp_module_unchanged.changed
+          - ntp_module_unchanged.before == ntp_module_unchanged.after
+          - ntp_module_after.gathered == ntp_module_before.gathered
+          - ntp_module_predicted.changed == (ntp_module_before.gathered.primary_server != 'time.cloudflare.com')
+          - ntp_module_predicted.after.primary_server == 'time.cloudflare.com'
+          - ntp_module_predicted.after.secondary_server == ntp_module_before.gathered.secondary_server
+          - ntp_module_predicted.diff.before == ntp_module_before.gathered
+          - ntp_module_predicted.diff.after == ntp_module_predicted.after
+      no_log: true
+
+    - name: Report validation without server values
+      ansible.builtin.debug:
+        msg: NTP gathering and both check-mode predictions passed; the router settings are unchanged.
