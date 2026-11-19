@@ -65,3 +65,20 @@
       ansible.builtin.assert:
         that:
           - network_probe_summary | selectattr('ok') | selectattr('markers') | list | length > 0
+
+    - name: Record DNS row structure without returning addresses or unknown text
+      ansible.builtin.set_fact:
+        network_dns_rows: >-
+          {{ (network_dns_rows | default([])) + [
+            {'labels': item | regex_findall(dns_labels), 'colons': item.count(':'),
+             'ipv4_count': item | regex_findall(ipv4_token) | length}] }}
+      vars:
+        dns_labels: >-
+          (?i)\b(?:LAN[1-8]|WAN[1-8]|IP Routed|Primary|Secondary|DNS|Not set|IPv6|DHCP|Manual|Auto|Server|Proxy)\b
+        ipv4_token: '\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
+      loop: "{{ (network_probes.results[0].stdout | default([''], true) | first).splitlines()[:80] }}"
+      no_log: true
+
+    - name: Report only DNS rows with recognised labels
+      ansible.builtin.debug:
+        msg: "{{ network_dns_rows | default([]) | rejectattr('labels', 'equalto', []) | list }}"
