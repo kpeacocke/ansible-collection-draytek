@@ -33,12 +33,11 @@ from ansible.plugins.cliconf import CliconfBase
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.utils import (
     to_list,
 )
+from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.connection import (
+    MAX_PAGE_ADVANCES,
+    PAGER_PROMPT,
+)
 
-
-# The captured Lac prompt explicitly documents Space Bar as Next Page.
-# Anchor at the current buffer end so an earlier page marker cannot match again.
-PAGER_PROMPT = r"--- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$"
-MAX_PAGE_ADVANCES = 64
 PAGED_COMMANDS = frozenset(("sys iface", "show status"))
 
 
@@ -112,6 +111,13 @@ class Cliconf(CliconfBase):
             output = cmd.pop("output", None)
             if output:
                 raise ValueError("'output' value %s is not supported for run_commands" % output)
+
+            if cmd.get("command", "").strip().startswith("sys tr069 get ") and self._connection.get_option(
+                "persistent_log_messages"
+            ):
+                raise AnsibleConnectionFailure(
+                    "TR-069 reads require ansible_persistent_log_messages=false"
+                )
 
             if cmd.get("command", "").strip() in PAGED_COMMANDS and not cmd.get("prompt"):
                 # check_all consumes one prompt/answer pair per page. A single

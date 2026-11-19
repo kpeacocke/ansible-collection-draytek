@@ -38,6 +38,8 @@ def test_built_collection_contains_runtime_and_not_repository_tooling(tmp_path):
         "plugins/modules/drayos_facts.py",
         "plugins/modules/drayos_hostname.py",
         "plugins/modules/drayos_ntp.py",
+        "plugins/modules/drayos_tr069.py",
+        "plugins/module_utils/network/drayos/tr069.py",
         "plugins/terminal/drayos.py",
         "plugins/cliconf/drayos.py",
         "plugins/module_utils/network/drayos/connection.py",
@@ -46,6 +48,8 @@ def test_built_collection_contains_runtime_and_not_repository_tooling(tmp_path):
         "tests/integration/targets/drayos_hostname/tasks/main.yml",
         "tests/integration/ntp.yml",
         "tests/integration/targets/drayos_ntp/tasks/main.yml",
+        "tests/integration/tr069.yml",
+        "tests/integration/targets/drayos_tr069/tasks/main.yml",
     } <= names
     info = manifest["collection_info"]
     assert info["repository"] == "https://github.com/kpeacocke/ansible-collection-draytek"

@@ -1,0 +1,10 @@
+---
+- name: Exercise installed read-only TR-069 without a device
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Run offline TR-069 integration target
+      ansible.builtin.import_tasks: targets/drayos_tr069/tasks/main.yml
