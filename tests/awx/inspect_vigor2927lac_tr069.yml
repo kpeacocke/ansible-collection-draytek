@@ -27,6 +27,11 @@
           declared_counts: >-
             {{ item.stdout[0] | regex_findall('Total number of parameter is[ \t]+([0-9]+)') }}
           contains_requested_path: "{{ item.item in item.stdout[0] }}"
+          metadata_labels: >-
+            {{ item.stdout[0] | regex_findall('(?m)^([A-Za-z][A-Za-z ]{0,40}):') }}
+          safe_metadata: >-
+            {{ item.stdout[0] |
+               regex_findall('(?im)^([A-Za-z][A-Za-z ]{0,40}):[ \t]*(string|boolean|unsignedint|int|true|false|[0-9]{1,4})[ \t\r]*$') }}
           response_shape: >-
             {{ item.stdout[0] | replace(item.item, '<parameter>') | regex_replace('[A-Za-z0-9_]+', 'x') }}
       loop: "{{ tr069_product_reads.results }}"
