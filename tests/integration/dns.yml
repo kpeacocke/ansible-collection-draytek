@@ -1,0 +1,27 @@
+---
+- name: Exercise installed LAN DNS parsing without a device
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Parse a complete synthetic DNS response in check mode
+      kpeacocke.draytek.drayos_dns:
+        state: parsed
+        running_config: |-
+          %% Domain name server settings:
+          {% for lan in range(1, 9) %}
+          % LAN{{ lan }} Primary DNS: 192.0.2.{{ lan }}
+          % LAN{{ lan }} Secondary DNS: [Not set]
+          {% endfor %}
+      check_mode: true
+      register: parsed_dns
+
+    - name: Check parsed fields and read-only status
+      ansible.builtin.assert:
+        that:
+          - not parsed_dns.changed
+          - parsed_dns.parsed | length == 8
+          - parsed_dns.parsed.LAN8.primary == '192.0.2.8'
+          - parsed_dns.parsed.LAN8.secondary is none

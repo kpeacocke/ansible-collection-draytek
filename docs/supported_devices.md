@@ -82,6 +82,14 @@ next-level DeviceInfo names and check-mode validation on Vigor2927Lac
 firmware 4.5.2.2 with Paramiko. This does not qualify TR-069 writes, other
 firmware, or other models.
 
+## LAN DNS readback
+
+Live LAN DNS validation [job 2107](https://awx.ambitiouscake.com/jobs/playbook/2107/output)
+on Vigor2927Lac firmware 4.5.2.2 (`b4c923a`) used Paramiko and the verified SSH
+host key. `drayos_dns` returned matching primary/secondary IPv4 settings for
+all eight LANs in normal and check mode without changes. This proves readback
+only, not DNS setter behaviour or upstream resolver selection.
+
 ## AWX fixture validation
 
 Use `tests/awx/validate_vigor2927lac.yml` in an AWX project pinned to the PR

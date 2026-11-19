@@ -1,0 +1,2 @@
+minor_changes:
+  - drayos_dns - Gather and parse per-LAN IPv4 DNS settings on Vigor2927Lac firmware 4.5.2.2 without configuration changes.
