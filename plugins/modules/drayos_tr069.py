@@ -46,7 +46,7 @@ notes:
     Flag is opaque metadata, not an interpreted data type.
   - Writable reports the device metadata only and does not qualify a setter.
   - Missing or malformed framing fails rather than guessing an empty value.
-  - The content-length header in names responses is recognised but its byte-count
+  - An optional content-length header in names responses is recognised but its byte-count
     semantics have not been qualified; completeness uses declared count and unique paths.
 attributes:
   check_mode:

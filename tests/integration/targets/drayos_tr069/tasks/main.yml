@@ -39,9 +39,9 @@
     query: names
     parameter: InternetGatewayDevice.DeviceInfo.
     running_config: |
-      Total number of parameter is 1
-      Total content length of parameter is 44
       InternetGatewayDevice.DeviceInfo.Manufacturer
+
+      Total number of parameter is 1
   register: parsed_names
   no_log: true
 

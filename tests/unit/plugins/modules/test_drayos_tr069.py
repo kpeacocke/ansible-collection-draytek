@@ -57,12 +57,21 @@ def test_names_validate_count_uniqueness_and_subtree():
     assert parse_names(empty, ROOT)["names"] == []
 
 
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_names_accept_the_observed_count_trailer_without_a_length_header(newline):
+    output = newline.join([LEAF, "", ROOT + "ModelName", "", "", "Total number of parameter is 2"])
+    assert parse_names(output, ROOT) == {
+        "parameter": ROOT, "names": [LEAF, ROOT + "ModelName"], "count": 2,
+    }
+
+
 @pytest.mark.parametrize("output", [
     "", NAMES.replace("is 2", "is 3"), NAMES + LEAF,
     NAMES.replace(ROOT + "ModelName", LEAF),
     NAMES.replace(ROOT + "ModelName", "InternetGatewayDevice.Other.Name"),
     NAMES + "\n--- MORE ---", NAMES + "\nSECRET",
     NAMES + "\nTotal number of parameter is 2",
+    NAMES + "\nTotal content length of parameter is 99",
     NAMES.replace("Total content length", "Unknown content length"),
     NAMES.replace("\r\n", "\v"),
     NAMES.replace(ROOT + "ModelName", ROOT + "Object.NestedName"),

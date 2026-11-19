@@ -76,6 +76,6 @@ def parse_names(output: str, parameter: str) -> dict[str, object]:
         else:
             raise ParseError("Unrecognised or out-of-subtree TR-069 names response")
     count_matches = len(counts) == 1 and (counts[0].lstrip("0") or "0") == str(len(names))
-    if not count_matches or len(lengths) != 1 or len(set(names)) != len(names):
+    if not count_matches or len(lengths) > 1 or len(set(names)) != len(names):
         raise ParseError("Incomplete or ambiguous TR-069 parameter names")
     return {"parameter": parameter, "names": names, "count": len(names)}
