@@ -98,3 +98,16 @@ def test_parsers_handle_malformed_output_without_inventing_values(parser, expect
 
 def test_empty_hostname_does_not_consume_next_line():
     assert facts.parse_sys_version("Router Name: \nRevision: abc").hostname is None
+
+
+def test_identification_uses_the_real_header_not_unrelated_embedded_labels():
+    response = "Description Router Model: Vigor9999\n" + _read_live("sys_version.txt")
+    info = facts.parse_sys_version(response)
+    assert info.model == "Vigor2927Lac"
+    assert info.firmware_version == "4.5.2.2"
+
+
+def test_unrelated_version_label_is_not_firmware_identification():
+    info = facts.parse_sys_version("Router Model: Vigor2927Lac\nDescription Version: 4.5.2.2")
+    assert info.model == "Vigor2927Lac"
+    assert info.firmware_version is None
