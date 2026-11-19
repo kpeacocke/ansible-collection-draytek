@@ -6,6 +6,10 @@ to **Vigor2927Lac firmware 4.5.2.2**. Only the primary server is managed; the
 secondary field is read and verified. Server deletion, clock values, time zones,
 synchronisation mode and enablement are not managed or verified.
 
+The write-platform check requires unambiguous identification labels. Embedded
+model/version text in unrelated fields and values on a following line cannot
+satisfy the guard. Qualified inline model/version headers remain recognised.
+
 ## Behaviour
 
 ```yaml
