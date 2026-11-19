@@ -1,0 +1,97 @@
+---
+- name: Qualify or verify restoration of LAN7 primary DNS
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  vars:
+    ansible_persistent_log_messages: false
+  pre_tasks:
+    - name: Require explicit mode and private, bounded execution
+      ansible.builtin.assert:
+        that:
+          - dns_lan7_mode | default('') in ['qualify_once', 'verify_restored']
+          - dns_lan7_mode != 'qualify_once' or dns_lan7_write_approved | default(false) | bool
+          - not ansible_check_mode
+          - not ansible_persistent_log_messages | bool
+          - ansible_play_hosts_all == ['HomeOne']
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+  tasks:
+    - name: Read and verify exact router platform privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - sys version
+        retries: 1
+      register: dns_platform
+      no_log: true
+
+    - name: Require the qualified hardware model and firmware
+      ansible.builtin.assert:
+        that:
+          - dns_platform.stdout[0] is search('(?m)^[ \t]*Router Model:[ \t]*Vigor2927Lac[ \t]+Version:[ \t]*4\.5\.2\.2(?:[ \t\r]|$)')
+
+    - name: Gather DNS baseline privately
+      kpeacocke.draytek.drayos_dns:
+      register: dns_baseline
+      no_log: true
+
+    - name: Require both LAN7 DNS settings to be unset
+      ansible.builtin.assert:
+        that:
+          - dns_baseline.gathered.LAN7.primary is none
+          - dns_baseline.gathered.LAN7.secondary is none
+
+    - name: Execute only the approved LAN7 primary DNS qualification
+      when: dns_lan7_mode == 'qualify_once'
+      block:
+        - name: Read LAN settings privately before the write
+          kpeacocke.draytek.drayos_command:
+            commands:
+              - command: show lan
+                prompt: "{{ [pager_prompt] * 64 }}"
+                answer: "{{ [' '] * 64 }}"
+                newline: false
+                check_all: true
+            retries: 1
+          vars:
+            pager_prompt: >-
+              --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+          register: dns_lan_status
+          no_log: true
+
+        - name: Require LAN7 to be disabled
+          ansible.builtin.assert:
+            that:
+              - dns_lan_status.stdout[0] | regex_findall('(?m)^[ \t%]*\[[VX]\][ \t]*LAN7(?=[ \t])') | length == 1
+              - dns_lan_status.stdout[0] is search('(?m)^[ \t%]*\[X\][ \t]*LAN7(?=[ \t])')
+            fail_msg: LAN7 is not demonstrably disabled; no setter will run.
+
+        - name: Set only the temporary LAN7 primary resolver
+          kpeacocke.draytek.drayos_command:
+            commands:
+              - srv dhcp dns1 lan7 192.0.2.53
+            retries: 1
+          changed_when: true
+          no_log: true
+
+        - name: Gather all LAN DNS fields after the change privately
+          kpeacocke.draytek.drayos_dns:
+          register: dns_after
+          no_log: true
+
+        - name: Verify the exact change and unchanged other LAN DNS fields
+          ansible.builtin.assert:
+            that:
+              - >-
+                dns_after.gathered == dns_baseline.gathered |
+                combine({'LAN7': {'primary': '192.0.2.53'}}, recursive=true)
+            fail_msg: Unexpected DNS readback; use the independently approved HTTPS recovery.
+          no_log: true
+
+    - name: Report the approved next step
+      ansible.builtin.debug:
+        msg: >-
+          {{ 'Temporary LAN7 primary DNS verified; operator must restore it via HTTPS now.'
+             if dns_lan7_mode == 'qualify_once'
+             else 'Both LAN7 DNS fields independently verified as unset.' }}
