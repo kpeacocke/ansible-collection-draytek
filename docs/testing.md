@@ -26,6 +26,14 @@ from a checkout located under `ansible_collections/kpeacocke/draytek`, with
 the collection dependencies installed alongside it. Docker and the
 Ansible test containers are required for that command.
 
+The unit suite builds a collection archive and checks its contents: runtime
+plugins, documentation and integration targets must remain present, while
+repository governance tooling and the tests that require it must not ship.
+CI installs the built archive into an isolated collection path and runs the
+hostname integration target from outside the source checkout. Repository-only
+tests still run from source in CI and AWX; their exclusion affects only the
+release archive.
+
 ## Baseline update repeatability
 
 The updater includes the no-op and bytecode fixes from

@@ -18,8 +18,11 @@ repository: "https://github.com/kpeacocke/ansible-collection-draytek"
 issues: "https://github.com/kpeacocke/ansible-collection-draytek/issues"
 build_ignore:
   # Repository governance/tooling, not collection content.
+  - .github
   - .baseline
   - scripts
+  - config
+  - AGENTS.md
   - baseline.sh
   - baseline.ps1
   - requirements-dev.txt
@@ -30,5 +33,8 @@ build_ignore:
   - .venv
   - .cache
 
+  - tests/unit/test_project_factory.py
+  - tests/unit/test_ci_workflows.py
+  - tests/unit/test_collection_build.py
   - tests/awx/collections
   - docs/command-reference/sources
