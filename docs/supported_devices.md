@@ -99,8 +99,14 @@ that both LAN7 DNS settings were unset. These tests do not qualify changes
 on active LANs, secondary DNS writes, effective resolver selection or reboot
 persistence. The public `drayos_dns` module restricts `state: merged` to
 disabled LAN7 on this exact firmware and verifies all eight LAN DNS pairs
-after a write. Use `primary_server: "0.0.0.0"` to clear the field. The CLI
-qualification is not a live module-write test.
+after a write. Use `primary_server: "0.0.0.0"` to clear the field.
+[Job 2117](https://awx.ambitiouscake.com/jobs/playbook/2117/output) at `2c76a32`
+verified both check-mode predictions and unchanged readback.
+[Job 2120](https://awx.ambitiouscake.com/jobs/playbook/2120/output) at `f7496dd`
+verified the public module's set, unchanged repeat, clear and full baseline
+restoration. An independent read-only
+[job 2122](https://awx.ambitiouscake.com/jobs/playbook/2122/output) at the same
+revision confirmed both LAN7 DNS fields were unset.
 
 ## AWX fixture validation
 
