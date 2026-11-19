@@ -33,6 +33,7 @@ jobs:
           ANSIBLE_COLLECTIONS_PATH="$smoke_root/collections" \
             ansible-doc --json kpeacocke.draytek.drayos_command \
               kpeacocke.draytek.drayos_facts kpeacocke.draytek.drayos_hostname \
+              kpeacocke.draytek.drayos_ntp \
               > plugin-docs.json
           python - <<'PY'
           import json
@@ -40,11 +41,13 @@ jobs:
               docs = json.load(stream)
           assert set(docs) == {
               "kpeacocke.draytek." + name
-              for name in ("drayos_command", "drayos_facts", "drayos_hostname")
+              for name in ("drayos_command", "drayos_facts", "drayos_hostname", "drayos_ntp")
           }
           PY
           ANSIBLE_COLLECTIONS_PATH="$smoke_root/collections" \
             ansible-playbook "$smoke_root/collections/ansible_collections/kpeacocke/draytek/tests/integration/hostname.yml" -i localhost,
+          ANSIBLE_COLLECTIONS_PATH="$smoke_root/collections" \
+            ansible-playbook "$smoke_root/collections/ansible_collections/kpeacocke/draytek/tests/integration/ntp.yml" -i localhost,
 
   units:
     # Uses plain pytest, not `ansible-test units --docker`: the only maintained

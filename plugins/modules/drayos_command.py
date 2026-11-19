@@ -47,6 +47,7 @@ options:
     default: 1
 notes:
   - This module never reports C(changed=true).
+  - Transport failures report the error class but suppress device output.
   - In check mode, only commands starting with C(show) are permitted, since
     this module does not distinguish mutating from non-mutating commands
     otherwise.
@@ -158,7 +159,9 @@ def main() -> None:
         try:
             responses = run_commands(module, commands)
         except DrayTekError as exc:
-            module.fail_json(msg=str(exc))
+            module.fail_json(
+                msg=f"Command execution failed ({type(exc).__name__}); device output suppressed"
+            )
             return
 
         for item in list(conditionals):

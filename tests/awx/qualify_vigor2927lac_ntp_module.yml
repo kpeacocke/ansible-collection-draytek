@@ -1,0 +1,5 @@
+---
+- name: Qualify the NTP resource only with specific production-test approval
+  ansible.builtin.import_playbook: qualify_vigor2927lac_ntp.yml
+  vars:
+    drayos_ntp_qualify_module: true

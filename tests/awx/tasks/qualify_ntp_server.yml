@@ -1,0 +1,174 @@
+---
+- name: Capture the NTP baseline
+  kpeacocke.draytek.drayos_command:
+    commands: [sys time show]
+  register: ntp_baseline
+  no_log: true
+
+- name: Validate the baseline before any write
+  ansible.builtin.assert:
+    that:
+      - ntp_baseline.stdout | length == 1
+      - ntp_baseline.stdout[0] | regex_findall('(?m)^[ \t]*Primary NTP Server:') | length == 1
+      - ntp_baseline.stdout[0] | regex_findall('(?m)^[ \t]*Secondary NTP Server:') | length == 1
+      - primary | length == 1
+      - secondary_empty | length == 1
+      - primary[0] | lower != 'time.cloudflare.com'
+    fail_msg: The NTP baseline is not eligible for this specific test.
+  vars:
+    primary: "{{ ntp_baseline.stdout[0] | regex_findall(primary_pattern) }}"
+    secondary_empty: "{{ ntp_baseline.stdout[0] | regex_findall(secondary_empty_pattern) }}"
+    primary_pattern: '(?m)^[ \t]*Primary NTP Server:[ \t]*\[([A-Za-z0-9][A-Za-z0-9.-]{0,38})\][ \t\r]*$'
+    secondary_empty_pattern: '(?m)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$'
+  no_log: true
+
+- name: Retain the original primary server privately
+  ansible.builtin.set_fact:
+    ntp_original_primary: >-
+      {{ (ntp_baseline.stdout[0] |
+          regex_findall('(?m)^[ \t]*Primary NTP Server:[ \t]*\[([A-Za-z0-9][A-Za-z0-9.-]{0,38})\][ \t\r]*$'))[0] }}
+    ntp_primary_changed: false
+  no_log: true
+
+- name: Apply the exact approved test and restore the baseline
+  block:
+    - name: Apply the temporary server to index 1
+      kpeacocke.draytek.drayos_command:
+        commands: [sys time server 1 time.cloudflare.com]
+      changed_when: true
+      no_log: true
+      when: not (drayos_ntp_qualify_module | default(false) | bool)
+
+    - name: Qualify the resource module through a complete change and repeat cycle
+      when: drayos_ntp_qualify_module | default(false) | bool
+      block:
+        - name: Apply the temporary primary with the NTP resource module
+          kpeacocke.draytek.drayos_ntp:
+            state: merged
+            config:
+              primary_server: time.cloudflare.com
+          register: ntp_resource_changed
+          no_log: true
+
+        - name: Repeat the identical desired state
+          kpeacocke.draytek.drayos_ntp:
+            state: merged
+            config:
+              primary_server: time.cloudflare.com
+          register: ntp_resource_repeated
+          no_log: true
+
+        - name: Predict restoration without changing the temporary state
+          kpeacocke.draytek.drayos_ntp:
+            state: merged
+            config:
+              primary_server: "{{ ntp_original_primary }}"
+          check_mode: true
+          diff: true
+          register: ntp_resource_checked
+          no_log: true
+
+        - name: Gather actual state after the check-mode prediction
+          kpeacocke.draytek.drayos_ntp:
+            state: gathered
+          register: ntp_resource_gathered
+          no_log: true
+
+        - name: Require changed then idempotent and correct check mode
+          ansible.builtin.assert:
+            that:
+              - ntp_resource_changed.changed
+              - not ntp_resource_repeated.changed
+              - ntp_resource_changed.after.primary_server == 'time.cloudflare.com'
+              - ntp_resource_changed.after.secondary_server == ''
+              - ntp_resource_repeated.before == ntp_resource_repeated.after
+              - ntp_resource_repeated.after == ntp_resource_changed.after
+              - ntp_resource_checked.changed
+              - ntp_resource_checked.before == ntp_resource_changed.after
+              - ntp_resource_checked.after.primary_server == ntp_original_primary | lower
+              - ntp_resource_checked.after.secondary_server == ''
+              - ntp_resource_checked.diff.before == ntp_resource_checked.before
+              - ntp_resource_checked.diff.after == ntp_resource_checked.after
+              - not ntp_resource_gathered.changed
+              - ntp_resource_gathered.gathered == ntp_resource_changed.after
+          no_log: true
+  always:
+    - name: Read back and restore when the observed state is safe
+      block:
+        - name: Read both NTP servers after the attempt
+          kpeacocke.draytek.drayos_command:
+            commands: [sys time show]
+          register: ntp_after_attempt
+          no_log: true
+
+        - name: Identify the observed primary and secondary state
+          ansible.builtin.set_fact:
+            ntp_primary_matches_test: >-
+              {{ ntp_after_attempt.stdout[0] |
+                 regex_findall('(?m)^[ \t]*Primary NTP Server:[ \t]*\[time\.cloudflare\.com\][ \t\r]*$') | length == 1 }}
+            ntp_primary_matches_original: >-
+              {{ ntp_after_attempt.stdout[0] |
+                 regex_findall('(?m)^[ \t]*Primary NTP Server:[ \t]*\[([A-Za-z0-9][A-Za-z0-9.-]{0,38})\][ \t\r]*$')
+                 == [ntp_original_primary] }}
+            ntp_secondary_still_empty: >-
+              {{ ntp_after_attempt.stdout[0] |
+                 regex_findall('(?m)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$') | length == 1 }}
+          no_log: true
+
+        - name: Stop if the observed state cannot be restored safely with CLI
+          ansible.builtin.assert:
+            that:
+              - ntp_after_attempt.stdout[0] | regex_findall('(?m)^[ \t]*Primary NTP Server:') | length == 1
+              - ntp_after_attempt.stdout[0] | regex_findall('(?m)^[ \t]*Secondary NTP Server:') | length == 1
+              - ntp_secondary_still_empty | bool
+              - ntp_primary_matches_test | bool or ntp_primary_matches_original | bool
+            fail_msg: NTP state changed unexpectedly; restore the original settings through HTTPS.
+
+        - name: Record whether index 1 changed the primary server
+          ansible.builtin.set_fact:
+            ntp_primary_changed: "{{ ntp_primary_matches_test | bool }}"
+
+        - name: Restore the original primary server
+          kpeacocke.draytek.drayos_command:
+            commands:
+              - "sys time server 1 {{ ntp_original_primary }}"
+          when: ntp_primary_changed | bool
+          changed_when: true
+          no_log: true
+
+        - name: Verify both original NTP settings after restoration
+          kpeacocke.draytek.drayos_command:
+            commands: [sys time show]
+          register: ntp_after_restore
+          no_log: true
+
+        - name: Require the original primary and empty secondary
+          ansible.builtin.assert:
+            that:
+              - ntp_after_restore.stdout[0] | regex_findall('(?m)^[ \t]*Primary NTP Server:') | length == 1
+              - ntp_after_restore.stdout[0] | regex_findall('(?m)^[ \t]*Secondary NTP Server:') | length == 1
+              - >-
+                ntp_after_restore.stdout[0] |
+                regex_findall('(?m)^[ \t]*Primary NTP Server:[ \t]*\[([A-Za-z0-9][A-Za-z0-9.-]{0,38})\][ \t\r]*$')
+                == [ntp_original_primary]
+              - >-
+                ntp_after_restore.stdout[0] |
+                regex_findall('(?m)^[ \t]*Secondary NTP Server:[ \t]*\[[ \t]*\][ \t\r]*$') | length == 1
+          no_log: true
+      rescue:
+        - name: Require independent recovery after an unsafe or failed restoration
+          ansible.builtin.fail:
+            msg: NTP restoration could not be verified; restore the original settings through HTTPS.
+
+- name: Require evidence that index 1 changed the primary server
+  ansible.builtin.assert:
+    that:
+      - ntp_primary_changed | bool
+    fail_msg: The approved command did not change the primary server; no capability is qualified.
+
+- name: Report qualification without exposing server values
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'The NTP resource changed and verified the primary, repeated without changes, and passed check mode. '
+         if drayos_ntp_qualify_module | default(false) | bool else '' }}
+      Index 1 changed the primary NTP server and the original settings were restored.

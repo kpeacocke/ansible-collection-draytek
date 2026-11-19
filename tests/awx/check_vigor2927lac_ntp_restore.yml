@@ -1,0 +1,43 @@
+---
+- name: Independently verify NTP settings after an interrupted qualification
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  pre_tasks:
+    - name: Require the expected private baseline digest
+      ansible.builtin.assert:
+        that:
+          - expected_primary_sha256 is defined
+          - expected_primary_sha256 is match('^[a-f0-9]{64}$')
+        fail_msg: Supply the SHA-256 digest of the independently captured primary server.
+      no_log: true
+
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+
+  tasks:
+    - name: Read current NTP settings privately
+      kpeacocke.draytek.drayos_command:
+        commands: [sys time show]
+      register: ntp_current
+      no_log: true
+
+    - name: Require the original primary and empty secondary
+      ansible.builtin.assert:
+        that:
+          - ntp_current.stdout | length == 1
+          - ntp_current.stdout[0] | regex_findall('(?m)^[ \t]*Primary NTP Server:') | length == 1
+          - ntp_current.stdout[0] | regex_findall('(?m)^[ \t]*Secondary NTP Server:') | length == 1
+          - primary | length == 1
+          - primary[0] | hash('sha256') == expected_primary_sha256
+          - secondary_empty | length == 1
+        fail_msg: The NTP settings do not match the independently captured baseline.
+      vars:
+        primary: "{{ ntp_current.stdout[0] | regex_findall('(?m)^[ \\t]*Primary NTP Server:[ \\t]*\\[([^\\]\\r\\n]+)\\][ \\t\\r]*$') }}"
+        secondary_empty: "{{ ntp_current.stdout[0] | regex_findall('(?m)^[ \\t]*Secondary NTP Server:[ \\t]*\\[[ \\t]*\\][ \\t\\r]*$') }}"
+      no_log: true
+
+    - name: Report verified restoration without exposing server values
+      ansible.builtin.debug:
+        msg: Both NTP server settings match the independently captured baseline.

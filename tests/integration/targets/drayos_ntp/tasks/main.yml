@@ -1,0 +1,50 @@
+---
+- name: Parse both server fields without a device
+  kpeacocke.draytek.drayos_ntp:
+    state: parsed
+    running_config: |
+      Primary NTP Server: [TIME.Example]
+      Secondary NTP Server: []
+  check_mode: true
+  register: parsed_ntp
+
+- name: Require normalised server fields and no changes
+  ansible.builtin.assert:
+    that:
+      - not parsed_ntp.changed
+      - parsed_ntp.parsed == {'primary_server':'time.example', 'secondary_server':''}
+
+- name: Reject incomplete output rather than guessing defaults
+  block:
+    - name: Parse output with a missing secondary field
+      kpeacocke.draytek.drayos_ntp:
+        state: parsed
+        running_config: "Primary NTP Server: [time.example]"
+
+    - name: Require malformed parsing to fail
+      ansible.builtin.fail:
+        msg: Incomplete NTP output was unexpectedly accepted
+  rescue:
+    - name: Require a controlled parser failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'Cannot determine both unambiguous NTP server fields' in ansible_failed_result.msg"
+
+- name: Reject CLI injection before attempting a connection
+  block:
+    - name: Supply an invalid server
+      kpeacocke.draytek.drayos_ntp:
+        state: merged
+        config:
+          primary_server: "time.example; sys reboot"
+
+    - name: Require invalid configuration to fail
+      ansible.builtin.fail:
+        msg: Invalid NTP server was unexpectedly accepted
+  rescue:
+    - name: Require validation rather than a connection failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'NTP server must be an ASCII DNS name' in ansible_failed_result.msg"

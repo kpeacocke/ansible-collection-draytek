@@ -1,0 +1,10 @@
+---
+- name: Exercise installed NTP parsing and validation without a device
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Run offline NTP integration target
+      ansible.builtin.import_tasks: targets/drayos_ntp/tasks/main.yml

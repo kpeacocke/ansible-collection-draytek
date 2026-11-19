@@ -1,0 +1,6 @@
+minor_changes:
+  - >-
+    drayos_ntp - add primary NTP server management on Vigor2927Lac firmware 4.5.2.2,
+    with platform guards, check/diff mode and mandatory readback of both server fields.
+bugfixes:
+  - drayos_command - suppress raw device output in transport failure messages.

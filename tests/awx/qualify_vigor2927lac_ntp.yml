@@ -1,0 +1,42 @@
+---
+- name: Qualify one approved NTP server command and restore the baseline
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  pre_tasks:
+    - name: Require explicit NTP test and recovery approval
+      ansible.builtin.assert:
+        that:
+          - drayos_ntp_test_approved | default(false) | bool
+          - drayos_ntp_recovery_ready | default(false) | bool
+          - not ansible_check_mode
+        fail_msg: Approve the exact NTP test and HTTPS recovery before device access.
+
+    - name: Require the approved router address and transport
+      ansible.builtin.assert:
+        that:
+          - ansible_host == '192.168.5.1'
+          - ansible_port | default(22) | int == 22
+          - ansible_network_cli_ssh_type | default('') == 'paramiko'
+        fail_msg: This test is restricted to the approved router and Paramiko transport.
+
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+
+    - name: Verify the exact router and firmware
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: [default]
+      register: ntp_platform
+      no_log: true
+
+    - name: Require the qualified platform
+      ansible.builtin.assert:
+        that:
+          - ntp_platform.ansible_facts.drayos.default.model == 'Vigor2927Lac'
+          - ntp_platform.ansible_facts.drayos.default.firmware_version == '4.5.2.2'
+      no_log: true
+
+  tasks:
+    - name: Perform the bounded NTP qualification
+      ansible.builtin.import_tasks: tasks/qualify_ntp_server.yml

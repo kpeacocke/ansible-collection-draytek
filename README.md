@@ -2,8 +2,9 @@
 
 This Ansible collection provides SSH-based automation for DrayTek Vigor routers
 running DrayOS, using `ansible.netcommon.network_cli`. It currently includes
-`drayos_command`, read-only `drayos_facts`, and an initial
-[`drayos_hostname` reader](docs/hostname.md). Hostname configuration is not
+`drayos_command`, read-only `drayos_facts`, an initial
+[`drayos_hostname` reader](docs/hostname.md), and a
+[`drayos_ntp` primary-server resource](docs/ntp.md). Hostname configuration is not
 supported; see the linked evidence and safety limits.
 
 VigorSwitch, VigorAP and VigorACS are not supported. The
