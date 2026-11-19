@@ -159,6 +159,10 @@ def test_invalid_state_inputs_fail_before_device_access(device, invoke, args):
     VERSION.replace("4.5.2.2", "4.5.2.3"),
     VERSION + "\nRouter Model: Vigor2927Lac Version: 4.5.2.2\n",
     "unrecognised output",
+    "Description Router Model: Vigor2927Lac\nRouter Model: Vigor2927Vac Version: 4.5.2.2\n",
+    "Router Model:\nVigor2927Lac Version: 4.5.2.2\n",
+    "Router Model: Vigor2927Lac Version:\n4.5.2.2\n",
+    "Router Model: Vigor2927Lac\nDescription Version: 4.5.2.2\n",
 ])
 def test_other_or_ambiguous_platforms_cannot_write(device, invoke, version):
     device.version = version

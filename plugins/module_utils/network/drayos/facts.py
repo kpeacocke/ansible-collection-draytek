@@ -15,8 +15,10 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.m
 
 _SYS_VERSION_PATTERNS = {
     "hostname": re.compile(r"^[ \t]*Router Name:[ \t]*([^\r\n]*)", re.MULTILINE),
-    "model": re.compile(r"Router Model:\s*(\S+)"),
-    "version": re.compile(r"Version:\s*(\S+)"),
+    "model": re.compile(r"^[ \t]*Router Model:[ \t]*(\S+)", re.MULTILINE),
+    "version": re.compile(
+        r"^[ \t]*(?:Router Model:[ \t]*\S+[ \t]+)?Version:[ \t]*(\S+)", re.MULTILINE
+    ),
     "revision": re.compile(r"Revision:\s*(.+)"),
     "serial_no": re.compile(r"Router serial no:\s*(.+)"),
 }
