@@ -10,9 +10,10 @@
     - name: Require explicit mode and private, bounded execution
       ansible.builtin.assert:
         that:
-          - dns_lan7_mode | default('') in ['qualify_once', 'restore_once', 'verify_restored']
+          - dns_lan7_mode | default('') in ['qualify_once', 'restore_once', 'verify_restored', 'module_cycle']
           - dns_lan7_mode != 'qualify_once' or dns_lan7_write_approved | default(false) | bool
           - dns_lan7_mode != 'restore_once' or dns_lan7_restore_approved | default(false) | bool
+          - dns_lan7_mode != 'module_cycle' or dns_lan7_module_cycle_approved | default(false) | bool
           - not ansible_check_mode
           - not ansible_persistent_log_messages | bool
           - ansible_play_hosts_all == ['HomeOne']
@@ -100,6 +101,75 @@
                 combine({'LAN7': {'primary': '192.0.2.53' if dns_lan7_mode == 'qualify_once' else none}}, recursive=true)
             fail_msg: Unexpected DNS readback; use the independently approved HTTPS recovery.
           no_log: true
+
+    - name: Qualify the public module with automatic restoration
+      when: dns_lan7_mode == 'module_cycle'
+      block:
+        - name: Set the approved temporary primary resolver with the public module
+          kpeacocke.draytek.drayos_dns:
+            state: merged
+            lan: LAN7
+            primary_server: "192.0.2.53"
+          register: dns_module_set
+          no_log: true
+
+        - name: Repeat the same desired primary resolver
+          kpeacocke.draytek.drayos_dns:
+            state: merged
+            lan: LAN7
+            primary_server: "192.0.2.53"
+          register: dns_module_repeat
+          no_log: true
+
+        - name: Verify the module changed only on the first invocation
+          ansible.builtin.assert:
+            that:
+              - dns_module_set.changed
+              - dns_module_set.before is none
+              - dns_module_set.after == '192.0.2.53'
+              - not dns_module_repeat.changed
+              - dns_module_repeat.after == '192.0.2.53'
+          no_log: true
+      always:
+        - name: Read current DNS before attempting cleanup
+          kpeacocke.draytek.drayos_dns:
+          register: dns_cleanup_before
+          no_log: true
+
+        - name: Refuse to overwrite an unexpected primary DNS value
+          ansible.builtin.assert:
+            that:
+              - dns_cleanup_before.gathered.LAN7.primary in [none, '192.0.2.53']
+            fail_msg: LAN7 primary DNS is neither unset nor the temporary value; inspect independently.
+
+        - name: Clear the primary resolver with the public module
+          kpeacocke.draytek.drayos_dns:
+            state: merged
+            lan: LAN7
+            primary_server: "0.0.0.0"
+          register: dns_module_clear
+          no_log: true
+
+        - name: Read the full DNS baseline again
+          kpeacocke.draytek.drayos_dns:
+          register: dns_cleanup_after
+          no_log: true
+
+        - name: Verify the entire baseline and expected clear status
+          ansible.builtin.assert:
+            that:
+              - dns_cleanup_after.gathered == dns_baseline.gathered
+              - dns_module_clear.changed == (dns_cleanup_before.gathered.LAN7.primary is not none)
+          no_log: true
+
+    - name: Require that the module performed the restoration
+      when: dns_lan7_mode == 'module_cycle'
+      ansible.builtin.assert:
+        that:
+          - dns_module_clear.changed
+          - dns_module_clear.before == '192.0.2.53'
+          - dns_module_clear.after is none
+      no_log: true
 
     - name: Report the approved next step
       ansible.builtin.debug:
