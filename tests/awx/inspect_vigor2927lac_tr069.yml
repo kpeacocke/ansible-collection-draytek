@@ -1,0 +1,34 @@
+---
+- name: Inspect TR-069 product-information response structure without configuration writes
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  pre_tasks:
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+  tasks:
+    - name: Read previously discovered product-information parameters privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - "sys tr069 get {{ item }}"
+      loop:
+        - InternetGatewayDevice.DeviceInfo.Manufacturer
+        - InternetGatewayDevice.DeviceInfo.ModelName
+        - InternetGatewayDevice.DeviceInfo.SoftwareVersion
+      register: tr069_product_reads
+      no_log: true
+
+    - name: Report only response structure and completeness metadata
+      ansible.builtin.debug:
+        msg:
+          parameter: "{{ item.item }}"
+          response_count: "{{ item.stdout | length }}"
+          declared_counts: >-
+            {{ item.stdout[0] | regex_findall('Total number of parameter is[ \t]+([0-9]+)') }}
+          contains_requested_path: "{{ item.item in item.stdout[0] }}"
+          response_shape: >-
+            {{ item.stdout[0] | replace(item.item, '<parameter>') | regex_replace('[A-Za-z0-9_]+', 'x') }}
+      loop: "{{ tr069_product_reads.results }}"
+      loop_control:
+        label: "{{ item.item }}"
