@@ -24,6 +24,10 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.e
     ConnectionError as DrayOSConnectionError,
 )
 
+# Anchor the captured Lac pager at the current buffer end, not an earlier page.
+PAGER_PROMPT = r"--- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$"
+MAX_PAGE_ADVANCES = 64
+
 
 def get_capabilities(module: Any) -> dict:
     """Return (and cache on the module) the persistent connection's capabilities."""

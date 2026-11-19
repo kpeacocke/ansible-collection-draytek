@@ -133,3 +133,15 @@ checks readback, a repeat and check mode, and restores with the independently
 qualified CLI command. Do not schedule it or treat historical approval as
 permission for a new run. AWX streaming failures can hide worker progress;
 always perform the separate read-only baseline check after a live cycle.
+
+## TR-069 validation
+
+The [read-only TR-069 contract](tr069.md) records format provenance and limits.
+The installed archive runs `tests/integration/tr069.yml`. A native Ansible
+subprocess test checks verbose callback output for absence of a synthetic
+confidential sentinel and proves that unprotected reads fail before device access.
+Transport tests also reject raw persistent logging before a TR-069 command.
+
+`tests/awx/check_vigor2927lac_tr069.yml` reads only three known product fields
+and next-level DeviceInfo names, checks their metadata and check-mode equality,
+and reports no parameter values. It sends no setters or persistence commands.

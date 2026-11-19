@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - drayos_tr069 - add private read-only single-parameter and next-level names queries with strict parsing and offline support.
+security_fixes:
+  - Require task-level no_log for TR-069 module reads and reject raw persistent connection logging before these commands execute.

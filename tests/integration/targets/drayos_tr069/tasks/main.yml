@@ -1,0 +1,72 @@
+---
+- name: Reject unprotected reads before device access
+  block:
+    - name: Attempt a read without task-level privacy
+      kpeacocke.draytek.drayos_tr069:
+        parameter: InternetGatewayDevice.DeviceInfo.Manufacturer
+
+    - name: Require unprotected invocation to fail
+      ansible.builtin.fail:
+        msg: Unprotected TR-069 read was accepted
+  rescue:
+    - name: Require the explicit privacy guard
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'requires task-level no_log: true' in ansible_failed_result.msg"
+
+- name: Parse a synthetic confidential value with callback privacy
+  kpeacocke.draytek.drayos_tr069:
+    state: parsed
+    parameter: InternetGatewayDevice.DeviceInfo.Manufacturer
+    running_config: "TR069_PRIVACY_SENTINEL\n\nFlag: 3022\n\nWritable: 0"
+  check_mode: true
+  register: parsed_parameter
+  no_log: true
+
+- name: Require exact value and unchanged result privately
+  ansible.builtin.assert:
+    that:
+      - not parsed_parameter.changed
+      - parsed_parameter.parsed.value == 'TR069_PRIVACY_SENTINEL'
+      - parsed_parameter.parsed.flag == '3022'
+      - not parsed_parameter.parsed.writable
+  no_log: true
+
+- name: Parse complete next-level names without a device
+  kpeacocke.draytek.drayos_tr069:
+    state: parsed
+    query: names
+    parameter: InternetGatewayDevice.DeviceInfo.
+    running_config: |
+      Total number of parameter is 1
+      Total content length of parameter is 44
+      InternetGatewayDevice.DeviceInfo.Manufacturer
+  register: parsed_names
+  no_log: true
+
+- name: Require complete parameter discovery
+  ansible.builtin.assert:
+    that:
+      - not parsed_names.changed
+      - parsed_names.parsed.count == 1
+      - parsed_names.parsed.names == ['InternetGatewayDevice.DeviceInfo.Manufacturer']
+  no_log: true
+
+- name: Reject injection without a device connection
+  block:
+    - name: Supply a malicious parameter
+      kpeacocke.draytek.drayos_tr069:
+        parameter: "InternetGatewayDevice.DeviceInfo.Manufacturer; sys reboot"
+      no_log: true
+
+    - name: Require malicious input to fail
+      ansible.builtin.fail:
+        msg: Invalid TR-069 input was accepted
+  rescue:
+    - name: Require a controlled validation failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'ValidationError' in ansible_failed_result.msg"
+      no_log: true

@@ -21,7 +21,7 @@ class FakeConnection:
         return "OK"
 
     def get_option(self, option):
-        assert option == "single_user_mode"
+        assert option in ("single_user_mode", "persistent_log_messages")
         return False
 
 
@@ -139,3 +139,24 @@ def test_pager_does_not_override_explicit_prompt(cliconf, monkeypatch):
     command = {"command": "sys iface", "prompt": "custom", "answer": "x"}
     cliconf.run_commands([command])
     assert seen == [command]
+
+
+@pytest.mark.parametrize("check_rc", [False, True])
+@pytest.mark.parametrize("suffix", ["Manufacturer", " nextlevel"])
+def test_tr069_cannot_read_secrets_with_raw_connection_logging(
+    cliconf, monkeypatch, check_rc, suffix,
+):
+    monkeypatch.setattr(cliconf._connection, "get_option",
+                        lambda option: option == "persistent_log_messages")
+    command = "sys tr069 get InternetGatewayDevice.DeviceInfo." + suffix
+    with pytest.raises(AnsibleConnectionFailure, match="persistent_log_messages=false"):
+        cliconf.run_commands([command], check_rc=check_rc)
+    assert cliconf._connection._sent == []
+
+
+def test_tr069_read_works_when_raw_connection_logging_is_disabled(cliconf, monkeypatch):
+    seen = []
+    monkeypatch.setattr(cliconf, "send_command", lambda **kw: seen.append(kw) or "private value")
+    command = "sys tr069 get InternetGatewayDevice.DeviceInfo.Manufacturer"
+    assert cliconf.run_commands([command]) == ["private value"]
+    assert seen == [{"command": command}]

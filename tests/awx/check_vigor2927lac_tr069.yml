@@ -1,0 +1,62 @@
+---
+- name: Validate TR-069 product reads and names without configuration writes
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  pre_tasks:
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+  tasks:
+    - name: Gather product parameters privately
+      kpeacocke.draytek.drayos_tr069:
+        parameter: "{{ item }}"
+      loop:
+        - InternetGatewayDevice.DeviceInfo.Manufacturer
+        - InternetGatewayDevice.DeviceInfo.ModelName
+        - InternetGatewayDevice.DeviceInfo.SoftwareVersion
+      register: product_parameters
+      no_log: true
+
+    - name: Require observed product values and metadata
+      ansible.builtin.assert:
+        that:
+          - product_parameters.results[0].gathered.value | lower == 'draytek'
+          - product_parameters.results[1].gathered.value == 'Vigor2927Lac'
+          - product_parameters.results[2].gathered.value == '4.5.2.2'
+          - not item.changed
+          - item.gathered.parameter == item.item
+          - not item.gathered.writable
+          - item.gathered.flag in ['3022', '9022']
+      loop: "{{ product_parameters.results }}"
+      no_log: true
+
+    - name: Gather next-level product parameter names privately
+      kpeacocke.draytek.drayos_tr069:
+        parameter: InternetGatewayDevice.DeviceInfo.
+        query: names
+      register: product_names
+      no_log: true
+
+    - name: Read in check mode without writes
+      kpeacocke.draytek.drayos_tr069:
+        parameter: InternetGatewayDevice.DeviceInfo.Manufacturer
+      check_mode: true
+      register: checked_parameter
+      no_log: true
+
+    - name: Require matching check-mode value and complete names
+      ansible.builtin.assert:
+        that:
+          - not checked_parameter.changed
+          - checked_parameter.gathered == product_parameters.results[0].gathered
+          - not product_names.changed
+          - product_names.gathered.count == product_names.gathered.names | length
+          - "'InternetGatewayDevice.DeviceInfo.Manufacturer' in product_names.gathered.names"
+          - "'InternetGatewayDevice.DeviceInfo.ModelName' in product_names.gathered.names"
+          - "'InternetGatewayDevice.DeviceInfo.SoftwareVersion' in product_names.gathered.names"
+      no_log: true
+
+    - name: Report only the passed read-only contract
+      ansible.builtin.debug:
+        msg: TR-069 product values, metadata, complete names and check-mode equality passed without configuration writes.
