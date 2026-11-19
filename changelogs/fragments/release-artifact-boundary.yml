@@ -1,0 +1,2 @@
+bugfixes:
+  - Exclude repository governance files and their source-only tests from collection archives while preserving runtime plugins and collection tests.
