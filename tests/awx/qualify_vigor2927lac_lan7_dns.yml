@@ -10,8 +10,9 @@
     - name: Require explicit mode and private, bounded execution
       ansible.builtin.assert:
         that:
-          - dns_lan7_mode | default('') in ['qualify_once', 'verify_restored']
+          - dns_lan7_mode | default('') in ['qualify_once', 'restore_once', 'verify_restored']
           - dns_lan7_mode != 'qualify_once' or dns_lan7_write_approved | default(false) | bool
+          - dns_lan7_mode != 'restore_once' or dns_lan7_restore_approved | default(false) | bool
           - not ansible_check_mode
           - not ansible_persistent_log_messages | bool
           - ansible_play_hosts_all == ['HomeOne']
@@ -36,14 +37,15 @@
       register: dns_baseline
       no_log: true
 
-    - name: Require both LAN7 DNS settings to be unset
+    - name: Require the expected LAN7 baseline for the requested operation
       ansible.builtin.assert:
         that:
-          - dns_baseline.gathered.LAN7.primary is none
           - dns_baseline.gathered.LAN7.secondary is none
+          - dns_lan7_mode == 'restore_once' or dns_baseline.gathered.LAN7.primary is none
+          - dns_lan7_mode != 'restore_once' or dns_baseline.gathered.LAN7.primary in [none, '192.0.2.53']
 
-    - name: Execute only the approved LAN7 primary DNS qualification
-      when: dns_lan7_mode == 'qualify_once'
+    - name: Execute only the approved LAN7 primary DNS mutation
+      when: dns_lan7_mode == 'qualify_once' or (dns_lan7_mode == 'restore_once' and dns_baseline.gathered.LAN7.primary is not none)
       block:
         - name: Read LAN settings privately before the write
           kpeacocke.draytek.drayos_command:
@@ -68,9 +70,19 @@
             fail_msg: LAN7 is not demonstrably disabled; no setter will run.
 
         - name: Set only the temporary LAN7 primary resolver
+          when: dns_lan7_mode == 'qualify_once'
           kpeacocke.draytek.drayos_command:
             commands:
               - srv dhcp dns1 lan7 192.0.2.53
+            retries: 1
+          changed_when: true
+          no_log: true
+
+        - name: Attempt to restore only the LAN7 primary resolver
+          when: dns_lan7_mode == 'restore_once'
+          kpeacocke.draytek.drayos_command:
+            commands:
+              - srv dhcp dns1 lan7 0.0.0.0
             retries: 1
           changed_when: true
           no_log: true
@@ -85,13 +97,13 @@
             that:
               - >-
                 dns_after.gathered == dns_baseline.gathered |
-                combine({'LAN7': {'primary': '192.0.2.53'}}, recursive=true)
+                combine({'LAN7': {'primary': '192.0.2.53' if dns_lan7_mode == 'qualify_once' else none}}, recursive=true)
             fail_msg: Unexpected DNS readback; use the independently approved HTTPS recovery.
           no_log: true
 
     - name: Report the approved next step
       ansible.builtin.debug:
         msg: >-
-          {{ 'Temporary LAN7 primary DNS verified; operator must restore it via HTTPS now.'
+          {{ 'Temporary LAN7 primary DNS verified; restoration is required.'
              if dns_lan7_mode == 'qualify_once'
-             else 'Both LAN7 DNS fields independently verified as unset.' }}
+             else 'Both LAN7 DNS fields verified as unset.' }}
