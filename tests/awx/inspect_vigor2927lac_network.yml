@@ -133,12 +133,50 @@
       ansible.builtin.debug:
         var: vlan_layout
 
+    - name: Compute VLAN column offsets without retaining row values
+      ansible.builtin.set_fact:
+        vlan_offsets:
+          subnet_columns: "{{ vlan_text | regex_findall(subnet_pattern) | map('length') | unique | list }}"
+          mark_columns: "{{ vlan_text | regex_findall(mark_pattern) | map('length') | unique | list }}"
+          header_columns: "{{ vlan_text | regex_findall(header_pattern) | map('length') | unique | list }}"
+          prefixed_rows: "{{ vlan_text | regex_findall(prefixed_pattern) | length }}"
+      vars:
+        vlan_text: "{{ network_probes.results[5].stdout | default([''], true) | first }}"
+        subnet_pattern: '(?m)^([ %]*[0-9]{1,2} +(?:ON|OFF) +[0-9]+ +[0-9]+[ V]+)[1-8]:LAN[1-8][ \r]*$'
+        mark_pattern: '(?m)^([ %]*[0-9]{1,2} +(?:ON|OFF) +[0-9]+ +[0-9]+[ V]*?)V'
+        header_pattern: '(?m)^([ %]*VLAN +Enable +VID +Pri +)p1 '
+        prefixed_pattern: '(?m)^ *% +[0-9]+ +(?:ON|OFF)\b'
+      no_log: true
+
+    - name: Report aggregate VLAN offsets only
+      ansible.builtin.debug:
+        var: vlan_offsets
+
     - name: Gather VLAN slots privately
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
         gather_vlan_slots: true
       register: vlan_facts
+      ignore_errors: true  # noqa: ignore-errors
       no_log: true
+
+    - name: Report the fixed VLAN diagnostic category
+      ansible.builtin.debug:
+        msg: "{{ categories.get(vlan_facts.msg | default(''), 'other') }}"
+      vars:
+        categories:
+          Unrecognised VLAN slot row layout: row_layout
+          Misaligned VLAN membership marker: membership
+          Invalid or duplicate VLAN slot: invalid_slot
+          Incomplete VLAN slot table: incomplete
+          Unexpected additional VLAN slot row: additional_row
+          Extended facts gathering failed; device output suppressed: transport
+      when: vlan_facts is failed
+
+    - name: Require VLAN slot gathering to succeed
+      ansible.builtin.assert:
+        that:
+          - vlan_facts is succeeded
 
     - name: Gather VLAN slots in check mode privately
       kpeacocke.draytek.drayos_facts:
