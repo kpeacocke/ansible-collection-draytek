@@ -66,6 +66,52 @@
         that:
           - network_probe_summary | selectattr('ok') | selectattr('markers') | list | length > 0
 
+    - name: Read documented NAT tables privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: "{{ item }}"
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+        retries: 1
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      loop:
+        - show nat
+        - show openport
+      register: nat_probes
+      ignore_errors: true  # noqa: ignore-errors
+      no_log: true
+
+    - name: Count NAT framing and rows without retaining rule values
+      ansible.builtin.set_fact:
+        nat_shapes: >-
+          {{ nat_shapes | default({}) | combine({item.item: {
+             'usable': usable,
+             'nonblank': text.splitlines() | select('search', '\S') | list | length,
+             'expected_headers': text | regex_findall(expected_header) | length,
+             'empty_markers': text | regex_findall(empty_marker) | length,
+             'row_candidates': text | regex_findall(numbered_row) | length,
+             'all_zero_redirection_rows': text | regex_findall(zero_row) | length if item.item == 'show nat' else none,
+             'pager_markers': text | regex_findall('--- MORE ---') | length}}) }}
+      vars:
+        usable: "{{ not (item.failed | default(false)) and (item.stdout | default([]) | length == 1) }}"
+        text: "{{ item.stdout[0] if usable else '' }}"
+        expected_header: "{{ redirection_header if item.item == 'show nat' else openport_header }}"
+        redirection_header: '(?im)^[ \t%]*Index[ \t]+Protocol[ \t]+Public Port[ \t]+Private IP[ \t]+Private Port[ \t\r]*$'
+        openport_header: '(?im)^[ \t%]*Index[ \t]+Status[ \t]+Comment[ \t]+Local IP Address[ \t\r]*$'
+        empty_marker: '(?im)^[ \t%]*No data entry\.?[ \t\r]*$'
+        numbered_row: '(?m)^[ \t%]*[0-9]+[ \t]+\S'
+        zero_row: '(?m)^[ \t%]*[0-9]+[ \t]+0[ \t]+0[ \t]+0\.0\.0\.0[ \t]+0[ \t\r]*$'
+      loop: "{{ nat_probes.results }}"
+      no_log: true
+
+    - name: Report only NAT framing and row counts
+      ansible.builtin.debug:
+        var: nat_shapes
+
     - name: Classify fixed network table shapes without retaining matched values
       ansible.builtin.set_fact:
         network_table_shapes: >-
