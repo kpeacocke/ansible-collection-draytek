@@ -94,6 +94,13 @@ flag, effective forwarding state, or untagged management access.
 Use task-level `no_log: true` and disable persistent transport logging
 when VLAN topology should not appear in job output.
 
+On Vigor2927Lac firmware 4.5.2.2, `gather_vlan_p1_untagged_access: true`
+reads the configured permission for devices sending untagged traffic on
+P1 to access the router. This independent opt-in returns the boolean
+`vlan_p1_untagged_access`; it does not test reachability or report global
+VLAN enablement. If the device does not report a recognised setting, the
+requested read fails rather than returning an assumed value.
+
 ## WAN link and LTE access facts
 
 `gather_wan_links: true` reads the online and stall indicators from numbered
