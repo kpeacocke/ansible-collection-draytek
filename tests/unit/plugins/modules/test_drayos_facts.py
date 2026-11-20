@@ -263,6 +263,8 @@ def test_nat_redirect_parser_keeps_placeholder_rows_and_crosses_pager():
     NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 53 198.51.100.256 5353"),
     NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 65536 198.51.100.20 5353"),
     NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "2 17 53 198.51.100.20 5353"),
+    NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "4 17 53 198.51.100.20 5353"),
+    NAT_HEADER + "\n".join(["1 0 0 0.0.0.0 0", "3 0 0 0.0.0.0 0"]),
     NAT_TABLE.rsplit("\n", 1)[0],
     NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 53 198.51.100.20 5353\nUnknown row"),
 ])

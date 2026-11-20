@@ -250,8 +250,8 @@ def parse_nat_redirects(text: str) -> list[dict[str, int | str]]:
         protocol_value = int(protocol)
         public_port_value = int(public_port)
         private_port_value = int(private_port)
-        if index_value < 1 or index_value in entries:
-            raise ParseError("Invalid or duplicate NAT redirection index")
+        if index_value != len(entries) + 1:
+            raise ParseError("Invalid, duplicate, or nonsequential NAT redirection index")
         if protocol_value > 255 or public_port_value > 65535 or private_port_value > 65535:
             raise ParseError("Invalid protocol or port in NAT redirection row")
         try:
