@@ -220,14 +220,18 @@ _NAT_REDIRECTION_ROW = re.compile(
 
 
 def parse_nat_redirects(text: str) -> list[dict[str, int | str]]:
-    """Parse the documented NAT redirection status table without dropping unknown lines."""
+    """Parse the documented NAT status table, including its command echo."""
     table_header = False
     columns_header = False
     awaiting_page = False
+    command_echo_seen = False
     entries: dict[int, dict[str, int | str]] = {}
     for raw in text.splitlines():
         line = raw.lstrip(" \t%").rstrip()
         if not line:
+            continue
+        if not table_header and not command_echo_seen and line == "> srv nat status":
+            command_echo_seen = True
             continue
         if _NAT_TABLE_HEADER.fullmatch(line):
             if table_header:

@@ -258,6 +258,11 @@ def test_nat_redirect_parser_keeps_placeholder_rows_and_crosses_pager():
     ]
 
 
+def test_nat_redirect_parser_accepts_documented_command_echo():
+    parse = drayos_facts.facts_parsers.parse_nat_redirects
+    assert parse("> srv nat status\n" + NAT_TABLE) == parse(NAT_TABLE)
+
+
 @pytest.mark.parametrize("table", [
     NAT_TABLE.replace("NAT Port Redirection Running Table:", "Unknown Table:"),
     NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 53 198.51.100.256 5353"),
@@ -267,6 +272,8 @@ def test_nat_redirect_parser_keeps_placeholder_rows_and_crosses_pager():
     NAT_HEADER + "\n".join(["1 0 0 0.0.0.0 0", "3 0 0 0.0.0.0 0"]),
     NAT_TABLE.rsplit("\n", 1)[0],
     NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 53 198.51.100.20 5353\nUnknown row"),
+    "> srv nat status\n> srv nat status\n" + NAT_TABLE,
+    NAT_TABLE + "\n> srv nat status",
 ])
 def test_nat_redirect_parser_rejects_incomplete_or_ambiguous_rows(table):
     with pytest.raises(ParseError):
