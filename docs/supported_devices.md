@@ -101,6 +101,17 @@ P1 to access the router. This independent opt-in returns the boolean
 VLAN enablement. If the device does not report a recognised setting, the
 requested read fails rather than returning an assumed value.
 
+## NAT port-redirection status
+
+On Vigor2927Lac firmware 4.5.2.2, `gather_nat_redirects: true` reads the
+documented `srv nat status` table. The returned `nat_redirects` entries
+preserve every reported row, including all-zero placeholders; they do not
+claim that a row is active or represent the full firewall policy. The parser
+fails on unknown or incomplete rows. These values include internal IPv4
+addresses and ports: disable persistent command logging and use task-level
+`no_log: true`; consider whether fact caching is appropriate. This opt-in has
+only been validated on Vigor2927Lac firmware 4.5.2.2.
+
 ## WAN link and LTE access facts
 
 `gather_wan_links: true` reads the online and stall indicators from numbered

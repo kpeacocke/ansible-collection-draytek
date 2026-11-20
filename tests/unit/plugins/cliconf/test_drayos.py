@@ -80,7 +80,7 @@ def test_cached_commands_cannot_bypass_fresh_resource_readback(cliconf, monkeypa
 
 
 @pytest.mark.parametrize("backend", ["paramiko", "libssh"])
-@pytest.mark.parametrize("command", ["sys iface", "show status", "srv dhcp status"])
+@pytest.mark.parametrize("command", ["sys iface", "show status", "srv dhcp status", "srv nat status", "show nat"])
 def test_pager_advances_multiple_pages_through_network_cli(cliconf, monkeypatch, backend, command):
     importlib.import_module("paramiko" if backend == "paramiko" else "pylibsshext.session")
     from ansible_collections.ansible.netcommon.plugins.connection.network_cli import Connection
@@ -162,12 +162,24 @@ def test_tr069_read_works_when_raw_connection_logging_is_disabled(cliconf, monke
     assert seen == [{"command": command}]
 
 
-@pytest.mark.parametrize("command", ["srv dhcp status", "wan lte stus"])
+@pytest.mark.parametrize("command", ["srv dhcp status", "srv nat status", "show nat", "show openport", "wan lte stus"])
 def test_private_status_reads_cannot_use_raw_connection_logging(cliconf, monkeypatch, command):
     monkeypatch.setattr(cliconf._connection, "get_option",
                         lambda option: option == "persistent_log_messages")
-    with pytest.raises(AnsibleConnectionFailure, match="persistent_log_messages=false"):
+    match = "persistent_log_messages=false"
+    if command in {"srv nat status", "show nat", "show openport"}:
+        match = "NAT redirection reads require"
+    with pytest.raises(AnsibleConnectionFailure, match=match):
         cliconf.run_commands([command])
+    assert cliconf._connection._sent == []
+
+
+@pytest.mark.parametrize("command", ["srv nat status", "show nat", "show openport"])
+def test_nat_status_get_requires_private_transport(cliconf, monkeypatch, command):
+    monkeypatch.setattr(cliconf._connection, "get_option",
+                        lambda option: option == "persistent_log_messages")
+    with pytest.raises(AnsibleConnectionFailure, match="NAT redirection reads require"):
+        cliconf.get(command=command)
     assert cliconf._connection._sent == []
 
 

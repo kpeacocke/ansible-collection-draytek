@@ -1,0 +1,2 @@
+minor_changes:
+  - drayos_facts - add an opt-in parser for the Vigor2927Lac NAT port-redirection status table.
