@@ -113,6 +113,53 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
+    - name: Read IPv6 route status for a WAN interface privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: ip6 route -a WAN1
+            prompt: "{{ [route_pager] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+        retries: 1
+      vars:
+        route_pager: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      register: ipv6_wan_probe
+      ignore_errors: true  # noqa: ignore-errors
+      no_log: true
+
+    - name: Classify IPv6 route output without recording addresses
+      ansible.builtin.set_fact:
+        ipv6_shape: >-
+          {{ ipv6_shape | default({}) |
+             combine({item.interface: {'command_ok': not (item.probe.failed | default(false)),
+             'nonblank': lines | select('search', '\S') | list | length,
+             'header': lines | select('search', header) | list | length,
+             'row': lines | select('search', row) | list | length,
+             'error': lines | select('search', error) | list | length,
+             'empty': lines | select('search', empty) | list | length,
+             'disabled': lines | select('search', disabled) | list | length,
+             'separators': lines | select('search', separator) | list | length}}) }}
+      vars:
+        lines: "{{ (item.probe.stdout | default([''], true) | first).splitlines() }}"
+        header: '(?i)\b(?:PREFIX(?:/PREFIX-LEN)?|NEXT.HOP|METRIC|FLAGS?)\b'
+        row: '(?i)^[ \t%]*[0-9a-f.]*:[0-9a-f:.]+(?:/[ \t]*[0-9]{1,3})?(?:[ \t]|$)'
+        error: '(?i)\b(?:unknown|invalid|usage|syntax|unrecognised|unrecognized|not supported|not found|error|fail(?:ed)?)\b'
+        empty: '(?i)\b(?:empty|no (?:ipv6 )?(?:routes?|entries|routing table))\b'
+        disabled: '(?i)\b(?:disabled|not enabled|not active|inactive)\b'
+        separator: '^[ \t%]*-{3,}[ \t]*$'
+      loop:
+        - interface: LAN1
+          probe: "{{ network_probes.results[7] }}"
+        - interface: WAN1
+          probe: "{{ ipv6_wan_probe }}"
+      no_log: true
+
+    - name: Report only IPv6 route format counts
+      ansible.builtin.debug:
+        var: ipv6_shape
+
     - name: Gather WAN and LTE facts privately
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
