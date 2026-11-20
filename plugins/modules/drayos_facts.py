@@ -41,6 +41,14 @@ options:
       - Independent of O(gather_subset); existing subset output is unchanged.
     type: bool
     default: false
+  gather_dhcp_leases:
+    description:
+      - Also collect the IPv4 DHCP lease table using C(srv dhcp status).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+      - Results contain client identifiers. Use task-level C(no_log) if they must not appear in task output,
+        and do not cache them if the fact cache is not suitable for this data.
+    type: bool
+    default: false
 notes:
   - This module never reports C(changed=true).
 """
@@ -68,6 +76,9 @@ ansible_facts:
     - When O(gather_vlan_slots=true), C(vlan_slots) lists slot, enabled, vid,
       priority, lan and members. These are configured row values, not effective
       forwarding state or the global VLAN enable flag.
+    - When O(gather_dhcp_leases=true), C(dhcp_leases) lists lan, index, ip_address,
+      mac_address, lease_time (display text) and host_id (null when absent).
+      This is a point-in-time lease table, not a reservation or pool configuration export.
   returned: always
   type: dict
 """
@@ -161,6 +172,7 @@ def main() -> None:
         gather_lan_profiles=dict(type="bool", default=False),
         gather_ipv4_routes=dict(type="bool", default=False),
         gather_vlan_slots=dict(type="bool", default=False),
+        gather_dhcp_leases=dict(type="bool", default=False),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
@@ -172,6 +184,7 @@ def main() -> None:
             ("gather_lan_profiles", "show lan", "lan_profiles", facts_parsers.parse_lan_profiles),
             ("gather_ipv4_routes", "ip route status", "ipv4_routes", facts_parsers.parse_ipv4_routes),
             ("gather_vlan_slots", "vlan status", "vlan_slots", facts_parsers.parse_vlan_slots),
+            ("gather_dhcp_leases", "srv dhcp status", "dhcp_leases", facts_parsers.parse_dhcp_leases),
         )
         if module.params[option]
     ]

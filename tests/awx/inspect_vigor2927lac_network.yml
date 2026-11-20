@@ -113,6 +113,53 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
+    - name: Count DHCP rows and pagers privately
+      ansible.builtin.set_fact:
+        dhcp_raw_count: "{{ dhcp_lines | select('match', dhcp_row) | list | length }}"
+        dhcp_pager_count: "{{ dhcp_lines | select('match', '^[ \t]*--- MORE ---') | list | length }}"
+        dhcp_fixed_count: "{{ dhcp_lines | select('match', dhcp_row + 'FIXED(?:[ \t]|$)') | list | length }}"
+      vars:
+        dhcp_lines: "{{ network_probes.results[4].stdout[0].splitlines() }}"
+        dhcp_row: '^[ \t]*[0-9]+[ \t]+[0-9.]+[ \t]+(?:[0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}[ \t]+'
+      no_log: true
+
+    - name: Report only aggregate DHCP row and pager counts
+      ansible.builtin.debug:
+        msg:
+          rows: "{{ dhcp_raw_count }}"
+          pagers: "{{ dhcp_pager_count }}"
+          fixed: "{{ dhcp_fixed_count }}"
+
+    - name: Gather DHCP leases privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_dhcp_leases: true
+      register: dhcp_facts
+      no_log: true
+
+    - name: Gather DHCP leases in check mode privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_dhcp_leases: true
+      check_mode: true
+      register: dhcp_check
+      no_log: true
+
+    - name: Verify DHCP row coverage and read-only check mode
+      ansible.builtin.assert:
+        that:
+          - not dhcp_facts.changed
+          - not dhcp_check.changed
+          - dhcp_raw_count | int > 0
+          - dhcp_rows | length == dhcp_raw_count | int
+          - dhcp_check_rows | length == dhcp_raw_count | int
+          - dhcp_rows | selectattr('lease_time', 'equalto', 'FIXED') | list | length == dhcp_fixed_count | int
+          - dhcp_rows | map(attribute='ip_address') | sort == dhcp_check_rows | map(attribute='ip_address') | sort
+      vars:
+        dhcp_rows: "{{ dhcp_facts.ansible_facts.drayos.dhcp_leases }}"
+        dhcp_check_rows: "{{ dhcp_check.ansible_facts.drayos.dhcp_leases }}"
+      no_log: true
+
     - name: Count VLAN rows with membership markers privately
       ansible.builtin.set_fact:
         vlan_marked_rows: "{{ vlan_text | regex_findall(marked_row) | length }}"

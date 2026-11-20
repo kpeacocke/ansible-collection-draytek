@@ -225,6 +225,66 @@ def test_vlan_slot_parser_preserves_vendor_maximum_vid():
         parse(table.replace("4095", "4096", 1))
 
 
+DHCP_TABLE = """\
+LAN1 : DHCP Server On    IP Pool: 192.0.2.10 ~ 192.0.2.20
+       Default Gateway: 192.0.2.1
+IP Routed : DHCP Server Off
+-------------------------------------------------------------------------
+Index IP Address       MAC Address           Leased Time    HOST ID
+-------------------------------------------------------------------------
+LAN1
+1 192.0.2.10 02-00-00-00-00-01 27:04:59 example client
+--- MORE ---   ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---
+2 192.0.2.11 02-00-00-00-00-02 0:00:02
+"""
+
+
+def test_dhcp_lease_parser_preserves_rows_and_optional_host_id():
+    assert drayos_facts.facts_parsers.parse_dhcp_leases(DHCP_TABLE) == [
+        {"lan": "LAN1", "index": 1, "ip_address": "192.0.2.10",
+         "mac_address": "02:00:00:00:00:01", "lease_time": "27:04:59", "host_id": "example client"},
+        {"lan": "LAN1", "index": 2, "ip_address": "192.0.2.11",
+         "mac_address": "02:00:00:00:00:02", "lease_time": "0:00:02", "host_id": None},
+    ]
+
+
+def test_dhcp_lease_parser_preserves_fixed_rows_and_allows_empty_sections():
+    parse = drayos_facts.facts_parsers.parse_dhcp_leases
+    table = DHCP_TABLE.replace("0:00:02", "FIXED") + "LAN2\n"
+    assert parse(table)[-1]["lease_time"] == "FIXED"
+    assert parse(table.split("1 192.0.2.10", 1)[0]) == []
+
+
+@pytest.mark.parametrize("check_mode", [False, True])
+def test_dhcp_lease_facts_opt_in_runs_only_the_read_command(monkeypatch, check_mode):
+    def execute(module, commands):
+        assert module.check_mode is check_mode
+        assert commands == ["srv dhcp status"]
+        return [DHCP_TABLE]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({"gather_subset": [], "gather_dhcp_leases": True, "_ansible_check_mode": check_mode})
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    result = excinfo.value.kwargs
+    assert result["changed"] is False
+    assert list(result["ansible_facts"]["drayos"]) == ["dhcp_leases"]
+    assert len(result["ansible_facts"]["drayos"]["dhcp_leases"]) == 2
+
+
+@pytest.mark.parametrize("table", [
+    DHCP_TABLE.replace("\nLAN1\n", "\n"),
+    DHCP_TABLE.replace("192.0.2.11 02", "192.0.256.11 02"),
+    DHCP_TABLE.replace("27:04:59", "27:64:59"),
+    DHCP_TABLE.replace("0:00:02", "unknown-time"),
+    DHCP_TABLE.replace("2 192.0.2.11", "1 192.0.2.11"),
+    DHCP_TABLE.rsplit("\n", 2)[0],
+])
+def test_dhcp_lease_parser_rejects_malformed_or_partial_tables(table):
+    with pytest.raises(ParseError):
+        drayos_facts.facts_parsers.parse_dhcp_leases(table)
+
+
 def test_module_returns_facts_without_changed_state(monkeypatch):
     monkeypatch.setattr(
         drayos_facts,

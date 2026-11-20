@@ -1,0 +1,2 @@
+minor_changes:
+  - drayos_facts - add opt-in read-only IPv4 DHCP lease facts.

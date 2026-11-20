@@ -94,6 +94,15 @@ flag, effective forwarding state, or untagged management access.
 Use task-level `no_log: true` and disable persistent transport logging
 when VLAN topology should not appear in job output.
 
+## IPv4 DHCP lease status
+
+`drayos_facts` with `gather_dhcp_leases: true` reads the IPv4 DHCP lease
+table independently of `gather_subset`. It returns each row's LAN, displayed
+index and lease time, IP address, MAC address and optional host ID. This is
+a point-in-time read, not a way to manage reservations, clients or pools.
+Persistent transport logging must be off. Use task-level `no_log: true` to
+keep client identifiers out of job output, and account for any configured fact cache.
+
 ## Primary NTP server
 
 The [NTP resource](ntp.md) is restricted to Vigor2927Lac firmware 4.5.2.2.
