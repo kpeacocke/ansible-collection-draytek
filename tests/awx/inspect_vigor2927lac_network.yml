@@ -137,20 +137,34 @@
       ansible.builtin.set_fact:
         vlan_offsets:
           subnet_columns: "{{ vlan_text | regex_findall(subnet_pattern) | map('length') | unique | list }}"
-          mark_columns: "{{ vlan_text | regex_findall(mark_pattern) | map('length') | unique | list }}"
           header_columns: "{{ vlan_text | regex_findall(header_pattern) | map('length') | unique | list }}"
           prefixed_rows: "{{ vlan_text | regex_findall(prefixed_pattern) | length }}"
       vars:
         vlan_text: "{{ network_probes.results[5].stdout | default([''], true) | first }}"
         subnet_pattern: '(?m)^([ %]*[0-9]{1,2} +(?:ON|OFF) +[0-9]+ +[0-9]+[ V]+)[1-8]:LAN[1-8][ \r]*$'
-        mark_pattern: '(?m)^([ %]*[0-9]{1,2} +(?:ON|OFF) +[0-9]+ +[0-9]+[ V]*?)V'
         header_pattern: '(?m)^([ %]*VLAN +Enable +VID +Pri +)p1 '
         prefixed_pattern: '(?m)^ *% +[0-9]+ +(?:ON|OFF)\b'
       no_log: true
 
+    - name: Measure every marker column on numbered VLAN rows
+      ansible.builtin.set_fact:
+        vlan_mark_offsets: "{{ vlan_mark_offsets | default([]) + offsets }}"
+      vars:
+        vlan_text: "{{ network_probes.results[5].stdout | default([''], true) | first }}"
+        row_pattern: '(?m)^([ %]*[0-9]{1,2} +(?:ON|OFF) +[0-9]+ +[0-9]+[ V]+)[1-8]:LAN[1-8][ \r]*$'
+        offsets: "{{ range(item | length) | zip(item | list) | selectattr('1', 'equalto', 'V') | map(attribute='0') | list }}"
+      loop: "{{ vlan_text | regex_findall(row_pattern) }}"
+      no_log: true
+
     - name: Report aggregate VLAN offsets only
       ansible.builtin.debug:
-        var: vlan_offsets
+        msg: >-
+          {{ vlan_offsets | combine({'off_header_count': marks | difference(left_aligned) | length,
+                                     'off_centred_count': marks | difference(centred) | length}) }}
+      vars:
+        marks: "{{ vlan_mark_offsets | default([]) | unique | list }}"
+        left_aligned: [23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 55, 60, 65]
+        centred: [23, 26, 29, 32, 35, 38, 41, 44, 47, 51, 56, 61, 66]
 
     - name: Gather VLAN slots privately
       kpeacocke.draytek.drayos_facts:
