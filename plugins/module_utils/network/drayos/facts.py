@@ -210,7 +210,7 @@ def parse_dhcp_leases(text: str) -> list[dict[str, int | str | None]]:
     frame = re.split(r"(?m)^[ \t]*(-{3,})[ \t]*\r?\n", text, maxsplit=1)
     if len(frame) != 3 or not re.match(rf"\s*(?:{_DHCP_SECTION})[ \t]*:[ \t]*DHCP Server\b", frame[0]):
         raise ParseError("Missing DHCP status preamble")
-    _, sep, body = frame
+    sep, body = frame[1:]
     lines = [line.strip(" \t") for line in body.splitlines() if line.strip(" \t")]
     if len(lines) < 2 or not _DHCP_HEADER.fullmatch(lines[0]) or lines[1] != sep:
         raise ParseError("Missing DHCP lease table header")
