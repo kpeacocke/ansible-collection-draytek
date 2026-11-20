@@ -22,6 +22,13 @@ options:
     elements: str
     default: [default]
     choices: [all, default, hardware, system, interfaces, wan, lan]
+  gather_lan_profiles:
+    description:
+      - Also collect configured IPv4 settings for LAN1 to LAN8 using C(show lan).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+      - Verified response framing targets Vigor2927Lac firmware 4.5.2.2.
+    type: bool
+    default: false
 notes:
   - This module never reports C(changed=true).
 """
@@ -39,7 +46,11 @@ EXAMPLES = r"""
 
 RETURN = r"""
 ansible_facts:
-  description: Facts collected under the drayos key.
+  description:
+    - Facts collected under the drayos key.
+    - When O(gather_lan_profiles=true), C(lan_profiles) maps each numbered LAN to
+      enabled, ip_address, netmask, dhcp_enabled, dhcp_start_ip, dhcp_pool_size
+      and dhcp_gateway. Values describe configuration, not active leases.
   returned: always
   type: dict
 """
@@ -47,6 +58,7 @@ ansible_facts:
 
 from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.errors import (
     DrayTekError,
+    ParseError,
 )
 from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.connection import (
     run_commands,
@@ -129,23 +141,33 @@ def main() -> None:
             default=["default"],
             choices=["all", *_ALL_SUBSETS],
         ),
+        gather_lan_profiles=dict(type="bool", default=False),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
     subsets = resolve_subsets(module.params["gather_subset"])
     commands = commands_for_subsets(subsets)
+    if module.params["gather_lan_profiles"]:
+        commands.append("show lan")
 
     try:
         results = run_commands(module, commands) if commands else []
+        if module.params["gather_lan_profiles"] and (
+            not isinstance(results, list) or len(results) != len(commands) or not isinstance(results[-1], str)
+        ):
+            raise ParseError("Expected one text response per command for LAN profile gathering")
+        responses = dict(zip(commands, results))
+        facts = build_facts(subsets, responses)
+        if module.params["gather_lan_profiles"]:
+            facts["lan_profiles"] = facts_parsers.parse_lan_profiles(responses["show lan"])
     except DrayTekError as exc:
-        module.fail_json(msg=str(exc))
+        message = str(exc)
+        if module.params["gather_lan_profiles"] and not isinstance(exc, ParseError):
+            message = "LAN profile gathering failed; device output suppressed"
+        module.fail_json(msg=message, changed=False)
         return
 
-    module.exit_json(
-        changed=False,
-        ansible_facts={"drayos": build_facts(
-            subsets, dict(zip(commands, results)))},
-    )
+    module.exit_json(changed=False, ansible_facts={"drayos": facts})
 
 
 if __name__ == "__main__":

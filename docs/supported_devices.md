@@ -61,6 +61,15 @@ Read-only explicit-Paramiko help job 1953 and names-only TR-069 discovery
 job 1956 succeeded. Discovery proves only those reads, not a writable
 parameter mapping or a live libssh connection.
 
+## Numbered LAN profiles
+
+Set `gather_lan_profiles: true` on `drayos_facts` to read the configured IPv4
+address, netmask and DHCP fields for LAN1 to LAN8. The option is independent
+of `gather_subset` and defaults to off. This does not read active leases,
+include the separate routed profile, or change configuration. AWX discovery
+job [2124](https://awx.ambitiouscake.com/jobs/playbook/2124/output) confirmed
+the eight-profile response framing on Vigor2927Lac firmware 4.5.2.2.
+
 ## Primary NTP server
 
 The [NTP resource](ntp.md) is restricted to Vigor2927Lac firmware 4.5.2.2.
