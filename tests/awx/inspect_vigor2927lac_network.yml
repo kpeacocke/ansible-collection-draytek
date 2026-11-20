@@ -1,0 +1,143 @@
+---
+- name: Inspect network response formats without changing router configuration
+  hosts: HomeOne
+  gather_facts: false
+  vars_files:
+    - vars/live_validation.yml
+  vars:
+    ansible_persistent_log_messages: false
+  pre_tasks:
+    - name: Require private transport settings
+      ansible.builtin.assert:
+        that:
+          - not ansible_persistent_log_messages | bool
+
+    - name: Prepare verified live validation
+      ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
+
+  tasks:
+    - name: Run fixed read-only network probes privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: "{{ item }}"
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+        retries: 1
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      loop:
+        - show dns
+        - show lan
+        - wan status
+        - wan lte stus
+        - srv dhcp status
+        - vlan status
+        - ip route status
+        - ip6 route -a LAN1
+      register: network_probes
+      ignore_errors: true  # noqa: ignore-errors
+      no_log: true
+
+    - name: Extract only fixed format markers and aggregate counts
+      ansible.builtin.set_fact:
+        network_probe_summary: >-
+          {{ (network_probe_summary | default([])) + [
+            {'command': item.item, 'ok': usable, 'lines': text.splitlines() | length,
+             'markers': text | regex_findall(marker_regex | replace('\n', '')) | unique | list}] }}
+      vars:
+        usable: "{{ not (item.failed | default(false)) and (item.stdout | default([]) | length == 1) }}"
+        text: "{{ item.stdout[0] if usable else '' }}"
+        marker_regex: |-
+          (?im)^[ \t%]*(Domain name server settings|LAN[1-8] (?:Primary|Secondary) DNS|The LAN settings|WAN[1-6]|PVC_WAN[1-8]|
+          Mode|IP Pool|Default Gateway|Index IP Address|VLAN is|VLAN Enable|Codes|IPv6 Routing Table|LTE status|Signal Strength|
+          PREFIX/PREFIX-LEN|Access Tech|No entries|Unknown command|Invalid command|Usage)(?=[ \t:\r]|$)
+      loop: "{{ network_probes.results }}"
+      no_log: true
+
+    - name: Report only the bounded network-probe summary
+      ansible.builtin.debug:
+        var: network_probe_summary
+
+    - name: Require at least one usable network response
+      ansible.builtin.assert:
+        that:
+          - network_probe_summary | selectattr('ok') | selectattr('markers') | list | length > 0
+
+    - name: Record DNS row structure without returning addresses or unknown text
+      ansible.builtin.set_fact:
+        network_dns_rows: >-
+          {{ (network_dns_rows | default([])) + [
+            {'labels': item | regex_findall(dns_labels), 'colons': item.count(':'),
+             'ipv4_count': item | regex_findall(ipv4_token) | length}] }}
+      vars:
+        dns_labels: >-
+          (?i)\b(?:LAN[1-8]|WAN[1-8]|IP Routed|Primary|Secondary|DNS|Not set|IPv6|DHCP|Manual|Auto|Server|Proxy)\b
+        ipv4_token: '\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
+      loop: "{{ (network_probes.results[0].stdout | default([''], true) | first).splitlines()[:80] }}"
+      no_log: true
+
+    - name: Report only DNS rows with recognised labels
+      ansible.builtin.debug:
+        msg: "{{ network_dns_rows | default([]) | rejectattr('labels', 'equalto', []) | list }}"
+
+    - name: Gather LAN DNS through the public module
+      kpeacocke.draytek.drayos_dns:
+      register: lan_dns
+      no_log: true
+
+    - name: Gather LAN DNS again in check mode
+      kpeacocke.draytek.drayos_dns:
+      check_mode: true
+      register: lan_dns_check
+      no_log: true
+
+    - name: Verify that the module returns all LANs and check mode matches
+      ansible.builtin.assert:
+        that:
+          - not lan_dns.changed
+          - not lan_dns_check.changed
+          - lan_dns.gathered | length == 8
+          - lan_dns.gathered == lan_dns_check.gathered
+      no_log: true
+
+    - name: Require the restored LAN7 baseline before testing predictions
+      ansible.builtin.assert:
+        that:
+          - lan_dns.gathered.LAN7.primary is none
+
+    - name: Predict a change from the restored baseline without writing
+      kpeacocke.draytek.drayos_dns:
+        state: merged
+        lan: LAN7
+        primary_server: "192.0.2.53"
+      check_mode: true
+      diff: true
+      register: dns_prediction
+      no_log: true
+
+    - name: Predict no change when clearing the already unset resolver
+      kpeacocke.draytek.drayos_dns:
+        state: merged
+        lan: LAN7
+        primary_server: "0.0.0.0"
+      check_mode: true
+      register: dns_no_change
+      no_log: true
+
+    - name: Verify that both predictions left the device unchanged
+      kpeacocke.draytek.drayos_dns:
+      register: dns_after_predictions
+      no_log: true
+
+    - name: Assert predicted change and no change plus identical live readback
+      ansible.builtin.assert:
+        that:
+          - dns_prediction.changed
+          - dns_prediction.diff.before.primary_server is none
+          - dns_prediction.diff.after.primary_server == '192.0.2.53'
+          - not dns_no_change.changed
+          - dns_after_predictions.gathered == lan_dns.gathered
+      no_log: true

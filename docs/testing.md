@@ -58,6 +58,15 @@ coverage are recorded in the [device matrix](supported_devices.md). Follow
 the [fixture contribution instructions](../CONTRIBUTING.md#contributing-drayos-device-fixtures)
 before capturing or sharing output.
 
+`tests/awx/inspect_vigor2927lac_network.yml` is a read-only discovery probe
+for DNS, LAN, WAN/LTE, DHCP, VLANs and routes. Use the verified-key validation
+inventory and keep persistent transport logging disabled. The job reports only
+fixed format markers and aggregate counts. It also checks that
+`kpeacocke.draytek.drayos_dns` gathers both IPv4 DNS fields for all eight LANs,
+without reporting a change, and returns the same result in check mode.
+It does not print resolver addresses. A missing marker or failed probe is
+not evidence that the feature is unsupported.
+
 The AWX playbooks described in the device matrix include a fixture-only check
 and a separate read-only live facts check. Run the latter only on an
 authorised device, and record its model, firmware, job ID and checked-out

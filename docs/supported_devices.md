@@ -82,6 +82,32 @@ next-level DeviceInfo names and check-mode validation on Vigor2927Lac
 firmware 4.5.2.2 with Paramiko. This does not qualify TR-069 writes, other
 firmware, or other models.
 
+## LAN DNS readback
+
+Live LAN DNS validation [job 2107](https://awx.ambitiouscake.com/jobs/playbook/2107/output)
+on Vigor2927Lac firmware 4.5.2.2 (`b4c923a`) used Paramiko and the verified SSH
+host key. `drayos_dns` returned matching primary/secondary IPv4 settings for
+all eight LANs in normal and check mode without changes.
+
+Separate, operator-approved Ansible playbook runs validated the CLI mapping
+for primary DNS on a disabled LAN7. [Job 2110](https://awx.ambitiouscake.com/jobs/playbook/2110/output)
+set a temporary address, and [job 2113](https://awx.ambitiouscake.com/jobs/playbook/2113/output)
+restored the field to unset using `srv dhcp dns1 lan7 0.0.0.0`. Both compared all
+LAN DNS fields before and after the operation. Independent read-only
+[job 2115](https://awx.ambitiouscake.com/jobs/playbook/2115/output) confirmed
+that both LAN7 DNS settings were unset. These tests do not qualify changes
+on active LANs, secondary DNS writes, effective resolver selection or reboot
+persistence. The public `drayos_dns` module restricts `state: merged` to
+disabled LAN7 on this exact firmware and verifies all eight LAN DNS pairs
+after a write. Use `primary_server: "0.0.0.0"` to clear the field.
+[Job 2117](https://awx.ambitiouscake.com/jobs/playbook/2117/output) at `2c76a32`
+verified both check-mode predictions and unchanged readback.
+[Job 2120](https://awx.ambitiouscake.com/jobs/playbook/2120/output) at `f7496dd`
+verified the public module's set, unchanged repeat, clear and full baseline
+restoration. An independent read-only
+[job 2122](https://awx.ambitiouscake.com/jobs/playbook/2122/output) at the same
+revision confirmed both LAN7 DNS fields were unset.
+
 ## AWX fixture validation
 
 Use `tests/awx/validate_vigor2927lac.yml` in an AWX project pinned to the PR
