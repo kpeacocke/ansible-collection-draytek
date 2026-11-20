@@ -139,6 +139,61 @@ def parse_ipv4_routes(text: str) -> list[dict[str, str | None]]:
     return routes
 
 
+_VLAN_HEADER = re.compile(
+    r" *VLAN +Enable +VID +Pri +(?P<ports>p1 p2 p3 p4 p5 s1 s2 s3 s4 5gs1 5gs2 5gs3 5gs4) +(?P<subnet>subnet)",
+    re.IGNORECASE,
+)
+_VLAN_ROW = re.compile(
+    r" *(?P<slot>[0-9]{1,2}) +(?P<enabled>ON|OFF) +(?P<vid>[0-9]{1,4}) +(?P<priority>[0-7])"
+    r"(?P<membership>[ V]+)(?P<subnet>[1-8]):LAN(?P<lan>[1-8])"
+)
+
+
+def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]:
+    """Parse configured VLAN slots in the observed fixed-width layout."""
+    header = None
+    columns: dict[int, str] = {}
+    slots: dict[int, dict[str, int | bool | str | list[str]]] = {}
+    for raw in text.splitlines():
+        line = raw.rstrip(" \t")
+        if not line or re.fullmatch(r" *-{3,}", line):
+            continue
+        if header is None:
+            header = _VLAN_HEADER.fullmatch(line)
+            if header:
+                columns = {
+                    header.start("ports") + port.start(): port.group().lower()
+                    for port in re.finditer(r"\S+", header["ports"])
+                }
+            continue
+        if len(slots) == 16:
+            if re.match(r" *[0-9]", line):
+                raise ParseError("Unexpected additional VLAN slot row")
+            continue
+        if slots and re.fullmatch(PAGER_PROMPT, line.lstrip(" ")):
+            continue
+        row = _VLAN_ROW.fullmatch(line)
+        if row is None or row.start("subnet") != header.start("subnet") or row["subnet"] != row["lan"]:
+            raise ParseError("Unrecognised VLAN slot row layout")
+        slot, vid = int(row["slot"]), int(row["vid"])
+        if slot not in range(16) or slot in slots or vid > 4094:
+            raise ParseError("Invalid or duplicate VLAN slot")
+        positions = [mark.start() for mark in re.finditer("V", line) if mark.start() >= row.start("membership")]
+        if any(position not in columns for position in positions):
+            raise ParseError("Misaligned VLAN membership marker")
+        slots[slot] = {
+            "slot": slot,
+            "enabled": row["enabled"] == "ON",
+            "vid": vid,
+            "priority": int(row["priority"]),
+            "lan": f"LAN{row['lan']}",
+            "members": [columns[position] for position in positions],
+        }
+    if len(slots) != 16:
+        raise ParseError("Incomplete VLAN slot table")
+    return [slots[slot] for slot in range(16)]
+
+
 _IFACE_BLOCK_RE = re.compile(
     r"Interface (?P<index>\d+) (?P<media>\S+):\s*"
     r".*?Status:\s*(?P<status>\S+)"
