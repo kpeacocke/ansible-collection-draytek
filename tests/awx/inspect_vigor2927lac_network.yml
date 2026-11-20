@@ -120,7 +120,16 @@
         lines: "{{ (network_probes.results[item.index].stdout | default([''], true) | first).splitlines() }}"
       loop:
         - {label: wan_nonblank, index: 2, pattern: '\s*\S'}
-        - {label: wan_state, index: 2, pattern: '^\s*(?:WAN[1-6]|PVC_WAN[1-8]):\s*(?:Online|Offline),\s*stall=[YN]\s*$'}
+        - {label: wan_state, index: 2, pattern: '^\s*(?:WAN[1-9]|PVC_WAN[1-9]):\s*(?:Online|Offline),\s*stall=[YN]\s*$'}
+        - {label: wan_headers, index: 2, pattern: '^\s*[A-Z][A-Z_]*[0-9]+:'}
+        - {label: wan_ipv6, index: 2, pattern: '^\s*(?:IPv6|IP6)\b'}
+        - {label: wan_link, index: 2, pattern: '^\s*(?:WAN[1-9]|PVC_WAN[1-9]):.*(?:Online|Offline)'}
+        - {label: wan_packets, index: 2, pattern: '^\s*TX Packets[=:]'}
+        - label: wan_counter_spaces
+          index: 2
+          pattern: >-
+            ^\s*TX Packets\s*=\s*[0-9]+\s*,\s*TX Rate\s*\(Bps\)\s*=\s*[0-9]+\s*,
+            \s*RX Packets\s*=\s*[0-9]+\s*,\s*RX Rate\s*\(Bps\)\s*=\s*[0-9]+\s*$
         - {label: wan_mode, index: 2, pattern: '^\s*Mode:.*,\s*Up Time=[0-9]+:[0-9]{2}:[0-9]{2}\s*$'}
         - {label: wan_address, index: 2, pattern: '^\s*IP=[0-9.-]+,\s*GW IP=[0-9.-]+\s*$'}
         - {label: wan_counters, index: 2, pattern: '^\s*TX Packets=[0-9]+,\s*TX Rate\(Bps\)=[0-9]+,\s*RX Packets=[0-9]+,\s*RX Rate\(Bps\)=[0-9]+\s*$'}
@@ -129,6 +138,11 @@
         - {label: lte_nonblank, index: 3, pattern: '\s*\S'}
         - {label: lte_state, index: 3, pattern: '^\s*Status:\s*Operational\.\s*\((?:Online|Offline)\)\s*$'}
         - {label: lte_state_label, index: 3, pattern: '^\s*Status:'}
+        - {label: lte_state_online, index: 3, pattern: '^\s*Status:.*\bOnline\b'}
+        - {label: lte_state_offline, index: 3, pattern: '^\s*Status:.*\bOffline\b'}
+        - {label: lte_rssi, index: 3, pattern: '^\s*RSSI:\s*-?[0-9]+\s+dBm\s*$'}
+        - {label: lte_rsrp, index: 3, pattern: '^\s*RSRP:\s*-?[0-9]+\s+dBm\s*$'}
+        - {label: lte_rsrq, index: 3, pattern: '^\s*RSRQ:\s*-?[0-9]+(?:\.[0-9]+)?\s+dB\s*$'}
         - {label: lte_access, index: 3, pattern: '^\s*Access Tech:\s*(?:LTE|---)?\s*$'}
         - {label: lte_radio, index: 3, pattern: '^\s*(?:Band|RSSI|RSRP|RSRQ|SINR|Signal Strength)\s*:'}
         - {label: lte_private, index: 3, pattern: '^\s*(?:ISP|MCC|IMEI|IMSI|ICCID|Unread SMS|SMSC address|SMS service status|Number of SMS sent)\s*:'}
@@ -137,6 +151,21 @@
     - name: Report WAN and LTE format counts
       ansible.builtin.debug:
         var: wan_lte_shape
+
+    - name: Classify LTE status framing privately
+      ansible.builtin.set_fact:
+        lte_frame: "{{ lte_text | regex_findall(allowed) }}"
+      vars:
+        lte_text: "{{ network_probes.results[3].stdout | default([''], true) | first }}"
+        allowed: >-
+          (?mx)^[\t\x20]*(Status|Access\x20Tech|Band|ISP|MCC|IMEI|IMSI|ICCID|RSSI|RSRP|RSRQ|SINR|
+          Signal\x20Strength|Max\x20Channel\x20TX\x20Rate|Max\x20Channel\x20RX\x20Rate|
+          Unread\x20SMS|SMSC\x20address|SMS\x20service\x20status|Number\x20of\x20SMS\x20sent)[\t\x20]*:
+      no_log: true
+
+    - name: Report only allowlisted LTE field labels
+      ansible.builtin.debug:
+        var: lte_frame
 
     - name: Count DHCP rows and pagers privately
       ansible.builtin.set_fact:
