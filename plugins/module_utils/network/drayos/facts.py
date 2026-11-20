@@ -195,6 +195,67 @@ def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]
     return [slots[slot] for slot in range(16)]
 
 
+_DHCP_SECTION = r"LAN[1-8]|IP Routed"
+_DHCP_HEADER = re.compile(r"Index[ \t]+IP Address[ \t]+MAC Address[ \t]+Leased Time[ \t]+HOST ID")
+_DHCP_ROW = re.compile(
+    r"(?P<index>[0-9]{1,6})[ \t]+(?P<ip>[0-9.]+)[ \t]+"
+    r"(?P<mac>[0-9a-fA-F]{2}(?P<separator>[:-])[0-9a-fA-F]{2}(?:(?P=separator)[0-9a-fA-F]{2}){4})[ \t]+"
+    r"(?P<time>[0-9]+:[0-5][0-9]:[0-5][0-9]|(?i:bind|bound|static|fixed|reserved|expired))"
+    r"(?:[ \t]+(?P<host>[^\x00-\x1f\x7f]+))?"
+)
+
+
+def parse_dhcp_leases(text: str) -> list[dict[str, int | str | None]]:
+    """Parse the DHCP lease table, keeping lease time as displayed."""
+    frame = re.split(r"(?m)^[ \t]*(-{3,})[ \t]*\r?\n", text, maxsplit=1)
+    if len(frame) != 3 or not re.match(rf"\s*(?:{_DHCP_SECTION})[ \t]*:[ \t]*DHCP Server\b", frame[0]):
+        raise ParseError("Missing DHCP status preamble")
+    _, sep, body = frame
+    lines = [line.strip(" \t") for line in body.splitlines() if line.strip(" \t")]
+    if len(lines) < 2 or not _DHCP_HEADER.fullmatch(lines[0]) or lines[1] != sep:
+        raise ParseError("Missing DHCP lease table header")
+
+    leases: list[dict[str, int | str | None]] = []
+    sections: set[str] = set()
+    indices: set[int] = set()
+    section = None
+    awaiting_page = False
+    for line in lines[2:]:
+        if leases and not awaiting_page and re.fullmatch(PAGER_PROMPT, line):
+            awaiting_page = True
+            continue
+        if re.fullmatch(_DHCP_SECTION, line):
+            if line in sections:
+                raise ParseError("Duplicate DHCP lease section")
+            sections.add(line)
+            section = line
+            indices.clear()
+        else:
+            row = _DHCP_ROW.fullmatch(line)
+            if section is None or row is None:
+                raise ParseError("Unrecognised DHCP lease table line")
+            index = int(row["index"])
+            if index < 1 or index in indices:
+                raise ParseError("Invalid or duplicate DHCP lease index")
+            try:
+                address = str(IPv4Address(row["ip"]))
+            except AddressValueError as exc:
+                raise ParseError("Invalid IPv4 address in DHCP lease table") from exc
+            indices.add(index)
+            leases.append({
+                "lan": section,
+                "index": index,
+                "ip_address": address,
+                "mac_address": row["mac"].replace("-", ":").lower(),
+                "lease_time": row["time"],
+                "host_id": row["host"],
+            })
+        awaiting_page = False
+    if awaiting_page:
+        raise ParseError("Incomplete paginated DHCP lease table")
+    return leases
+
+
 _IFACE_BLOCK_RE = re.compile(
     r"Interface (?P<index>\d+) (?P<media>\S+):\s*"
     r".*?Status:\s*(?P<status>\S+)"

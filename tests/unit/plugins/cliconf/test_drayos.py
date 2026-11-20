@@ -80,7 +80,7 @@ def test_cached_commands_cannot_bypass_fresh_resource_readback(cliconf, monkeypa
 
 
 @pytest.mark.parametrize("backend", ["paramiko", "libssh"])
-@pytest.mark.parametrize("command", ["sys iface", "show status"])
+@pytest.mark.parametrize("command", ["sys iface", "show status", "srv dhcp status"])
 def test_pager_advances_multiple_pages_through_network_cli(cliconf, monkeypatch, backend, command):
     importlib.import_module("paramiko" if backend == "paramiko" else "pylibsshext.session")
     from ansible_collections.ansible.netcommon.plugins.connection.network_cli import Connection
@@ -160,3 +160,11 @@ def test_tr069_read_works_when_raw_connection_logging_is_disabled(cliconf, monke
     command = "sys tr069 get InternetGatewayDevice.DeviceInfo.Manufacturer"
     assert cliconf.run_commands([command]) == ["private value"]
     assert seen == [{"command": command}]
+
+
+def test_dhcp_lease_read_cannot_use_raw_connection_logging(cliconf, monkeypatch):
+    monkeypatch.setattr(cliconf._connection, "get_option",
+                        lambda option: option == "persistent_log_messages")
+    with pytest.raises(AnsibleConnectionFailure, match="persistent_log_messages=false"):
+        cliconf.run_commands(["srv dhcp status"])
+    assert cliconf._connection._sent == []
