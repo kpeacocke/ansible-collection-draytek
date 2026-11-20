@@ -115,20 +115,20 @@
 
     - name: Count DHCP rows and pagers privately
       ansible.builtin.set_fact:
-        dhcp_raw_count: "{{ dhcp_text | regex_findall(dhcp_row) | length }}"
-        dhcp_pager_count: "{{ dhcp_text | regex_findall('(?m)^[ \t]*--- MORE ---') | length }}"
-        dhcp_labels: "{{ dhcp_text | regex_findall(dhcp_row + '(?i:(bind|bound|static|fixed|reserved|expired))\\b') | unique }}"
+        dhcp_raw_count: "{{ dhcp_lines | select('match', dhcp_row) | list | length }}"
+        dhcp_pager_count: "{{ dhcp_lines | select('match', '^[ \t]*--- MORE ---') | list | length }}"
+        dhcp_fixed_count: "{{ dhcp_lines | select('match', dhcp_row + 'FIXED(?:[ \t]|$)') | list | length }}"
       vars:
-        dhcp_text: "{{ network_probes.results[4].stdout[0] }}"
-        dhcp_row: '(?m)^[ \t]*[0-9]+[ \t]+[0-9.]+[ \t]+(?:[0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}[ \t]+'
+        dhcp_lines: "{{ network_probes.results[4].stdout[0].splitlines() }}"
+        dhcp_row: '^[ \t]*[0-9]+[ \t]+[0-9.]+[ \t]+(?:[0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}[ \t]+'
       no_log: true
 
-    - name: Report only DHCP row and pager counts and allowlisted lease labels
+    - name: Report only aggregate DHCP row and pager counts
       ansible.builtin.debug:
         msg:
           rows: "{{ dhcp_raw_count }}"
           pagers: "{{ dhcp_pager_count }}"
-          labels: "{{ dhcp_labels }}"
+          fixed: "{{ dhcp_fixed_count }}"
 
     - name: Gather DHCP leases privately
       kpeacocke.draytek.drayos_facts:
@@ -153,7 +153,8 @@
           - dhcp_raw_count | int > 0
           - dhcp_rows | length == dhcp_raw_count | int
           - dhcp_check_rows | length == dhcp_raw_count | int
-          - dhcp_rows | map(attribute='ip_address') | list == dhcp_check_rows | map(attribute='ip_address') | list
+          - dhcp_rows | selectattr('lease_time', 'equalto', 'FIXED') | list | length == dhcp_fixed_count | int
+          - dhcp_rows | map(attribute='ip_address') | sort == dhcp_check_rows | map(attribute='ip_address') | sort
       vars:
         dhcp_rows: "{{ dhcp_facts.ansible_facts.drayos.dhcp_leases }}"
         dhcp_check_rows: "{{ dhcp_check.ansible_facts.drayos.dhcp_leases }}"

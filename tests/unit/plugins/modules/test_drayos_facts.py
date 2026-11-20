@@ -248,6 +248,13 @@ def test_dhcp_lease_parser_preserves_rows_and_optional_host_id():
     ]
 
 
+def test_dhcp_lease_parser_preserves_fixed_rows_and_allows_empty_sections():
+    parse = drayos_facts.facts_parsers.parse_dhcp_leases
+    table = DHCP_TABLE.replace("0:00:02", "FIXED") + "LAN2\n"
+    assert parse(table)[-1]["lease_time"] == "FIXED"
+    assert parse(table.split("1 192.0.2.10", 1)[0]) == []
+
+
 @pytest.mark.parametrize("check_mode", [False, True])
 def test_dhcp_lease_facts_opt_in_runs_only_the_read_command(monkeypatch, check_mode):
     def execute(module, commands):
