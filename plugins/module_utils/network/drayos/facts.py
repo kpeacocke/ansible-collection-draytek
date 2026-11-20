@@ -8,6 +8,9 @@ fixture. The older Vigor2927 4.4.0 fixture remains documentation evidence.
 from __future__ import annotations
 
 import re
+from ipaddress import AddressValueError, IPv4Address
+
+from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.errors import ParseError
 
 from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.models import (
     PlatformInfo,
@@ -43,6 +46,47 @@ def parse_sys_version(text: str) -> PlatformInfo:
         hardware_version=values.get("revision"),
         serial_number=serial,
     )
+
+
+_LAN_HEADER = re.compile(r"[ \t%]*The LAN settings:[ \t]*")
+_LAN_PROFILE_PREFIX = re.compile(r"[ \t%]*(?:\[[^\r\n]*\][ \t]*)?LAN[1-8]\b")
+_LAN_PROFILE_ROW = re.compile(
+    r"[ \t%]*\[([VX])\][ \t]*(LAN[1-8])[ \t]+([0-9.]+)[ \t]+([0-9.]+)[ \t]+"
+    r"([VX])[ \t]+([0-9.]+)[ \t]+([0-9]{1,10})[ \t]+([0-9.]+)[ \t]*"
+)
+
+
+def parse_lan_profiles(text: str) -> dict[str, dict[str, str | int | bool]]:
+    """Parse the eight numbered profiles, excluding the separate routed profile."""
+    header = False
+    profiles: dict[str, dict[str, str | int | bool]] = {}
+    for line in text.splitlines():
+        if _LAN_HEADER.fullmatch(line):
+            if header:
+                raise ParseError("Duplicate LAN settings header")
+            header = True
+        elif _LAN_PROFILE_PREFIX.match(line):
+            row = _LAN_PROFILE_ROW.fullmatch(line)
+            if not header or row is None:
+                raise ParseError("Unrecognised LAN profile row")
+            enabled, name, address, mask, dhcp, start, count, gateway = row.groups()
+            if name in profiles:
+                raise ParseError("Duplicate LAN profile row")
+            try:
+                profiles[name] = {
+                    "enabled": enabled == "V",
+                    "ip_address": str(IPv4Address(address)),
+                    "netmask": str(IPv4Address(mask)),
+                    "dhcp_enabled": dhcp == "V",
+                    "dhcp_start_ip": str(IPv4Address(start)),
+                    "dhcp_pool_size": int(count),
+                    "dhcp_gateway": str(IPv4Address(gateway)),
+                }
+            except AddressValueError as exc:
+                raise ParseError("Invalid address in LAN profile row") from exc
+    if len(profiles) != 8:
+        raise ParseError("Incomplete LAN settings response")
+    return profiles
 
 
 _IFACE_BLOCK_RE = re.compile(

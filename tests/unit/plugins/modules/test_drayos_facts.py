@@ -8,6 +8,7 @@ from ansible.module_utils import basic
 from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible_collections.kpeacocke.draytek.plugins.modules import drayos_facts
+from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.errors import ParseError
 
 FIXTURES = Path(__file__).parents[3] / \
     "fixtures" / "drayos" / "vigor2927" / "4.4.0"
@@ -59,6 +60,47 @@ def test_commands_for_subsets_only_requests_needed_commands():
     assert drayos_facts.commands_for_subsets({"default"}) == ["sys version"]
     commands = drayos_facts.commands_for_subsets({"wan", "lan", "system"})
     assert commands == ["sys version", "show status"]
+
+
+LAN_TABLE = "\r\n".join([
+    "The LAN settings:",
+    *[
+        f"[{'V' if lan == 1 else 'X'}]LAN{lan} 192.0.2.{lan} 255.255.255.0 V 192.0.2.20 20 192.0.2.1"
+        for lan in range(1, 9)
+    ],
+    "[X]Route 198.51.100.1 255.255.255.0 X 0.0.0.0 0 198.51.100.1",
+])
+
+
+@pytest.mark.parametrize("table", [
+    LAN_TABLE.replace("[X]LAN8", "[X]LAN7"),
+    LAN_TABLE.replace("192.0.2.8", "192.0.2.256"),
+    LAN_TABLE.rsplit("\r\n", 2)[0],
+])
+def test_lan_profile_parser_rejects_bad_rows(table):
+    with pytest.raises(ParseError):
+        drayos_facts.facts_parsers.parse_lan_profiles(table)
+
+
+def test_opt_in_lan_profiles_in_check_mode(monkeypatch):
+    def execute(module, commands):
+        assert module.check_mode
+        assert commands == ["show lan"]
+        return [LAN_TABLE]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({"gather_subset": [], "gather_lan_profiles": True, "_ansible_check_mode": True})
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    result = excinfo.value.kwargs
+    assert not result["changed"]
+    profiles = result["ansible_facts"]["drayos"]["lan_profiles"]
+    assert set(profiles) == {f"LAN{lan}" for lan in range(1, 9)}
+    assert profiles["LAN7"] == {
+        "enabled": False, "ip_address": "192.0.2.7", "netmask": "255.255.255.0",
+        "dhcp_enabled": True, "dhcp_start_ip": "192.0.2.20", "dhcp_pool_size": 20,
+        "dhcp_gateway": "192.0.2.1",
+    }
 
 
 def test_build_facts_from_documented_fixture():

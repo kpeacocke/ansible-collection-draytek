@@ -141,3 +141,38 @@
           - not dns_no_change.changed
           - dns_after_predictions.gathered == lan_dns.gathered
       no_log: true
+
+    - name: Classify documented LAN table rows without returning network values
+      ansible.builtin.set_fact:
+        lan_table_shape:
+          profiles: "{{ lan_text | regex_findall(profile_prefix) | length }}"
+          complete_profiles: "{{ lan_text | regex_findall(complete_profile | replace('\n', '')) | length }}"
+          routed_profile: "{{ lan_text | regex_findall(route_prefix) | length }}"
+      vars:
+        lan_text: "{{ network_probes.results[1].stdout | default([''], true) | first }}"
+        profile_prefix: '(?m)^[ \t%]*\[[VX]\][ \t]*LAN[1-8](?=[ \t])'
+        route_prefix: '(?m)^[ \t%]*\[[VX]\][ \t]*Route(?=[ \t])'
+        complete_profile: |-
+          (?m)^[ \t%]*\[[VX]\][ \t]*LAN[1-8][ \t]+(?:[0-9.]+[ \t]+){2}
+          [VX][ \t]+[0-9.]+[ \t]+[0-9]+[ \t]+[0-9.]+[ \t\r]*$
+      no_log: true
+
+    - name: Report only LAN table shape counts
+      ansible.builtin.debug:
+        var: lan_table_shape
+
+    - name: Gather numbered LAN profiles privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_lan_profiles: true
+      check_mode: true
+      register: lan_profiles_result
+      no_log: true
+
+    - name: Verify the numbered LAN profile contract without printing addresses
+      ansible.builtin.assert:
+        that:
+          - not lan_profiles_result.changed
+          - lan_profiles_result.ansible_facts.drayos.lan_profiles | length == 8
+          - not lan_profiles_result.ansible_facts.drayos.lan_profiles.LAN7.enabled
+      no_log: true
