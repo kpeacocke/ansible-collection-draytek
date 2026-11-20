@@ -29,6 +29,12 @@ options:
       - Verified response framing targets Vigor2927Lac firmware 4.5.2.2.
     type: bool
     default: false
+  gather_ipv4_routes:
+    description:
+      - Also collect the IPv4 route status table using C(ip route status).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+    type: bool
+    default: false
 notes:
   - This module never reports C(changed=true).
 """
@@ -51,6 +57,8 @@ ansible_facts:
     - When O(gather_lan_profiles=true), C(lan_profiles) maps each numbered LAN to
       enabled, ip_address, netmask, dhcp_enabled, dhcp_start_ip, dhcp_pool_size
       and dhcp_gateway. Values describe configuration, not active leases.
+    - When O(gather_ipv4_routes=true), C(ipv4_routes) lists destination (CIDR),
+      flags (as reported), next_hop (null when directly connected), and interface.
   returned: always
   type: dict
 """
@@ -142,28 +150,37 @@ def main() -> None:
             choices=["all", *_ALL_SUBSETS],
         ),
         gather_lan_profiles=dict(type="bool", default=False),
+        gather_ipv4_routes=dict(type="bool", default=False),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
     subsets = resolve_subsets(module.params["gather_subset"])
     commands = commands_for_subsets(subsets)
-    if module.params["gather_lan_profiles"]:
-        commands.append("show lan")
+    optional_facts = [
+        (command, key, parser)
+        for option, command, key, parser in (
+            ("gather_lan_profiles", "show lan", "lan_profiles", facts_parsers.parse_lan_profiles),
+            ("gather_ipv4_routes", "ip route status", "ipv4_routes", facts_parsers.parse_ipv4_routes),
+        )
+        if module.params[option]
+    ]
+    commands.extend(entry[0] for entry in optional_facts)
 
     try:
         results = run_commands(module, commands) if commands else []
-        if module.params["gather_lan_profiles"] and (
-            not isinstance(results, list) or len(results) != len(commands) or not isinstance(results[-1], str)
+        if optional_facts and (
+            not isinstance(results, list) or len(results) != len(commands)
+            or not all(isinstance(result, str) for result in results)
         ):
-            raise ParseError("Expected one text response per command for LAN profile gathering")
+            raise ParseError("Expected one text response per facts command")
         responses = dict(zip(commands, results))
         facts = build_facts(subsets, responses)
-        if module.params["gather_lan_profiles"]:
-            facts["lan_profiles"] = facts_parsers.parse_lan_profiles(responses["show lan"])
+        for command, key, parser in optional_facts:
+            facts[key] = parser(responses[command])
     except DrayTekError as exc:
         message = str(exc)
-        if module.params["gather_lan_profiles"] and not isinstance(exc, ParseError):
-            message = "LAN profile gathering failed; device output suppressed"
+        if optional_facts and not isinstance(exc, ParseError):
+            message = "Extended facts gathering failed; device output suppressed"
         module.fail_json(msg=message, changed=False)
         return
 

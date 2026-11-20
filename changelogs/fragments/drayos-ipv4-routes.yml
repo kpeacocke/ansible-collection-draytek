@@ -1,0 +1,2 @@
+minor_changes:
+  - drayos_facts - Add opt-in gathering of the IPv4 route status table.
