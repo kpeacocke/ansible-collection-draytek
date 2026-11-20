@@ -126,6 +126,20 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
+    - name: Extract only known IPv4 route legend tokens
+      ansible.builtin.set_fact:
+        ipv4_legend_tokens: >-
+          {{ route_text | regex_findall('(?im)^[ \t%]*Codes:[^\r\n]*') |
+             join(' ') | regex_findall(legend_token) }}
+      vars:
+        route_text: "{{ network_probes.results[6].stdout | default([''], true) | first }}"
+        legend_token: '(?i)\b(?:Codes|connected|static|RIP|default|private|dynamic|kernel|local|unicast|reject|C|S|R)\b|[*~=-]|,'
+      no_log: true
+
+    - name: Report recognised IPv4 route legend tokens only
+      ansible.builtin.debug:
+        var: ipv4_legend_tokens
+
     - name: Read IPv4 routes through the public module
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
