@@ -47,6 +47,14 @@ options:
       - Independent of O(gather_subset); existing subset output is unchanged.
     type: bool
     default: false
+  gather_nat_redirects:
+    description:
+      - Also collect the documented NAT port-redirection status table using C(srv nat status).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+      - Qualified on Vigor2927Lac firmware 4.5.2.2. The table includes placeholder rows and private IPv4 addresses.
+        Use task-level C(no_log), disable persistent command logging and consider whether fact caching is appropriate.
+    type: bool
+    default: false
   gather_dhcp_leases:
     description:
       - Also collect the IPv4 DHCP lease table using C(srv dhcp status).
@@ -97,6 +105,9 @@ ansible_facts:
       forwarding state or the global VLAN enable flag.
     - When O(gather_vlan_p1_untagged_access=true), C(vlan_p1_untagged_access) is a
       boolean configuration value, not a reachability check or the global VLAN enable flag.
+    - When O(gather_nat_redirects=true), C(nat_redirects) lists the reported index,
+      protocol number, public port, private IPv4 address and private port for each row.
+      Placeholder rows are retained; the module does not infer that a row is active.
     - When O(gather_dhcp_leases=true), C(dhcp_leases) lists lan, index, ip_address,
       mac_address, lease_time (display text) and host_id (null when absent).
       This is a point-in-time lease table, not a reservation or pool configuration export.
@@ -199,6 +210,7 @@ def main() -> None:
         gather_ipv4_routes=dict(type="bool", default=False),
         gather_vlan_slots=dict(type="bool", default=False),
         gather_vlan_p1_untagged_access=dict(type="bool", default=False),
+        gather_nat_redirects=dict(type="bool", default=False),
         gather_dhcp_leases=dict(type="bool", default=False),
         gather_wan_links=dict(type="bool", default=False),
         gather_lte_access=dict(type="bool", default=False),
@@ -214,6 +226,7 @@ def main() -> None:
             ("gather_ipv4_routes", "ip route status", "ipv4_routes", facts_parsers.parse_ipv4_routes),
             ("gather_vlan_slots", "vlan status", "vlan_slots", facts_parsers.parse_vlan_slots),
             ("gather_vlan_p1_untagged_access", "vlan status", "vlan_p1_untagged_access", facts_parsers.parse_vlan_p1_untagged_access),
+            ("gather_nat_redirects", "srv nat status", "nat_redirects", facts_parsers.parse_nat_redirects),
             ("gather_dhcp_leases", "srv dhcp status", "dhcp_leases", facts_parsers.parse_dhcp_leases),
             ("gather_wan_links", "wan status", "wan_links", facts_parsers.parse_wan_links),
             ("gather_lte_access", "wan lte stus", "lte_access", facts_parsers.parse_lte_access),

@@ -209,6 +209,68 @@ def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]
     return [slots[slot] for slot in range(16)]
 
 
+_NAT_TABLE_HEADER = re.compile(r"(?:NAT )?Port Redirection Running Table[ \t]*:", re.IGNORECASE)
+_NAT_TABLE_COLUMNS = re.compile(
+    r"Index[ \t]+Protocol[ \t]+Public Port[ \t]+Private IP[ \t]+Private Port",
+    re.IGNORECASE,
+)
+_NAT_REDIRECTION_ROW = re.compile(
+    r"([0-9]{1,5})[ \t]+([0-9]{1,3})[ \t]+([0-9]{1,5})[ \t]+([0-9.]{1,15})[ \t]+([0-9]{1,5})"
+)
+
+
+def parse_nat_redirects(text: str) -> list[dict[str, int | str]]:
+    """Parse the documented NAT redirection status table without dropping unknown lines."""
+    table_header = False
+    columns_header = False
+    awaiting_page = False
+    entries: dict[int, dict[str, int | str]] = {}
+    for raw in text.splitlines():
+        line = raw.lstrip(" \t%").rstrip()
+        if not line:
+            continue
+        if _NAT_TABLE_HEADER.fullmatch(line):
+            if table_header:
+                raise ParseError("Duplicate NAT redirection table header")
+            table_header = True
+            continue
+        if _NAT_TABLE_COLUMNS.fullmatch(line):
+            if not table_header or columns_header:
+                raise ParseError("Unexpected NAT redirection column header")
+            columns_header = True
+            continue
+        if entries and not awaiting_page and re.fullmatch(PAGER_PROMPT, line):
+            awaiting_page = True
+            continue
+        row = _NAT_REDIRECTION_ROW.fullmatch(line) if columns_header else None
+        if row is None:
+            raise ParseError("Unrecognised NAT redirection table line")
+        index, protocol, public_port, private_ip, private_port = row.groups()
+        index_value = int(index)
+        protocol_value = int(protocol)
+        public_port_value = int(public_port)
+        private_port_value = int(private_port)
+        if index_value < 1 or index_value in entries:
+            raise ParseError("Invalid or duplicate NAT redirection index")
+        if protocol_value > 255 or public_port_value > 65535 or private_port_value > 65535:
+            raise ParseError("Invalid protocol or port in NAT redirection row")
+        try:
+            private_ip_value = str(IPv4Address(private_ip))
+        except AddressValueError as exc:
+            raise ParseError("Invalid IPv4 address in NAT redirection row") from exc
+        entries[index_value] = {
+            "index": index_value,
+            "protocol": protocol_value,
+            "public_port": public_port_value,
+            "private_ip": private_ip_value,
+            "private_port": private_port_value,
+        }
+        awaiting_page = False
+    if not table_header or not columns_header or not entries or awaiting_page:
+        raise ParseError("Incomplete NAT redirection table")
+    return [entries[index] for index in sorted(entries)]
+
+
 _DHCP_SECTION = r"LAN[1-8]|IP Routed"
 _DHCP_HEADER = re.compile(r"Index[ \t]+IP Address[ \t]+MAC Address[ \t]+Leased Time[ \t]+HOST ID")
 _DHCP_ROW = re.compile(

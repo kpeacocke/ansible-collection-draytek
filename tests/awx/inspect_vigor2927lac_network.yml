@@ -116,6 +116,36 @@
       ansible.builtin.debug:
         var: nat_shapes
 
+    - name: Gather NAT redirection facts privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_nat_redirects: true
+      register: nat_facts
+      no_log: true
+
+    - name: Gather NAT redirection facts in check mode privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_nat_redirects: true
+      register: nat_check
+      check_mode: true
+      no_log: true
+
+    - name: Verify the NAT parser against each bounded raw snapshot
+      ansible.builtin.assert:
+        that:
+          - not nat_facts.changed
+          - not nat_check.changed
+          - nat_facts.ansible_facts.drayos.nat_redirects | length == nat_shapes['srv nat status'].complete_redirection_rows | int
+          - nat_check.ansible_facts.drayos.nat_redirects | length == nat_shapes['srv nat status'].complete_redirection_rows | int
+      no_log: true
+
+    - name: Report only NAT fact row counts
+      ansible.builtin.debug:
+        msg:
+          normal_rows: "{{ nat_facts.ansible_facts.drayos.nat_redirects | length }}"
+          check_rows: "{{ nat_check.ansible_facts.drayos.nat_redirects | length }}"
+
     - name: Classify fixed network table shapes without retaining matched values
       ansible.builtin.set_fact:
         network_table_shapes: >-
