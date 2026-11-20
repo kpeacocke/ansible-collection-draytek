@@ -49,6 +49,19 @@ options:
         and do not cache them if the fact cache is not suitable for this data.
     type: bool
     default: false
+  gather_wan_links:
+    description:
+      - Also collect the online and stall indicators from numbered WAN and PVC WAN headers using C(wan status).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+    type: bool
+    default: false
+  gather_lte_access:
+    description:
+      - Also collect LTE access technology using C(wan lte stus).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+      - Requires persistent transport logging to be disabled because the raw response contains modem identifiers.
+    type: bool
+    default: false
 notes:
   - This module never reports C(changed=true).
 """
@@ -79,6 +92,11 @@ ansible_facts:
     - When O(gather_dhcp_leases=true), C(dhcp_leases) lists lan, index, ip_address,
       mac_address, lease_time (display text) and host_id (null when absent).
       This is a point-in-time lease table, not a reservation or pool configuration export.
+    - When O(gather_wan_links=true), C(wan_links) lists interface, online and stalled
+      for the numbered WAN and PVC WAN headers. This excludes traffic, addressing and other status blocks.
+    - When O(gather_lte_access=true), C(lte_access) contains C(access_technology),
+      which is V(LTE) or null when the device leaves it unspecified or displays a placeholder.
+      It is not a connectivity check.
   returned: always
   type: dict
 """
@@ -173,6 +191,8 @@ def main() -> None:
         gather_ipv4_routes=dict(type="bool", default=False),
         gather_vlan_slots=dict(type="bool", default=False),
         gather_dhcp_leases=dict(type="bool", default=False),
+        gather_wan_links=dict(type="bool", default=False),
+        gather_lte_access=dict(type="bool", default=False),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
@@ -185,6 +205,8 @@ def main() -> None:
             ("gather_ipv4_routes", "ip route status", "ipv4_routes", facts_parsers.parse_ipv4_routes),
             ("gather_vlan_slots", "vlan status", "vlan_slots", facts_parsers.parse_vlan_slots),
             ("gather_dhcp_leases", "srv dhcp status", "dhcp_leases", facts_parsers.parse_dhcp_leases),
+            ("gather_wan_links", "wan status", "wan_links", facts_parsers.parse_wan_links),
+            ("gather_lte_access", "wan lte stus", "lte_access", facts_parsers.parse_lte_access),
         )
         if module.params[option]
     ]

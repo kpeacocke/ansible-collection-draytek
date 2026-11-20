@@ -94,6 +94,15 @@ flag, effective forwarding state, or untagged management access.
 Use task-level `no_log: true` and disable persistent transport logging
 when VLAN topology should not appear in job output.
 
+## WAN link and LTE access facts
+
+`gather_wan_links: true` reads the online and stall indicators from numbered
+WAN and PVC WAN headers. It does not report addressing, throughput or other
+status blocks. `gather_lte_access: true` reports the modem's LTE access
+technology, not link reachability or signal quality. It excludes modem and
+subscriber identifiers and requires persistent transport logging to be off.
+Both options are independent of `gather_subset` and default to off.
+
 ## IPv4 DHCP lease status
 
 `drayos_facts` with `gather_dhcp_leases: true` reads the IPv4 DHCP lease

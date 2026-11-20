@@ -285,6 +285,54 @@ def test_dhcp_lease_parser_rejects_malformed_or_partial_tables(table):
         drayos_facts.facts_parsers.parse_dhcp_leases(table)
 
 
+WAN_LINKS = """\
+WAN1: Online, stall=N
+ Mode: DHCP, Up Time=00:04:59
+--- MORE ---   ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---
+WAN2: Offline, stall=Y
+PVC_WAN5: Offline, stall=N
+"""
+LTE_ACCESS = "Status: Operational. (Online)\nAccess Tech: LTE\nIMEI: synthetic-private-value\n"
+
+
+@pytest.mark.parametrize("check_mode", [False, True])
+def test_wan_and_lte_facts_only_return_qualified_fields(monkeypatch, check_mode):
+    def execute(module, commands):
+        assert module.check_mode is check_mode
+        assert commands == ["wan status", "wan lte stus"]
+        return [WAN_LINKS, LTE_ACCESS]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({"gather_subset": [], "gather_wan_links": True, "gather_lte_access": True, "_ansible_check_mode": check_mode})
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    result = excinfo.value.kwargs
+    assert result["changed"] is False
+    assert result["ansible_facts"]["drayos"] == {
+        "lte_access": {"access_technology": "LTE"},
+        "wan_links": [
+            {"interface": "WAN1", "online": True, "stalled": False},
+            {"interface": "WAN2", "online": False, "stalled": True},
+            {"interface": "PVC_WAN5", "online": False, "stalled": False},
+        ],
+    }
+
+
+@pytest.mark.parametrize("text", ["", WAN_LINKS.replace("WAN2", "WAN1"), WAN_LINKS.replace("stall=Y", "stall=?"),
+                                  WAN_LINKS + WAN_LINKS.splitlines()[2]])
+def test_wan_links_reject_missing_duplicate_or_incomplete_headers(text):
+    with pytest.raises(ParseError):
+        drayos_facts.facts_parsers.parse_wan_links(text)
+
+
+def test_lte_access_rejects_missing_or_ambiguous_or_unknown_values():
+    parse = drayos_facts.facts_parsers.parse_lte_access
+    assert parse(LTE_ACCESS.replace("Tech: LTE", "Tech: ---")) == {"access_technology": None}
+    for text in ["Access Tech: LTE", LTE_ACCESS + "Access Tech: LTE", LTE_ACCESS.replace("Tech: LTE", "Tech: unknown")]:
+        with pytest.raises(ParseError):
+            parse(text)
+
+
 def test_module_returns_facts_without_changed_state(monkeypatch):
     monkeypatch.setattr(
         drayos_facts,

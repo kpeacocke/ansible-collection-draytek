@@ -256,6 +256,38 @@ def parse_dhcp_leases(text: str) -> list[dict[str, int | str | None]]:
     return leases
 
 
+_WAN_LINK = re.compile(r"((?:PVC_)?WAN[1-9]):[ \t]*(Online|Offline),[ \t]*stall=([YN])")
+
+
+def parse_wan_links(text: str) -> list[dict[str, str | bool]]:
+    """Read numbered WAN link headers, not the associated telemetry blocks."""
+    links: dict[str, dict[str, str | bool]] = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not re.match(r"(?:PVC_)?WAN[0-9]+\b", line):
+            continue
+        match = _WAN_LINK.fullmatch(line)
+        if match is None or match[1] in links:
+            raise ParseError("Unrecognised or duplicate numbered WAN link header")
+        links[match[1]] = {"interface": match[1], "online": match[2] == "Online", "stalled": match[3] == "Y"}
+    if not {"WAN1", "WAN2"} <= links.keys() or re.fullmatch(PAGER_PROMPT, text.rstrip().splitlines()[-1].strip()):
+        raise ParseError("Missing or incomplete numbered WAN link status")
+    return list(links.values())
+
+
+def parse_lte_access(text: str) -> dict[str, str | None]:
+    """Extract access technology without returning modem identifiers."""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    statuses = [line for line in lines if line.startswith("Status:")]
+    technologies = [line for line in lines if line.startswith("Access Tech:")]
+    if len(statuses) != 1 or len(technologies) != 1:
+        raise ParseError("Missing or ambiguous LTE status framing")
+    match = re.fullmatch(r"Access Tech:[ \t]*(LTE|---)?", technologies[0])
+    if match is None:
+        raise ParseError("Unrecognised LTE access technology")
+    return {"access_technology": "LTE" if match.group(1) == "LTE" else None}
+
+
 _IFACE_BLOCK_RE = re.compile(
     r"Interface (?P<index>\d+) (?P<media>\S+):\s*"
     r".*?Status:\s*(?P<status>\S+)"

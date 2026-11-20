@@ -1,0 +1,2 @@
+minor_changes:
+  - drayos_facts - add opt-in numbered WAN link indicators and LTE access technology.

@@ -113,6 +113,38 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
+    - name: Gather WAN and LTE facts privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_wan_links: true
+        gather_lte_access: true
+      register: wan_lte_facts
+      no_log: true
+
+    - name: Gather WAN and LTE facts in check mode privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_wan_links: true
+        gather_lte_access: true
+      check_mode: true
+      register: wan_lte_check
+      no_log: true
+
+    - name: Verify the WAN headers and LTE access field privately
+      ansible.builtin.assert:
+        that:
+          - not wan_lte_facts.changed
+          - not wan_lte_check.changed
+          - actual.wan_links | map(attribute='interface') | list == wan_headers
+          - (actual.lte_access.access_technology == 'LTE') == (network_probes.results[3].stdout[0] is search(lte_label))
+          - actual == wan_lte_check.ansible_facts.drayos
+      vars:
+        actual: "{{ wan_lte_facts.ansible_facts.drayos }}"
+        wan_headers: "{{ network_probes.results[2].stdout[0] | regex_findall(wan_header) }}"
+        wan_header: '(?m)^[ \t]*((?:PVC_)?WAN[0-9]+):[ \t]*(?:Online|Offline),[ \t]*stall=[YN][ \t\r]*$'
+        lte_label: '(?m)^[ \t]*Access Tech:[ \t]*LTE[ \t\r]*$'
+      no_log: true
+
     - name: Count DHCP rows and pagers privately
       ansible.builtin.set_fact:
         dhcp_raw_count: "{{ dhcp_lines | select('match', dhcp_row) | list | length }}"
