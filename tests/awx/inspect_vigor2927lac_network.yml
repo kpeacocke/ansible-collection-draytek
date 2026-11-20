@@ -113,6 +113,26 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
+    - name: Identify VLAN column layout without reporting membership or settings
+      ansible.builtin.set_fact:
+        vlan_layout:
+          known_header: "{{ vlan_text | regex_findall(header) | first | default('') }}"
+          global_status_present: "{{ vlan_text | regex_search(global_status) is not none }}"
+          marked_rows: "{{ vlan_text | regex_findall(marked_row) | length }}"
+          permit_footer_present: "{{ vlan_text | regex_search(permit_footer) is not none }}"
+      vars:
+        vlan_text: "{{ network_probes.results[5].stdout | default([''], true) | first }}"
+        header: >-
+          (?im)^[ \t%]*(VLAN[ ]+Enable[ ]+VID[ ]+Pri[ ]+(?:(?:p[1-9]|(?:5g)?s[1-9])[ ]+)+subnet)[ \t\r]*$
+        global_status: '(?im)^[ \t%]*VLAN is (?:Enable|Disable)[ \t]*:'
+        marked_row: '(?im)^[ \t%]*[0-9]+[ \t]+(?:ON|OFF)[ \t]+[0-9]+[ \t]+[0-9]+[ V]+V[ V]+[1-8]:LAN[1-8][ \t\r]*$'
+        permit_footer: '(?im)^[ \t%]*Permit untagged device in P1 to access router:[ \t]*(?:ON|OFF)\b'
+      no_log: true
+
+    - name: Report only VLAN framing evidence
+      ansible.builtin.debug:
+        var: vlan_layout
+
     - name: Read IPv4 routes through the public module
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
