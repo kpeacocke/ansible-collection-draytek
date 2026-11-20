@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from ipaddress import AddressValueError, IPv4Address, IPv4Network
 
+from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.connection import PAGER_PROMPT
 from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.errors import ParseError
 
 from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.models import (
@@ -103,12 +104,16 @@ def parse_ipv4_routes(text: str) -> list[dict[str, str | None]]:
     """Parse documented route rows without silently dropping unknown routes."""
     legend = False
     routes = []
+    awaiting_page = False
     for raw in text.splitlines():
         line = raw.lstrip(" \t%").rstrip()
         if not line:
             continue
         if _IPV4_ROUTE_LEGEND.fullmatch(line) and not legend:
             legend = True
+            continue
+        if routes and not awaiting_page and re.fullmatch(PAGER_PROMPT, line):
+            awaiting_page = True
             continue
         row = _IPV4_ROUTE_ROW.fullmatch(line)
         if not legend or row is None:
@@ -124,8 +129,11 @@ def parse_ipv4_routes(text: str) -> list[dict[str, str | None]]:
                 "next_hop": str(IPv4Address(gateway)) if gateway is not None else None,
                 "interface": interface,
             })
+            awaiting_page = False
         except ValueError as exc:
             raise ParseError("Invalid address or mask in IPv4 route table") from exc
+    if awaiting_page:
+        raise ParseError("Incomplete paginated IPv4 route table")
     if not routes:
         raise ParseError("Missing or empty IPv4 route table")
     return routes

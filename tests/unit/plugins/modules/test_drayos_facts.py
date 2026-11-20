@@ -162,6 +162,17 @@ def test_ipv4_routes_allow_extra_legend_entries_but_not_unknown_route_codes():
         parse(extended.replace("S* 0.0.0.0", "B 0.0.0.0"))
 
 
+def test_ipv4_routes_preserve_rows_across_the_known_pager():
+    banner = "--- MORE ---   ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---"
+    parse = drayos_facts.facts_parsers.parse_ipv4_routes
+    paged = ROUTE_TABLE.replace("S* 0.0.0.0", f"{banner}\r\nS* 0.0.0.0")
+    assert parse(paged) == parse(ROUTE_TABLE)
+    with pytest.raises(ParseError):
+        parse(paged.replace("Next Page", "Unknown"))
+    with pytest.raises(ParseError):
+        parse(ROUTE_TABLE + banner + "\r\n")
+
+
 def test_module_returns_facts_without_changed_state(monkeypatch):
     monkeypatch.setattr(
         drayos_facts,
