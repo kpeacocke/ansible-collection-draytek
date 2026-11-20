@@ -39,8 +39,8 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.c
 )
 
 PAGED_COMMANDS = frozenset((
-    "sys iface", "show status", "show lan", "ip route status", "vlan status", "srv dhcp status",
-    "srv nat status", "wan status", "wan lte stus",
+    "sys iface", "show status", "show lan", "show nat", "ip route status", "vlan status",
+    "srv dhcp status", "srv nat status", "wan status", "wan lte stus",
 ))
 
 
@@ -76,7 +76,8 @@ class Cliconf(CliconfBase):
             raise AnsibleConnectionFailure("LTE access reads require ansible_persistent_log_messages=false")
 
     def _require_private_nat_read(self, command):
-        if command.strip() == "srv nat status" and self._connection.get_option("persistent_log_messages"):
+        if command.strip() in {"show nat", "show openport", "srv nat status"} and \
+                self._connection.get_option("persistent_log_messages"):
             raise AnsibleConnectionFailure("NAT redirection reads require ansible_persistent_log_messages=false")
 
     def get(
