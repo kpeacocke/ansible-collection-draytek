@@ -70,6 +70,10 @@ class Cliconf(CliconfBase):
             "(engineering-specification.md, section 12)"
         )
 
+    def _require_private_lte_read(self, command):
+        if command.strip() == "wan lte stus" and self._connection.get_option("persistent_log_messages"):
+            raise AnsibleConnectionFailure("LTE access reads require ansible_persistent_log_messages=false")
+
     def get(
         self,
         command=None,
@@ -85,6 +89,7 @@ class Cliconf(CliconfBase):
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
+        self._require_private_lte_read(command)
         return self.send_command(
             command=command,
             prompt=prompt,
@@ -124,8 +129,7 @@ class Cliconf(CliconfBase):
             if cmd.get("command", "").strip() == "srv dhcp status" and self._connection.get_option("persistent_log_messages"):
                 raise AnsibleConnectionFailure("DHCP lease reads require ansible_persistent_log_messages=false")
 
-            if cmd.get("command", "").strip() == "wan lte stus" and self._connection.get_option("persistent_log_messages"):
-                raise AnsibleConnectionFailure("LTE access reads require ansible_persistent_log_messages=false")
+            self._require_private_lte_read(cmd.get("command", ""))
 
             if cmd.get("command", "").strip() in PAGED_COMMANDS and not cmd.get("prompt"):
                 # check_all consumes one prompt/answer pair per page. A single

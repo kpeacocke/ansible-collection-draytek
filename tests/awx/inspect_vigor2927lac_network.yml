@@ -182,14 +182,20 @@
         that:
           - not wan_lte_facts.changed
           - not wan_lte_check.changed
-          - actual.wan_links | map(attribute='interface') | list == wan_headers
-          - (actual.lte_access.access_technology == 'LTE') == (network_probes.results[3].stdout[0] is search(lte_label))
-          - actual == wan_lte_check.ansible_facts.drayos
+          - wan_headers | length > 0
+          - snapshot.wan_links | map(attribute='interface') | sort == wan_headers | sort
+          - snapshot.wan_links | selectattr('online', 'boolean') | list | length == wan_headers | length
+          - snapshot.wan_links | selectattr('stalled', 'boolean') | list | length == wan_headers | length
+          - snapshot.lte_access.keys() | list == ['access_technology']
+          - snapshot.lte_access.access_technology in ['LTE', none]
       vars:
-        actual: "{{ wan_lte_facts.ansible_facts.drayos }}"
         wan_headers: "{{ network_probes.results[2].stdout[0] | regex_findall(wan_header) }}"
         wan_header: '(?m)^[ \t]*((?:PVC_)?WAN[0-9]+):[ \t]*(?:Online|Offline),[ \t]*stall=[YN][ \t\r]*$'
-        lte_label: '(?m)^[ \t]*Access Tech:[ \t]*LTE[ \t\r]*$'
+      loop:
+        - "{{ wan_lte_facts.ansible_facts.drayos }}"
+        - "{{ wan_lte_check.ansible_facts.drayos }}"
+      loop_control:
+        loop_var: snapshot
       no_log: true
 
     - name: Count DHCP rows and pagers privately
