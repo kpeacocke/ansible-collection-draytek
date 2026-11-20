@@ -35,6 +35,12 @@ options:
       - Independent of O(gather_subset); existing subset output is unchanged.
     type: bool
     default: false
+  gather_vlan_slots:
+    description:
+      - Also collect configured VLAN slots using C(vlan status).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+    type: bool
+    default: false
 notes:
   - This module never reports C(changed=true).
 """
@@ -59,6 +65,9 @@ ansible_facts:
       and dhcp_gateway. Values describe configuration, not active leases.
     - When O(gather_ipv4_routes=true), C(ipv4_routes) lists destination (CIDR),
       flags (as reported), next_hop (null when directly connected), and interface.
+    - When O(gather_vlan_slots=true), C(vlan_slots) lists slot, enabled, vid,
+      priority, lan and members. These are configured row values, not effective
+      forwarding state or the global VLAN enable flag.
   returned: always
   type: dict
 """
@@ -151,6 +160,7 @@ def main() -> None:
         ),
         gather_lan_profiles=dict(type="bool", default=False),
         gather_ipv4_routes=dict(type="bool", default=False),
+        gather_vlan_slots=dict(type="bool", default=False),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
@@ -161,6 +171,7 @@ def main() -> None:
         for option, command, key, parser in (
             ("gather_lan_profiles", "show lan", "lan_profiles", facts_parsers.parse_lan_profiles),
             ("gather_ipv4_routes", "ip route status", "ipv4_routes", facts_parsers.parse_ipv4_routes),
+            ("gather_vlan_slots", "vlan status", "vlan_slots", facts_parsers.parse_vlan_slots),
         )
         if module.params[option]
     ]

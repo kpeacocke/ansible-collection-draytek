@@ -113,6 +113,42 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
+    - name: Count VLAN rows with membership markers privately
+      ansible.builtin.set_fact:
+        vlan_marked_rows: "{{ vlan_text | regex_findall(marked_row) | length }}"
+      vars:
+        vlan_text: "{{ network_probes.results[5].stdout | default([''], true) | first }}"
+        marked_row: '(?im)^[ \t%]*[0-9]+[ \t]+(?:ON|OFF)[ \t]+[0-9]+[ \t]+[0-9]+[ V]+V[ V]+[1-8]:LAN[1-8][ \t\r]*$'
+      no_log: true
+
+    - name: Gather VLAN slots privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_vlan_slots: true
+      register: vlan_facts
+      no_log: true
+
+    - name: Gather VLAN slots in check mode privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_vlan_slots: true
+      register: vlan_check
+      check_mode: true
+      no_log: true
+
+    - name: Verify the VLAN slot contract without exposing settings
+      ansible.builtin.assert:
+        that:
+          - not vlan_facts.changed
+          - not vlan_check.changed
+          - slots | map(attribute='slot') | list == range(16) | list
+          - vlan_marked_rows | int > 0
+          - slots | rejectattr('members', 'equalto', []) | list | length == vlan_marked_rows | int
+          - slots == vlan_check.ansible_facts.drayos.vlan_slots
+      vars:
+        slots: "{{ vlan_facts.ansible_facts.drayos.vlan_slots }}"
+      no_log: true
+
     - name: Read IPv4 routes through the public module
       kpeacocke.draytek.drayos_facts:
         gather_subset: []

@@ -38,7 +38,7 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.c
     PAGER_PROMPT,
 )
 
-PAGED_COMMANDS = frozenset(("sys iface", "show status", "show lan", "ip route status"))
+PAGED_COMMANDS = frozenset(("sys iface", "show status", "show lan", "ip route status", "vlan status"))
 
 
 class Cliconf(CliconfBase):

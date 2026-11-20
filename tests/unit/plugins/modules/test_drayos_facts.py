@@ -173,6 +173,58 @@ def test_ipv4_routes_preserve_rows_across_the_known_pager():
         parse(ROUTE_TABLE + banner + "\r\n")
 
 
+VLAN_HEADER = "VLAN Enable VID  Pri   p1 p2 p3 p4 p5 s1 s2 s3 s4 5gs1 5gs2 5gs3 5gs4  subnet"
+VLAN_ROWS = [
+    " 3   ON       42 3".ljust(23) + "V" + " " * 38 + "V"
+    if slot == 3 else f"{slot:2}   OFF       0 0"
+    for slot in range(16)
+]
+VLAN_TABLE = "\n".join([
+    "VLAN is Disable :", VLAN_HEADER,
+    *(f"{row.ljust(VLAN_HEADER.index('subnet'))}2:LAN2" for row in VLAN_ROWS),
+    "Permit untagged device in P1 to access router: ON",
+])
+
+
+def test_vlan_slot_facts_preserve_sparse_membership(monkeypatch):
+    def execute(module, commands):
+        assert module.check_mode
+        assert commands == ["vlan status"]
+        return [VLAN_TABLE]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({"gather_subset": [], "gather_vlan_slots": True, "_ansible_check_mode": True})
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    result = excinfo.value.kwargs
+    assert result["changed"] is False
+    slots = result["ansible_facts"]["drayos"]["vlan_slots"]
+    assert [row["slot"] for row in slots] == list(range(16))
+    assert slots[3] == {"slot": 3, "enabled": True, "vid": 42, "priority": 3,
+                        "lan": "LAN2", "members": ["p1", "5gs3"]}
+    assert slots[15]["members"] == []
+
+
+@pytest.mark.parametrize("table", [
+    VLAN_TABLE.replace("15   OFF", "14   OFF"),
+    VLAN_TABLE.replace("V  ", "VV ", 1),
+    VLAN_TABLE.replace("    V", "   VV", 1),
+    VLAN_TABLE.replace("2:LAN2", "2:LAN3", 1),
+    "\n".join(VLAN_TABLE.splitlines()[:-2]),
+])
+def test_vlan_slot_parser_rejects_ambiguous_or_incomplete_rows(table):
+    with pytest.raises(ParseError):
+        drayos_facts.facts_parsers.parse_vlan_slots(table)
+
+
+def test_vlan_slot_parser_preserves_vendor_maximum_vid():
+    table = VLAN_TABLE.replace("42 3  ", "4095 3", 1)
+    parse = drayos_facts.facts_parsers.parse_vlan_slots
+    assert parse(table)[3]["vid"] == 4095
+    with pytest.raises(ParseError, match="Invalid or duplicate VLAN slot"):
+        parse(table.replace("4095", "4096", 1))
+
+
 def test_module_returns_facts_without_changed_state(monkeypatch):
     monkeypatch.setattr(
         drayos_facts,
