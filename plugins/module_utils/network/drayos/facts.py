@@ -177,7 +177,7 @@ def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]
         if row is None or row.start("subnet") != header.start("subnet") or row["subnet"] != row["lan"]:
             raise ParseError("Unrecognised VLAN slot row layout")
         slot, vid = int(row["slot"]), int(row["vid"])
-        if slot not in range(16) or slot in slots or vid > 4094:
+        if slot not in range(16) or slot in slots or vid > 4095:
             raise ParseError("Invalid or duplicate VLAN slot")
         positions = [row.start("membership") + mark.start() for mark in re.finditer("V", row["membership"])]
         if any(position not in columns for position in positions):

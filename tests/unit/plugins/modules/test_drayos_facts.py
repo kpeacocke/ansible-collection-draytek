@@ -217,6 +217,14 @@ def test_vlan_slot_parser_rejects_ambiguous_or_incomplete_rows(table):
         drayos_facts.facts_parsers.parse_vlan_slots(table)
 
 
+def test_vlan_slot_parser_preserves_vendor_maximum_vid():
+    table = VLAN_TABLE.replace("42 3  ", "4095 3", 1)
+    parse = drayos_facts.facts_parsers.parse_vlan_slots
+    assert parse(table)[3]["vid"] == 4095
+    with pytest.raises(ParseError, match="Invalid or duplicate VLAN slot"):
+        parse(table.replace("4095", "4096", 1))
+
+
 def test_module_returns_facts_without_changed_state(monkeypatch):
     monkeypatch.setattr(
         drayos_facts,
