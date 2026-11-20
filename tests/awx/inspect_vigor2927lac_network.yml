@@ -101,19 +101,6 @@
         - label: ipv4_route_rows
           index: 6
           pattern: '(?im)^[ \t%]*[CSR*~]+[ \t]+[0-9.]+/[ \t]*[0-9.]+[ \t]+(?:is directly connected|via[ \t]+[0-9.]+),'
-        - label: ipv4_route_nonblank_lines
-          index: 6
-          pattern: '(?m)^[ \t%]*[^ \t%\r\n]'
-        - label: ipv4_route_legend
-          index: 6
-          pattern: '(?m)^[ \t%]*Codes:[ \t]*C - connected,[ \t]*S - static,[ \t]*R - RIP,[ \t]*\* - default,[ \t]*~ - private[ \t\r]*$'
-        - label: ipv4_route_complete_rows
-          index: 6
-          pattern: >-
-            (?m)^[ \t%]*[CSR*~]+[ \t]+[0-9.]+/[ \t]*[0-9.]+[ \t]+(?:is directly connected|via[ \t]+[0-9.]+),[ \t]*[A-Za-z0-9][A-Za-z0-9 _./-]*[ \t\r]*$
-        - label: ipv4_route_separator_lines
-          index: 6
-          pattern: '(?m)^[ \t%]*-{3,}[ \t\r]*$'
         - label: ipv6_route_header
           index: 7
           pattern: '(?im)^[ \t%]*PREFIX/PREFIX-LEN[ \t]+I/F[ \t]+METRIC[ \t]+FLAG[ \t]+NEXT-HOP[ \t\r]*$'
@@ -126,45 +113,12 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
-    - name: Extract only known IPv4 route legend tokens
-      ansible.builtin.set_fact:
-        ipv4_legend_tokens: >-
-          {{ route_text | regex_findall('(?im)^[ \t%]*Codes:[^\r\n]*') |
-             join(' ') | regex_findall(legend_token) }}
-      vars:
-        route_text: "{{ network_probes.results[6].stdout | default([''], true) | first }}"
-        legend_token: '(?i)\b(?:Codes|connected|static|RIP|default|private|dynamic|kernel|local|unicast|reject|C|S|R)\b|[*~=-]|,'
-      no_log: true
-
-    - name: Report recognised IPv4 route legend tokens only
-      ansible.builtin.debug:
-        var: ipv4_legend_tokens
-
     - name: Read IPv4 routes through the public module
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
         gather_ipv4_routes: true
       register: ipv4_route_facts
-      ignore_errors: true  # noqa: ignore-errors
       no_log: true
-
-    - name: Report only the category of the IPv4 read failure
-      ansible.builtin.debug:
-        msg: >-
-          {{ known_failure_codes.get(ipv4_route_facts.msg | default(''), 'other') }}
-      vars:
-        known_failure_codes:
-          Unrecognised IPv4 route table line: framing
-          Invalid address or mask in IPv4 route table: address_or_mask
-          Missing or empty IPv4 route table: empty
-          Extended facts gathering failed; device output suppressed: transport
-      when: ipv4_route_facts is failed
-
-    - name: Require successful IPv4 route gathering
-      ansible.builtin.assert:
-        that:
-          - ipv4_route_facts is succeeded
-
     - name: Read IPv4 routes in check mode
       kpeacocke.draytek.drayos_facts:
         gather_subset: []

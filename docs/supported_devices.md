@@ -70,6 +70,21 @@ include the separate routed profile, or change configuration. AWX discovery
 job [2124](https://awx.ambitiouscake.com/jobs/playbook/2124/output) confirmed
 the eight-profile response framing on Vigor2927Lac firmware 4.5.2.2.
 
+## IPv4 route status
+
+Set `gather_ipv4_routes: true` on `drayos_facts` to read the IPv4 table
+reported by `ip route status`. Each entry includes a CIDR destination,
+the reported flags, the outgoing interface and a next hop (null for
+directly connected routes). The option defaults to off and is independent
+of `gather_subset`. Use task-level `no_log: true` when route topology
+should not appear in job output, and keep persistent transport logging
+disabled.
+
+[AWX job 2144](https://awx.ambitiouscake.com/jobs/playbook/2144/output)
+verified that normal and check mode returned the same complete table on
+the Vigor2927Lac running 4.5.2.2. This does not cover IPv6, policy routing,
+or route configuration.
+
 ## Primary NTP server
 
 The [NTP resource](ntp.md) is restricted to Vigor2927Lac firmware 4.5.2.2.
