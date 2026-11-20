@@ -113,6 +113,33 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
+    - name: Read IPv4 routes through the public module
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_ipv4_routes: true
+      register: ipv4_route_facts
+      no_log: true
+
+    - name: Read IPv4 routes in check mode
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_ipv4_routes: true
+      check_mode: true
+      register: ipv4_route_check
+      no_log: true
+
+    - name: Verify the IPv4 table is unchanged and covers every matched row
+      ansible.builtin.assert:
+        that:
+          - not ipv4_route_facts.changed
+          - not ipv4_route_check.changed
+          - routes | length > 0
+          - routes | length == network_table_shapes.ipv4_route_rows.matched_lines | int
+          - routes == ipv4_route_check.ansible_facts.drayos.ipv4_routes
+      vars:
+        routes: "{{ ipv4_route_facts.ansible_facts.drayos.ipv4_routes }}"
+      no_log: true
+
     - name: Record DNS row structure without returning addresses or unknown text
       ansible.builtin.set_fact:
         network_dns_rows: >-

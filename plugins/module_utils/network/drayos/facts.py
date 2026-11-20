@@ -8,7 +8,7 @@ fixture. The older Vigor2927 4.4.0 fixture remains documentation evidence.
 from __future__ import annotations
 
 import re
-from ipaddress import AddressValueError, IPv4Address
+from ipaddress import AddressValueError, IPv4Address, IPv4Network
 
 from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.errors import ParseError
 
@@ -87,6 +87,47 @@ def parse_lan_profiles(text: str) -> dict[str, dict[str, str | int | bool]]:
     if len(profiles) != 8:
         raise ParseError("Incomplete LAN settings response")
     return profiles
+
+
+_IPV4_ROUTE_LEGEND = re.compile(
+    r"Codes:\s*C - connected,\s*S - static,\s*R - RIP,\s*\* - default,\s*~ - private"
+)
+_IPV4_ROUTE_ROW = re.compile(
+    r"([CSR*~]+)[ \t]+([0-9.]+)/[ \t]*([0-9.]+)[ \t]+"
+    r"(?:is directly connected|via[ \t]+([0-9.]+)),[ \t]*([A-Za-z0-9][A-Za-z0-9 _./-]*)"
+)
+
+
+def parse_ipv4_routes(text: str) -> list[dict[str, str | None]]:
+    """Parse documented route rows without silently dropping unknown routes."""
+    legend = False
+    routes = []
+    for raw in text.splitlines():
+        line = raw.lstrip(" \t%").rstrip()
+        if not line:
+            continue
+        if _IPV4_ROUTE_LEGEND.fullmatch(line) and not legend:
+            legend = True
+            continue
+        row = _IPV4_ROUTE_ROW.fullmatch(line)
+        if not legend or row is None:
+            raise ParseError("Unrecognised IPv4 route table line")
+        flags, address, mask, gateway, interface = row.groups()
+        try:
+            network = IPv4Network(f"{address}/{mask}", strict=True)
+            if str(network.netmask) != mask:
+                raise ValueError("Expected a network mask")
+            routes.append({
+                "destination": str(network),
+                "flags": flags,
+                "next_hop": str(IPv4Address(gateway)) if gateway is not None else None,
+                "interface": interface,
+            })
+        except ValueError as exc:
+            raise ParseError("Invalid address or mask in IPv4 route table") from exc
+    if not routes:
+        raise ParseError("Missing or empty IPv4 route table")
+    return routes
 
 
 _IFACE_BLOCK_RE = re.compile(

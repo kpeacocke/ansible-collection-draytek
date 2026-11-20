@@ -117,6 +117,43 @@ def test_build_facts_from_documented_fixture():
     assert len(result["wan"]) >= 3
 
 
+ROUTE_TABLE = (
+    "Codes: C - connected, S - static, R - RIP, * - default, ~ - private\r\n"
+    "% C~ 192.0.2.0/ 255.255.255.0 is directly connected, LAN1\r\n"
+    "S* 0.0.0.0/ 0.0.0.0 via 198.51.100.1, WAN1\r\n"
+)
+
+
+@pytest.mark.parametrize("check_mode", [False, True])
+def test_opt_in_ipv4_routes(monkeypatch, check_mode):
+    def execute(module, commands):
+        assert module.check_mode == check_mode
+        assert commands == ["ip route status"]
+        return [ROUTE_TABLE]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({"gather_subset": [], "gather_ipv4_routes": True, "_ansible_check_mode": check_mode})
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    assert excinfo.value.kwargs["changed"] is False
+    assert excinfo.value.kwargs["ansible_facts"]["drayos"]["ipv4_routes"] == [
+        {"destination": "192.0.2.0/24", "flags": "C~", "next_hop": None, "interface": "LAN1"},
+        {"destination": "0.0.0.0/0", "flags": "S*", "next_hop": "198.51.100.1", "interface": "WAN1"},
+    ]
+
+
+@pytest.mark.parametrize("table", [
+    ROUTE_TABLE.split("\r\n", 1)[1],
+    ROUTE_TABLE + "unrecognised route\r\n",
+    ROUTE_TABLE.replace("255.255.255.0", "0.0.0.255"),
+    ROUTE_TABLE.replace("192.0.2.0", "192.0.2.1"),
+    ROUTE_TABLE.replace("198.51.100.1", "198.51.100.256"),
+])
+def test_ipv4_routes_reject_unknown_or_invalid_rows(table):
+    with pytest.raises(ParseError):
+        drayos_facts.facts_parsers.parse_ipv4_routes(table)
+
+
 def test_module_returns_facts_without_changed_state(monkeypatch):
     monkeypatch.setattr(
         drayos_facts,
