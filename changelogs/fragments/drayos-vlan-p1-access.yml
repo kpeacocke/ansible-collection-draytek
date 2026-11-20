@@ -1,0 +1,2 @@
+minor_changes:
+  - drayos_facts - add an opt-in fact for the configured untagged P1 router-access permission on Vigor2927Lac.

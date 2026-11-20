@@ -205,6 +205,37 @@ def test_vlan_slot_facts_preserve_sparse_membership(monkeypatch):
     assert slots[15]["members"] == []
 
 
+@pytest.mark.parametrize(("check_mode", "include_slots", "state"), [(False, False, "ON"), (True, True, "OFF")])
+def test_vlan_p1_untagged_access_facts(monkeypatch, check_mode, include_slots, state):
+    def execute(module, commands):
+        assert module.check_mode == check_mode
+        assert commands == ["vlan status"]
+        return [VLAN_TABLE.replace("access router: ON", f"access router: {state}....")]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({
+        "gather_subset": [], "gather_vlan_p1_untagged_access": True,
+        "gather_vlan_slots": include_slots, "_ansible_check_mode": check_mode,
+    })
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    result = excinfo.value.kwargs
+    assert result["changed"] is False
+    facts = result["ansible_facts"]["drayos"]
+    assert facts["vlan_p1_untagged_access"] is (state == "ON")
+    assert ("vlan_slots" in facts) is include_slots
+
+
+@pytest.mark.parametrize("footer", [
+    "",
+    "Permit untagged device in P1 to access router: unknown",
+    "Permit untagged device in P1 to access router: ON\nPermit untagged device in P1 to access router: unknown",
+])
+def test_vlan_p1_untagged_access_rejects_missing_or_ambiguous_values(footer):
+    with pytest.raises(ParseError, match="Expected one recognised"):
+        drayos_facts.facts_parsers.parse_vlan_p1_untagged_access(VLAN_TABLE.rsplit("\n", 1)[0] + "\n" + footer)
+
+
 @pytest.mark.parametrize("table", [
     VLAN_TABLE.replace("15   OFF", "14   OFF"),
     VLAN_TABLE.replace("V  ", "VV ", 1),

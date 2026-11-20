@@ -149,6 +149,20 @@ _VLAN_ROW = re.compile(
 )
 
 
+_VLAN_P1_ACCESS = re.compile(
+    r"(?im)^[ \t%]*Permit untagged device in P1 to access router\b([^\r\n]*)$"
+)
+
+
+def parse_vlan_p1_untagged_access(text: str) -> bool:
+    """Read the P1 untagged router-access setting, not reachability."""
+    labels = _VLAN_P1_ACCESS.findall(text.replace("\r\n", "\n"))
+    value = re.fullmatch(r"[ \t]*:[ \t]*(ON|OFF)[. \t]*", labels[0], re.IGNORECASE) if len(labels) == 1 else None
+    if value is None:
+        raise ParseError("Expected one recognised VLAN P1 untagged router-access setting")
+    return value[1].upper() == "ON"
+
+
 def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]:
     """Parse configured VLAN slots in the observed fixed-width layout."""
     header = None

@@ -41,6 +41,12 @@ options:
       - Independent of O(gather_subset); existing subset output is unchanged.
     type: bool
     default: false
+  gather_vlan_p1_untagged_access:
+    description:
+      - Also collect whether the router is configured to permit access from untagged devices on P1 using C(vlan status).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+    type: bool
+    default: false
   gather_dhcp_leases:
     description:
       - Also collect the IPv4 DHCP lease table using C(srv dhcp status).
@@ -89,6 +95,8 @@ ansible_facts:
     - When O(gather_vlan_slots=true), C(vlan_slots) lists slot, enabled, vid,
       priority, lan and members. These are configured row values, not effective
       forwarding state or the global VLAN enable flag.
+    - When O(gather_vlan_p1_untagged_access=true), C(vlan_p1_untagged_access) is a
+      boolean configuration value, not a reachability check or the global VLAN enable flag.
     - When O(gather_dhcp_leases=true), C(dhcp_leases) lists lan, index, ip_address,
       mac_address, lease_time (display text) and host_id (null when absent).
       This is a point-in-time lease table, not a reservation or pool configuration export.
@@ -190,6 +198,7 @@ def main() -> None:
         gather_lan_profiles=dict(type="bool", default=False),
         gather_ipv4_routes=dict(type="bool", default=False),
         gather_vlan_slots=dict(type="bool", default=False),
+        gather_vlan_p1_untagged_access=dict(type="bool", default=False),
         gather_dhcp_leases=dict(type="bool", default=False),
         gather_wan_links=dict(type="bool", default=False),
         gather_lte_access=dict(type="bool", default=False),
@@ -204,13 +213,14 @@ def main() -> None:
             ("gather_lan_profiles", "show lan", "lan_profiles", facts_parsers.parse_lan_profiles),
             ("gather_ipv4_routes", "ip route status", "ipv4_routes", facts_parsers.parse_ipv4_routes),
             ("gather_vlan_slots", "vlan status", "vlan_slots", facts_parsers.parse_vlan_slots),
+            ("gather_vlan_p1_untagged_access", "vlan status", "vlan_p1_untagged_access", facts_parsers.parse_vlan_p1_untagged_access),
             ("gather_dhcp_leases", "srv dhcp status", "dhcp_leases", facts_parsers.parse_dhcp_leases),
             ("gather_wan_links", "wan status", "wan_links", facts_parsers.parse_wan_links),
             ("gather_lte_access", "wan lte stus", "lte_access", facts_parsers.parse_lte_access),
         )
         if module.params[option]
     ]
-    commands.extend(entry[0] for entry in optional_facts)
+    commands.extend(dict.fromkeys(entry[0] for entry in optional_facts))
 
     try:
         results = run_commands(module, commands) if commands else []

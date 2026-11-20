@@ -206,17 +206,19 @@
         marked_row: '(?im)^[ \t%]*[0-9]+[ \t]+(?:ON|OFF)[ \t]+[0-9]+[ \t]+[0-9]+[ V]+V[ V]+[1-8]:LAN[1-8][ \t\r]*$'
       no_log: true
 
-    - name: Gather VLAN slots privately
+    - name: Gather VLAN slots and P1 access privately
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
         gather_vlan_slots: true
+        gather_vlan_p1_untagged_access: true
       register: vlan_facts
       no_log: true
 
-    - name: Gather VLAN slots in check mode privately
+    - name: Gather VLAN slots and P1 access in check mode privately
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
         gather_vlan_slots: true
+        gather_vlan_p1_untagged_access: true
       register: vlan_check
       check_mode: true
       no_log: true
@@ -232,6 +234,18 @@
           - slots == vlan_check.ansible_facts.drayos.vlan_slots
       vars:
         slots: "{{ vlan_facts.ansible_facts.drayos.vlan_slots }}"
+      no_log: true
+
+    - name: Verify configured P1 access against the independent VLAN status read
+      ansible.builtin.assert:
+        that:
+          - raw_access | length == 1
+          - vlan_facts.ansible_facts.drayos.vlan_p1_untagged_access is boolean
+          - vlan_facts.ansible_facts.drayos.vlan_p1_untagged_access == ((raw_access | first | upper) == 'ON')
+          - vlan_facts.ansible_facts.drayos.vlan_p1_untagged_access == vlan_check.ansible_facts.drayos.vlan_p1_untagged_access
+      vars:
+        footer: '(?im)^[ \t%]*Permit untagged device in P1 to access router[ \t]*:[ \t]*(ON|OFF)[. \t\r]*$'
+        raw_access: "{{ network_probes.results[5].stdout[0] | regex_findall(footer) }}"
       no_log: true
 
     - name: Read IPv4 routes through the public module
