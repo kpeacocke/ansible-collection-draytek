@@ -162,9 +162,10 @@ def test_tr069_read_works_when_raw_connection_logging_is_disabled(cliconf, monke
     assert seen == [{"command": command}]
 
 
-def test_dhcp_lease_read_cannot_use_raw_connection_logging(cliconf, monkeypatch):
+@pytest.mark.parametrize("command", ["srv dhcp status", "wan lte stus"])
+def test_private_status_reads_cannot_use_raw_connection_logging(cliconf, monkeypatch, command):
     monkeypatch.setattr(cliconf._connection, "get_option",
                         lambda option: option == "persistent_log_messages")
     with pytest.raises(AnsibleConnectionFailure, match="persistent_log_messages=false"):
-        cliconf.run_commands(["srv dhcp status"])
+        cliconf.run_commands([command])
     assert cliconf._connection._sent == []
