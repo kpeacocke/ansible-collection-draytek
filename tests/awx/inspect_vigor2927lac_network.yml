@@ -93,6 +93,7 @@
              'usable': usable,
              'nonblank': text.splitlines() | select('search', '\S') | list | length,
              'expected_headers': text | regex_findall(expected_header) | length,
+             'column_headers': text | regex_findall(column_header) | length,
              'empty_markers': text | regex_findall(empty_marker) | length,
              'row_candidates': text | regex_findall(numbered_row) | length,
              'complete_redirection_rows': text | regex_findall(complete_redirection_row) | length if item.item != 'show openport' else none,
@@ -107,15 +108,16 @@
         redirection_header: '(?im)^[ \t%]*Index[ \t]+Protocol[ \t]+Public Port[ \t]+Private IP[ \t]+Private Port[ \t\r]*$'
         openport_header: '(?im)^[ \t%]*Index[ \t]+Status[ \t]+Comment[ \t]+Local IP Address[ \t\r]*$'
         status_header: '(?im)^[ \t%]*NAT Port Redirection Running Table[ \t]*:[ \t\r]*$'
+        column_header: '(?im)^[ \t%]*Index[ \t]+Protocol[ \t]+Public Port[ \t]+Private IP[ \t]+Private Port[ \t\r]*$'
         empty_marker: '(?im)^[ \t%]*No data entry\.?[ \t\r]*$'
         numbered_row: '(?m)^[ \t%]*[0-9]+[ \t]+\S'
         complete_redirection_row: '(?m)^[ \t%]*[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]+(?:[0-9]{1,3}\.){3}[0-9]{1,3}[ \t]+[0-9]+[ \t\r]*$'
         zero_redirection_row: '(?m)^[ \t%]*[0-9]+[ \t]+0[ \t]+0[ \t]+0\.0\.0\.0[ \t]+0[ \t\r]*$'
         nat_recognised_line: >-
-          (?i)^[ \t%]*(?:(?:NAT )?Port Redirection Running Table[ \t]*:|
-          Index[ \t]+Protocol[ \t]+Public Port[ \t]+Private IP[ \t]+Private Port|
+          (?ix)^[ \t%]*(?:(?:NAT\x20)?Port\x20Redirection\x20Running\x20Table[ \t]*:|
+          Index[ \t]+Protocol[ \t]+Public\x20Port[ \t]+Private\x20IP[ \t]+Private\x20Port|
           [0-9]{1,5}[ \t]+[0-9]{1,3}[ \t]+[0-9]{1,5}[ \t]+[0-9.]{1,15}[ \t]+[0-9]{1,5}|
-          --- MORE ---.*|-{3,}|>[ \t]*)$
+          ---\x20MORE\x20---.*|-{3,}|>[ \t]*)$
       loop: "{{ nat_probes.results }}"
       no_log: true
 
@@ -140,20 +142,32 @@
       no_log: true
       ignore_errors: true  # noqa: ignore-errors
 
-    - name: Classify NAT module failures without returning their messages
+    - name: Classify NAT parser failures without returning their messages
       ansible.builtin.set_fact:
         nat_fact_failure_classes:
           normal: >-
             {{ 'none' if not nat_facts.failed | default(false) else
-               'parser' if (nat_facts.msg | default('')) is
-               search('NAT redirection table|NAT redirection index|NAT redirection row') else 'other' }}
+               'duplicate_header' if (nat_facts.msg | default('')) is search('Duplicate NAT redirection table header') else
+               'columns_header' if (nat_facts.msg | default('')) is search('Unexpected NAT redirection column header') else
+               'unrecognised_line' if (nat_facts.msg | default('')) is search('Unrecognised NAT redirection table line') else
+               'invalid_index' if (nat_facts.msg | default('')) is search('Invalid, duplicate, or nonsequential NAT redirection index') else
+               'invalid_protocol_or_port' if (nat_facts.msg | default('')) is search('Invalid protocol or port in NAT redirection row') else
+               'invalid_ipv4' if (nat_facts.msg | default('')) is search('Invalid IPv4 address in NAT redirection row') else
+               'incomplete_table' if (nat_facts.msg | default('')) is search('Incomplete NAT redirection table') else
+               'parser_other' if (nat_facts.msg | default('')) is search('NAT redirection') else 'other' }}
           check: >-
             {{ 'none' if not nat_check.failed | default(false) else
-               'parser' if (nat_check.msg | default('')) is
-               search('NAT redirection table|NAT redirection index|NAT redirection row') else 'other' }}
+               'duplicate_header' if (nat_check.msg | default('')) is search('Duplicate NAT redirection table header') else
+               'columns_header' if (nat_check.msg | default('')) is search('Unexpected NAT redirection column header') else
+               'unrecognised_line' if (nat_check.msg | default('')) is search('Unrecognised NAT redirection table line') else
+               'invalid_index' if (nat_check.msg | default('')) is search('Invalid, duplicate, or nonsequential NAT redirection index') else
+               'invalid_protocol_or_port' if (nat_check.msg | default('')) is search('Invalid protocol or port in NAT redirection row') else
+               'invalid_ipv4' if (nat_check.msg | default('')) is search('Invalid IPv4 address in NAT redirection row') else
+               'incomplete_table' if (nat_check.msg | default('')) is search('Incomplete NAT redirection table') else
+               'parser_other' if (nat_check.msg | default('')) is search('NAT redirection') else 'other' }}
       no_log: true
 
-    - name: Report only the bounded NAT failure class
+    - name: Report only fixed NAT parser failure categories
       ansible.builtin.debug:
         var: nat_fact_failure_classes
 
