@@ -169,3 +169,11 @@ def test_private_status_reads_cannot_use_raw_connection_logging(cliconf, monkeyp
     with pytest.raises(AnsibleConnectionFailure, match="persistent_log_messages=false"):
         cliconf.run_commands([command])
     assert cliconf._connection._sent == []
+
+
+def test_lte_get_requires_private_transport(cliconf, monkeypatch):
+    monkeypatch.setattr(cliconf._connection, "get_option",
+                        lambda option: option == "persistent_log_messages")
+    with pytest.raises(AnsibleConnectionFailure, match="persistent_log_messages=false"):
+        cliconf.get(command="wan lte stus")
+    assert cliconf._connection._sent == []
