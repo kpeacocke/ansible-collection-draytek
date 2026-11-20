@@ -175,7 +175,7 @@ def test_ipv4_routes_preserve_rows_across_the_known_pager():
 
 VLAN_HEADER = "VLAN Enable VID  Pri   p1 p2 p3 p4 p5 s1 s2 s3 s4 5gs1 5gs2 5gs3 5gs4  subnet"
 VLAN_ROWS = [f"{slot:2}   OFF       0 0" for slot in range(16)]
-VLAN_ROWS[3] = " 3   ON       42 3".ljust(23) + "V" + " " * 36 + "V"
+VLAN_ROWS[3] = " 3   ON       42 3".ljust(23) + "V" + " " * 38 + "V"
 VLAN_TABLE = "\n".join([
     "VLAN is Disable :", VLAN_HEADER,
     *(f"{row.ljust(VLAN_HEADER.index('subnet'))}2:LAN2" for row in VLAN_ROWS),
@@ -204,7 +204,8 @@ def test_vlan_slot_facts_preserve_sparse_membership(monkeypatch):
 
 @pytest.mark.parametrize("table", [
     VLAN_TABLE.replace("15   OFF", "14   OFF"),
-    VLAN_TABLE.replace("V  ", " V ", 1),
+    VLAN_TABLE.replace("V  ", "VV ", 1),
+    VLAN_TABLE.replace("    V", "   VV", 1),
     VLAN_TABLE.replace("2:LAN2", "2:LAN3", 1),
     "\n".join(VLAN_TABLE.splitlines()[:-2]),
 ])
