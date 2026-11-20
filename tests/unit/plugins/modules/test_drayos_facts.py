@@ -154,6 +154,14 @@ def test_ipv4_routes_reject_unknown_or_invalid_rows(table):
         drayos_facts.facts_parsers.parse_ipv4_routes(table)
 
 
+def test_ipv4_routes_allow_extra_legend_entries_but_not_unknown_route_codes():
+    extended = ROUTE_TABLE.replace("~ - private", "~ - private, B - example code")
+    parse = drayos_facts.facts_parsers.parse_ipv4_routes
+    assert parse(extended) == parse(ROUTE_TABLE)
+    with pytest.raises(ParseError):
+        parse(extended.replace("S* 0.0.0.0", "B 0.0.0.0"))
+
+
 def test_module_returns_facts_without_changed_state(monkeypatch):
     monkeypatch.setattr(
         drayos_facts,

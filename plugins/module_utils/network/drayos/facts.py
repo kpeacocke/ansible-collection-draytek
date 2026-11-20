@@ -91,6 +91,7 @@ def parse_lan_profiles(text: str) -> dict[str, dict[str, str | int | bool]]:
 
 _IPV4_ROUTE_LEGEND = re.compile(
     r"Codes:\s*C - connected,\s*S - static,\s*R - RIP,\s*\* - default,\s*~ - private"
+    r"(?:,[ \t]*[A-Za-z*~?!=+-]{1,4}[ \t]+-[ \t]+[A-Za-z][A-Za-z0-9 /_-]{0,63})*"
 )
 _IPV4_ROUTE_ROW = re.compile(
     r"([CSR*~]+)[ \t]+([0-9.]+)/[ \t]*([0-9.]+)[ \t]+"
