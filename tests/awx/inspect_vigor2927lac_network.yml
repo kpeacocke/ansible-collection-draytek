@@ -113,10 +113,10 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
-    - name: Read IPv6 route status for a WAN interface privately
+    - name: Read IPv6 route and address status privately
       kpeacocke.draytek.drayos_command:
         commands:
-          - command: ip6 route -a WAN1
+          - command: "{{ item }}"
             prompt: "{{ [route_pager] * 64 }}"
             answer: "{{ [' '] * 64 }}"
             newline: false
@@ -125,7 +125,10 @@
       vars:
         route_pager: >-
           --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
-      register: ipv6_wan_probe
+      loop:
+        - ip6 route -a WAN1
+        - ip6 addr -a LAN1
+      register: ipv6_extra_probes
       ignore_errors: true  # noqa: ignore-errors
       no_log: true
 
@@ -140,6 +143,8 @@
              'error': lines | select('search', error) | list | length,
              'empty': lines | select('search', empty) | list | length,
              'disabled': lines | select('search', disabled) | list | length,
+             'option_lines': lines | select('search', options) | list | length,
+             'address_markers': lines | select('search', addr_markers) | list | length,
              'separators': lines | select('search', separator) | list | length}}) }}
       vars:
         lines: "{{ (item.probe.stdout | default([''], true) | first).splitlines() }}"
@@ -148,12 +153,16 @@
         error: '(?i)\b(?:unknown|invalid|usage|syntax|unrecognised|unrecognized|not supported|not found|error|fail(?:ed)?)\b'
         empty: '(?i)\b(?:empty|no (?:ipv6 )?(?:routes?|entries|routing table))\b'
         disabled: '(?i)\b(?:disabled|not enabled|not active|inactive)\b'
+        options: '^[ \t%]*(?:ip6[ \t]+(?:route|addr)[ \t]+)?-[a-zA-Z](?=[ \t<:,.]|$)'
+        addr_markers: '(?i)\b(?:link.local|unicast|multicast|IPv6 address|prefix length)\b'
         separator: '^[ \t%]*-{3,}[ \t]*$'
       loop:
-        - interface: LAN1
+        - interface: lan1_routes
           probe: "{{ network_probes.results[7] }}"
-        - interface: WAN1
-          probe: "{{ ipv6_wan_probe }}"
+        - interface: wan1_routes
+          probe: "{{ ipv6_extra_probes.results[0] }}"
+        - interface: lan1_addresses
+          probe: "{{ ipv6_extra_probes.results[1] }}"
       no_log: true
 
     - name: Report only IPv6 route format counts
