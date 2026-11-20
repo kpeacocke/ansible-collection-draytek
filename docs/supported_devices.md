@@ -85,6 +85,15 @@ verified that normal and check mode returned the same complete table on
 the Vigor2927Lac running 4.5.2.2. This does not cover IPv6, policy routing,
 or route configuration.
 
+## Configured VLAN slots
+
+Set `gather_vlan_slots: true` on `drayos_facts` to read slots 0 to 15,
+including each slot's enable flag, VID, priority, LAN and membership
+labels. This opt-in reports configured slots, not the global VLAN enable
+flag, effective forwarding state, or untagged management access.
+Use task-level `no_log: true` and disable persistent transport logging
+when VLAN topology should not appear in job output.
+
 ## Primary NTP server
 
 The [NTP resource](ntp.md) is restricted to Vigor2927Lac firmware 4.5.2.2.

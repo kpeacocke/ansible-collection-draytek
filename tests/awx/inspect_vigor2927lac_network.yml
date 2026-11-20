@@ -113,88 +113,20 @@
       ansible.builtin.debug:
         var: network_table_shapes
 
-    - name: Identify VLAN column layout without reporting membership or settings
+    - name: Count VLAN rows with membership markers privately
       ansible.builtin.set_fact:
-        vlan_layout:
-          known_header: "{{ vlan_text | regex_findall(header) | first | default('') }}"
-          global_status_present: "{{ vlan_text | regex_search(global_status) is not none }}"
-          marked_rows: "{{ vlan_text | regex_findall(marked_row) | length }}"
-          permit_footer_present: "{{ vlan_text | regex_search(permit_footer) is not none }}"
+        vlan_marked_rows: "{{ vlan_text | regex_findall(marked_row) | length }}"
       vars:
         vlan_text: "{{ network_probes.results[5].stdout | default([''], true) | first }}"
-        header: >-
-          (?im)^[ \t%]*(VLAN[ ]+Enable[ ]+VID[ ]+Pri[ ]+(?:(?:p[1-9]|(?:5g)?s[1-9])[ ]+)+subnet)[ \t\r]*$
-        global_status: '(?im)^[ \t%]*VLAN is (?:Enable|Disable)[ \t]*:'
         marked_row: '(?im)^[ \t%]*[0-9]+[ \t]+(?:ON|OFF)[ \t]+[0-9]+[ \t]+[0-9]+[ V]+V[ V]+[1-8]:LAN[1-8][ \t\r]*$'
-        permit_footer: '(?im)^[ \t%]*Permit untagged device in P1 to access router:[ \t]*(?:ON|OFF)\b'
       no_log: true
-
-    - name: Report only VLAN framing evidence
-      ansible.builtin.debug:
-        var: vlan_layout
-
-    - name: Compute VLAN column offsets without retaining row values
-      ansible.builtin.set_fact:
-        vlan_offsets:
-          subnet_columns: "{{ vlan_text | regex_findall(subnet_pattern) | map('length') | unique | list }}"
-          header_columns: "{{ vlan_text | regex_findall(header_pattern) | map('length') | unique | list }}"
-          prefixed_rows: "{{ vlan_text | regex_findall(prefixed_pattern) | length }}"
-      vars:
-        vlan_text: "{{ network_probes.results[5].stdout | default([''], true) | first }}"
-        subnet_pattern: '(?m)^([ %]*[0-9]{1,2} +(?:ON|OFF) +[0-9]+ +[0-9]+[ V]+)[1-8]:LAN[1-8][ \r]*$'
-        header_pattern: '(?m)^([ %]*VLAN +Enable +VID +Pri +)p1 '
-        prefixed_pattern: '(?m)^ *% +[0-9]+ +(?:ON|OFF)\b'
-      no_log: true
-
-    - name: Measure every marker column on numbered VLAN rows
-      ansible.builtin.set_fact:
-        vlan_mark_offsets: "{{ vlan_mark_offsets | default([]) + offsets }}"
-      vars:
-        vlan_text: "{{ network_probes.results[5].stdout | default([''], true) | first }}"
-        row_pattern: '(?m)^([ %]*[0-9]{1,2} +(?:ON|OFF) +[0-9]+ +[0-9]+[ V]+)[1-8]:LAN[1-8][ \r]*$'
-        offsets: "{{ range(item | length) | zip(item | list) | selectattr('1', 'equalto', 'V') | map(attribute='0') | list }}"
-      loop: "{{ vlan_text | regex_findall(row_pattern) }}"
-      no_log: true
-
-    - name: Report aggregate VLAN offsets only
-      ansible.builtin.debug:
-        msg: >-
-          {{ vlan_offsets | combine({'off_label_count': marks | difference(label_columns) | length,
-                                     'off_cells_count': marks | difference(range(23, 71) | list) | length,
-                                     'off_right_aligned_count': marks | difference(right_aligned) | length,
-                                     'off_right_centred_count': marks | difference(right_centred) | length}) }}
-      vars:
-        marks: "{{ vlan_mark_offsets | default([]) | unique | list }}"
-        label_columns: [23, 24, 26, 27, 29, 30, 32, 33, 35, 36, 38, 39, 41, 42, 44, 45, 47, 48,
-                        50, 51, 52, 53, 55, 56, 57, 58, 60, 61, 62, 63, 65, 66, 67, 68]
-        right_aligned: [24, 27, 30, 33, 36, 39, 42, 45, 48, 53, 58, 63, 68]
-        right_centred: [23, 26, 29, 32, 35, 38, 41, 44, 47, 52, 57, 62, 67]
 
     - name: Gather VLAN slots privately
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
         gather_vlan_slots: true
       register: vlan_facts
-      ignore_errors: true  # noqa: ignore-errors
       no_log: true
-
-    - name: Report the fixed VLAN diagnostic category
-      ansible.builtin.debug:
-        msg: "{{ categories.get(vlan_facts.msg | default(''), 'other') }}"
-      vars:
-        categories:
-          Unrecognised VLAN slot row layout: row_layout
-          Misaligned VLAN membership marker: membership
-          Invalid or duplicate VLAN slot: invalid_slot
-          Incomplete VLAN slot table: incomplete
-          Unexpected additional VLAN slot row: additional_row
-          Extended facts gathering failed; device output suppressed: transport
-      when: vlan_facts is failed
-
-    - name: Require VLAN slot gathering to succeed
-      ansible.builtin.assert:
-        that:
-          - vlan_facts is succeeded
 
     - name: Gather VLAN slots in check mode privately
       kpeacocke.draytek.drayos_facts:
@@ -210,7 +142,8 @@
           - not vlan_facts.changed
           - not vlan_check.changed
           - slots | map(attribute='slot') | list == range(16) | list
-          - slots | rejectattr('members', 'equalto', []) | list | length == vlan_layout.marked_rows | int
+          - vlan_marked_rows | int > 0
+          - slots | rejectattr('members', 'equalto', []) | list | length == vlan_marked_rows | int
           - slots == vlan_check.ansible_facts.drayos.vlan_slots
       vars:
         slots: "{{ vlan_facts.ansible_facts.drayos.vlan_slots }}"

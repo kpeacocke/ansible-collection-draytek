@@ -174,8 +174,11 @@ def test_ipv4_routes_preserve_rows_across_the_known_pager():
 
 
 VLAN_HEADER = "VLAN Enable VID  Pri   p1 p2 p3 p4 p5 s1 s2 s3 s4 5gs1 5gs2 5gs3 5gs4  subnet"
-VLAN_ROWS = [f"{slot:2}   OFF       0 0" for slot in range(16)]
-VLAN_ROWS[3] = " 3   ON       42 3".ljust(23) + "V" + " " * 38 + "V"
+VLAN_ROWS = [
+    " 3   ON       42 3".ljust(23) + "V" + " " * 38 + "V"
+    if slot == 3 else f"{slot:2}   OFF       0 0"
+    for slot in range(16)
+]
 VLAN_TABLE = "\n".join([
     "VLAN is Disable :", VLAN_HEADER,
     *(f"{row.ljust(VLAN_HEADER.index('subnet'))}2:LAN2" for row in VLAN_ROWS),

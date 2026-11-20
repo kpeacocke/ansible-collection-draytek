@@ -152,7 +152,7 @@ _VLAN_ROW = re.compile(
 def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]:
     """Parse configured VLAN slots in the observed fixed-width layout."""
     header = None
-    columns: list[tuple[int, int, str]] = []
+    columns: dict[int, str] = {}
     slots: dict[int, dict[str, int | bool | str | list[str]]] = {}
     for raw in text.splitlines():
         line = raw.rstrip(" \t")
@@ -161,10 +161,11 @@ def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]
         if header is None:
             header = _VLAN_HEADER.fullmatch(line)
             if header:
-                ports = list(re.finditer(r"\S+", header["ports"]))
-                starts = [header.start("ports") + port.start() for port in ports]
-                ends = starts[1:] + [header.start("subnet")]
-                columns = [(start, end, port.group().lower()) for start, end, port in zip(starts, ends, ports)]
+                # The wider 5 GHz labels place their marker two characters in.
+                columns = {
+                    header.start("ports") + port.start() + (2 if len(port.group()) == 4 else 0): port.group().lower()
+                    for port in re.finditer(r"\S+", header["ports"])
+                }
             continue
         if len(slots) == 16:
             if re.match(r" *[0-9]", line):
@@ -178,8 +179,8 @@ def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]
         slot, vid = int(row["slot"]), int(row["vid"])
         if slot not in range(16) or slot in slots or vid > 4094:
             raise ParseError("Invalid or duplicate VLAN slot")
-        counts = [(name, line[max(start, row.start("membership")):end].count("V")) for start, end, name in columns]
-        if any(count > 1 for _, count in counts) or sum(count for _, count in counts) != row["membership"].count("V"):
+        positions = [row.start("membership") + mark.start() for mark in re.finditer("V", row["membership"])]
+        if any(position not in columns for position in positions):
             raise ParseError("Misaligned VLAN membership marker")
         slots[slot] = {
             "slot": slot,
@@ -187,7 +188,7 @@ def parse_vlan_slots(text: str) -> list[dict[str, int | bool | str | list[str]]]
             "vid": vid,
             "priority": int(row["priority"]),
             "lan": f"LAN{row['lan']}",
-            "members": [name for name, count in counts if count],
+            "members": [columns[position] for position in positions],
         }
     if len(slots) != 16:
         raise ParseError("Incomplete VLAN slot table")
