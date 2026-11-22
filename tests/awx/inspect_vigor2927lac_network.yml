@@ -317,8 +317,16 @@
           pager_like: "{{ dhcp_unrecognised_lines | select('match', '^[ \t]*--- MORE ---') | list | length }}"
           prompt_like: "{{ dhcp_unrecognised_lines | select('match', '^[ \t]*>') | list | length }}"
           other: "{{ dhcp_unrecognised_lines | reject('match', known_shape) | list | length }}"
+          valid_index_and_mac: "{{ dhcp_unrecognised_lines | select('match', mac_prefix) | list | length }}"
+          valid_lease_prefix: "{{ dhcp_unrecognised_lines | select('match', lease_prefix) | list | length }}"
+          control_in_host: "{{ dhcp_unrecognised_lines | select('match', host_control) | list | length }}"
       vars:
         known_shape: '^[ \t]*(?:[0-9]+[ \t]|(?:LAN[0-9]+|IP Routed)\b|-{3,}[ \t]*$|--- MORE ---|>)'
+        mac_prefix: >-
+          (?x)^[ \t]*[0-9]{1,6}[ \t]+[0-9.]+[ \t]+
+          [0-9a-fA-F]{2}(?P<sep>[:-])[0-9a-fA-F]{2}(?:(?P=sep)[0-9a-fA-F]{2}){4}[ \t]+
+        lease_prefix: "{{ mac_prefix + '(?:[0-9]+:[0-5][0-9]:[0-5][0-9]|FIXED)(?=[ \\t]|$)' }}"
+        host_control: "{{ lease_prefix + '[ \\t]+[^ \\t][^\\x00-\\x1f\\x7f]*[\\x00-\\x1f\\x7f]' }}"
       no_log: true
 
     - name: Report only aggregate unrecognised DHCP line shapes
