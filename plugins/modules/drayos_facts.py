@@ -110,6 +110,7 @@ ansible_facts:
       Placeholder rows are retained; the module does not infer that a row is active.
     - When O(gather_dhcp_leases=true), C(dhcp_leases) lists lan, index, ip_address,
       mac_address, lease_time (display text) and host_id (null when absent).
+      Embedded horizontal tabs in host_id are preserved.
       This is a point-in-time lease table, not a reservation or pool configuration export.
     - When O(gather_wan_links=true), C(wan_links) lists interface, online and stalled
       for the numbered WAN and PVC WAN headers. This excludes traffic, addressing and other status blocks.

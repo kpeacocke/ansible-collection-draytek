@@ -303,7 +303,7 @@
         recognised_line: >-
           (?x)^[ \t]*(?:(?:LAN[1-8]|IP\x20Routed)|
           [0-9]{1,6}[ \t]+[0-9.]+[ \t]+[0-9a-fA-F]{2}(?P<sep>[:-])[0-9a-fA-F]{2}(?:(?P=sep)[0-9a-fA-F]{2}){4}[ \t]+
-          (?:[0-9]+:[0-5][0-9]:[0-5][0-9]|FIXED)(?:[ \t]+[^\x00-\x1f\x7f]+)?|
+          (?:[0-9]+:[0-5][0-9]:[0-5][0-9]|FIXED)(?:[ \t]+[^\x00-\x08\x0a-\x1f\x7f]+)?|
           ---\x20MORE\x20---[ \t]+\['q':\x20Quit,\x20'Enter':\x20New\x20Lines,\x20'Space\x20Bar':\x20Next\x20Page\]\x20---)[ \t]*$
       no_log: true
 

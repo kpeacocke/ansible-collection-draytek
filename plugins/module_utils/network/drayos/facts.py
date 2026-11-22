@@ -294,7 +294,7 @@ _DHCP_ROW = re.compile(
     r"(?P<index>[0-9]{1,6})[ \t]+(?P<ip>[0-9.]+)[ \t]+"
     r"(?P<mac>[0-9a-fA-F]{2}(?P<separator>[:-])[0-9a-fA-F]{2}(?:(?P=separator)[0-9a-fA-F]{2}){4})[ \t]+"
     r"(?P<time>[0-9]+:[0-5][0-9]:[0-5][0-9]|FIXED)"
-    r"(?:[ \t]+(?P<host>[^\x00-\x1f\x7f]+))?"
+    r"(?:[ \t]+(?P<host>[^\x00-\x08\x0a-\x1f\x7f]+))?"
 )
 
 

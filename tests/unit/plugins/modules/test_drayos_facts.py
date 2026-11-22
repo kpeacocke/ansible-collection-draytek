@@ -357,6 +357,18 @@ def test_dhcp_lease_parser_preserves_rows_and_optional_host_id():
     ]
 
 
+def test_dhcp_lease_parser_preserves_tabs_in_host_id():
+    table = DHCP_TABLE.replace("example client", "example\tclient")
+    assert drayos_facts.facts_parsers.parse_dhcp_leases(table)[0]["host_id"] == "example\tclient"
+
+
+@pytest.mark.parametrize("control", ["\x00", "\x1b", "\x7f"])
+def test_dhcp_lease_parser_rejects_other_control_characters_in_host_id(control):
+    table = DHCP_TABLE.replace("example client", f"example{control}client")
+    with pytest.raises(ParseError, match="Unrecognised DHCP lease table line"):
+        drayos_facts.facts_parsers.parse_dhcp_leases(table)
+
+
 def test_dhcp_lease_parser_preserves_fixed_rows_and_allows_empty_sections():
     parse = drayos_facts.facts_parsers.parse_dhcp_leases
     table = DHCP_TABLE.replace("0:00:02", "FIXED") + "LAN2\n"
