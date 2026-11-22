@@ -297,6 +297,7 @@
         gather_dhcp_leases: true
       register: dhcp_facts
       no_log: true
+      ignore_errors: true  # noqa: ignore-errors
 
     - name: Gather DHCP leases in check mode privately
       kpeacocke.draytek.drayos_facts:
@@ -304,6 +305,38 @@
         gather_dhcp_leases: true
       check_mode: true
       register: dhcp_check
+      no_log: true
+      ignore_errors: true  # noqa: ignore-errors
+
+    - name: Classify DHCP parser failures without returning their messages
+      ansible.builtin.set_fact:
+        dhcp_fact_failure_classes: >-
+          {{ dhcp_fact_failure_classes | default({}) | combine({item.label:
+             'none' if not item.result.failed | default(false) else
+             'preamble' if (item.result.msg | default('')) is search('Missing DHCP status preamble') else
+             'header' if (item.result.msg | default('')) is search('Missing DHCP lease table header') else
+             'duplicate_section' if (item.result.msg | default('')) is search('Duplicate DHCP lease section') else
+             'unrecognised_line' if (item.result.msg | default('')) is search('Unrecognised DHCP lease table line') else
+             'invalid_index' if (item.result.msg | default('')) is search('Invalid or duplicate DHCP lease index') else
+             'invalid_ipv4' if (item.result.msg | default('')) is search('Invalid IPv4 address in DHCP lease table') else
+             'incomplete_table' if (item.result.msg | default('')) is search('Incomplete paginated DHCP lease table') else
+             'other'}) }}
+      loop:
+        - label: normal
+          result: "{{ dhcp_facts }}"
+        - label: check
+          result: "{{ dhcp_check }}"
+      no_log: true
+
+    - name: Report only fixed DHCP parser failure categories
+      ansible.builtin.debug:
+        var: dhcp_fact_failure_classes
+
+    - name: Require successful DHCP fact gathering
+      ansible.builtin.assert:
+        that:
+          - not dhcp_facts.failed | default(false)
+          - not dhcp_check.failed | default(false)
       no_log: true
 
     - name: Verify DHCP row coverage and read-only check mode
