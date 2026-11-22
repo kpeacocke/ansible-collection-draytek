@@ -39,7 +39,8 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.c
 )
 
 PAGED_COMMANDS = frozenset((
-    "sys iface", "show status", "show lan", "ip route status", "vlan status", "srv dhcp status", "wan status", "wan lte stus",
+    "sys iface", "show status", "show lan", "show nat", "show openport", "ip route status", "vlan status",
+    "srv dhcp status", "srv nat status", "wan status", "wan lte stus",
 ))
 
 
@@ -74,6 +75,11 @@ class Cliconf(CliconfBase):
         if command.strip() == "wan lte stus" and self._connection.get_option("persistent_log_messages"):
             raise AnsibleConnectionFailure("LTE access reads require ansible_persistent_log_messages=false")
 
+    def _require_private_nat_read(self, command):
+        if command.strip() in {"show nat", "show openport", "srv nat status"} and \
+                self._connection.get_option("persistent_log_messages"):
+            raise AnsibleConnectionFailure("NAT redirection reads require ansible_persistent_log_messages=false")
+
     def get(
         self,
         command=None,
@@ -90,6 +96,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'output' value %s is not supported for get" % output)
 
         self._require_private_lte_read(command)
+        self._require_private_nat_read(command)
         return self.send_command(
             command=command,
             prompt=prompt,
@@ -130,6 +137,7 @@ class Cliconf(CliconfBase):
                 raise AnsibleConnectionFailure("DHCP lease reads require ansible_persistent_log_messages=false")
 
             self._require_private_lte_read(cmd.get("command", ""))
+            self._require_private_nat_read(cmd.get("command", ""))
 
             if cmd.get("command", "").strip() in PAGED_COMMANDS and not cmd.get("prompt"):
                 # check_all consumes one prompt/answer pair per page. A single

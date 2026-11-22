@@ -1,0 +1,5 @@
+minor_changes:
+  - drayos_facts - add an opt-in parser for the Vigor2927Lac NAT port-redirection status table.
+bugfixes:
+  - drayos_facts - preserve embedded tabs in DHCP lease host identifiers.
+  - drayos cliconf - advance paginated ``show openport`` output automatically.

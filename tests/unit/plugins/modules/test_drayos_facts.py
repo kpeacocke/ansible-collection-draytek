@@ -236,6 +236,84 @@ def test_vlan_p1_untagged_access_rejects_missing_or_ambiguous_values(footer):
         drayos_facts.facts_parsers.parse_vlan_p1_untagged_access(VLAN_TABLE.rsplit("\n", 1)[0] + "\n" + footer)
 
 
+NAT_HEADER = """\
+NAT Port Redirection Running Table:
+Index Protocol Public Port Private IP Private Port
+"""
+NAT_ROWS = [
+    "1 6 80 192.0.2.10 8080",
+    "2 0 0 0.0.0.0 0",
+    "--- MORE --- ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---",
+    "3 17 53 198.51.100.20 5353",
+]
+NAT_TABLE = NAT_HEADER + "\n".join(NAT_ROWS)
+NAT_PROTOCOL_LEGEND = "Protocol: 0=disable, 6=TCP, 17=UDP"
+
+
+def test_nat_redirect_parser_keeps_placeholder_rows_and_crosses_pager():
+    entries = drayos_facts.facts_parsers.parse_nat_redirects(NAT_TABLE)
+    assert entries == [
+        {"index": 1, "protocol": 6, "public_port": 80, "private_ip": "192.0.2.10", "private_port": 8080},
+        {"index": 2, "protocol": 0, "public_port": 0, "private_ip": "0.0.0.0", "private_port": 0},
+        {"index": 3, "protocol": 17, "public_port": 53, "private_ip": "198.51.100.20", "private_port": 5353},
+    ]
+
+
+def test_nat_redirect_parser_accepts_documented_command_echo():
+    parse = drayos_facts.facts_parsers.parse_nat_redirects
+    assert parse("> srv nat status\n" + NAT_TABLE) == parse(NAT_TABLE)
+
+
+@pytest.mark.parametrize("legend", [
+    NAT_PROTOCOL_LEGEND,
+    "  Protocol : 0 = disable, 6 = TCP, 17 = UDP  ",
+])
+def test_nat_redirect_parser_accepts_live_protocol_legend_at_end(legend):
+    parse = drayos_facts.facts_parsers.parse_nat_redirects
+    assert parse(NAT_TABLE + "\n" + legend + "\n") == parse(NAT_TABLE)
+
+
+@pytest.mark.parametrize("table", [
+    NAT_TABLE.replace("NAT Port Redirection Running Table:", "Unknown Table:"),
+    NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 53 198.51.100.256 5353"),
+    NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 65536 198.51.100.20 5353"),
+    NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "2 17 53 198.51.100.20 5353"),
+    NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "4 17 53 198.51.100.20 5353"),
+    NAT_HEADER + "\n".join(["1 0 0 0.0.0.0 0", "3 0 0 0.0.0.0 0"]),
+    NAT_TABLE.rsplit("\n", 1)[0],
+    NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 53 198.51.100.20 5353\nUnknown row"),
+    "> srv nat status\n> srv nat status\n" + NAT_TABLE,
+    NAT_TABLE + "\n> srv nat status",
+    NAT_HEADER + NAT_PROTOCOL_LEGEND + "\n" + "\n".join(NAT_ROWS),
+    NAT_TABLE + "\n" + NAT_PROTOCOL_LEGEND + "\n" + NAT_PROTOCOL_LEGEND,
+    NAT_TABLE + "\n" + NAT_PROTOCOL_LEGEND + "\n4 0 0 0.0.0.0 0",
+    NAT_TABLE + "\n--- MORE --- ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---\n" + NAT_PROTOCOL_LEGEND,
+    NAT_TABLE + "\nProtocol: 0=disable, 6=TCP, 17=other",
+])
+def test_nat_redirect_parser_rejects_incomplete_or_ambiguous_rows(table):
+    with pytest.raises(ParseError):
+        drayos_facts.facts_parsers.parse_nat_redirects(table)
+
+
+@pytest.mark.parametrize("check_mode", [False, True])
+def test_nat_redirect_facts_are_opt_in_and_read_only(monkeypatch, check_mode):
+    def execute(module, commands):
+        assert module.check_mode == check_mode
+        assert commands == ["srv nat status"]
+        return [NAT_TABLE + "\n" + NAT_PROTOCOL_LEGEND]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({
+        "gather_subset": [], "gather_nat_redirects": True, "_ansible_check_mode": check_mode,
+    })
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    result = excinfo.value.kwargs
+    assert result["changed"] is False
+    assert result["ansible_facts"]["drayos"]["nat_redirects"] == \
+        drayos_facts.facts_parsers.parse_nat_redirects(NAT_TABLE)
+
+
 @pytest.mark.parametrize("table", [
     VLAN_TABLE.replace("15   OFF", "14   OFF"),
     VLAN_TABLE.replace("V  ", "VV ", 1),
@@ -277,6 +355,18 @@ def test_dhcp_lease_parser_preserves_rows_and_optional_host_id():
         {"lan": "LAN1", "index": 2, "ip_address": "192.0.2.11",
          "mac_address": "02:00:00:00:00:02", "lease_time": "0:00:02", "host_id": None},
     ]
+
+
+def test_dhcp_lease_parser_preserves_tabs_in_host_id():
+    table = DHCP_TABLE.replace("example client", "example\tclient")
+    assert drayos_facts.facts_parsers.parse_dhcp_leases(table)[0]["host_id"] == "example\tclient"
+
+
+@pytest.mark.parametrize("control", ["\x00", "\x1b", "\x7f"])
+def test_dhcp_lease_parser_rejects_other_control_characters_in_host_id(control):
+    table = DHCP_TABLE.replace("example client", f"example{control}client")
+    with pytest.raises(ParseError, match="Unrecognised DHCP lease table line"):
+        drayos_facts.facts_parsers.parse_dhcp_leases(table)
 
 
 def test_dhcp_lease_parser_preserves_fixed_rows_and_allows_empty_sections():

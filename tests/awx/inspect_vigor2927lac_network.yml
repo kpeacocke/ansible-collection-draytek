@@ -66,6 +66,129 @@
         that:
           - network_probe_summary | selectattr('ok') | selectattr('markers') | list | length > 0
 
+    - name: Read documented NAT tables privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: "{{ item }}"
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+        retries: 1
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      loop:
+        - show nat
+        - show openport
+        - srv nat status
+      register: nat_probes
+      ignore_errors: true  # noqa: ignore-errors
+      no_log: true
+
+    - name: Count NAT framing and rows without retaining rule values
+      ansible.builtin.set_fact:
+        nat_shapes: >-
+          {{ nat_shapes | default({}) | combine({item.item: {
+             'usable': usable,
+             'nonblank': text.splitlines() | select('search', '\S') | list | length,
+             'expected_headers': text | regex_findall(expected_header) | length,
+             'column_headers': text | regex_findall(column_header) | length,
+             'empty_markers': text | regex_findall(empty_marker) | length,
+             'row_candidates': text | regex_findall(numbered_row) | length,
+             'complete_redirection_rows': text | regex_findall(complete_redirection_row) | length if item.item != 'show openport' else none,
+             'all_zero_redirection_rows': text | regex_findall(zero_redirection_row) | length if item.item != 'show openport' else none,
+             'unclassified_lines': lines | reject('match', nat_recognised_line) | length if item.item == 'srv nat status' else none,
+             'pager_markers': text | regex_findall('--- MORE ---') | length}}) }}
+      vars:
+        usable: "{{ not (item.failed | default(false)) and (item.stdout | default([]) | length == 1) }}"
+        text: "{{ item.stdout[0] if usable else '' }}"
+        lines: "{{ text.splitlines() | select('search', '\\S') | list }}"
+        expected_header: "{{ openport_header if item.item == 'show openport' else status_header if item.item == 'srv nat status' else redirection_header }}"
+        redirection_header: '(?im)^[ \t%]*Index[ \t]+Protocol[ \t]+Public Port[ \t]+Private IP[ \t]+Private Port[ \t\r]*$'
+        openport_header: '(?im)^[ \t%]*Index[ \t]+Status[ \t]+Comment[ \t]+Local IP Address[ \t\r]*$'
+        status_header: '(?im)^[ \t%]*NAT Port Redirection Running Table[ \t]*:[ \t\r]*$'
+        column_header: '(?im)^[ \t%]*Index[ \t]+Protocol[ \t]+Public Port[ \t]+Private IP[ \t]+Private Port[ \t\r]*$'
+        empty_marker: '(?im)^[ \t%]*No data entry\.?[ \t\r]*$'
+        numbered_row: '(?m)^[ \t%]*[0-9]+[ \t]+\S'
+        complete_redirection_row: '(?m)^[ \t%]*[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]+(?:[0-9]{1,3}\.){3}[0-9]{1,3}[ \t]+[0-9]+[ \t\r]*$'
+        zero_redirection_row: '(?m)^[ \t%]*[0-9]+[ \t]+0[ \t]+0[ \t]+0\.0\.0\.0[ \t]+0[ \t\r]*$'
+        nat_recognised_line: >-
+          (?ix)^[ \t%]*(?:(?:NAT\x20)?Port\x20Redirection\x20Running\x20Table[ \t]*:|
+          Index[ \t]+Protocol[ \t]+Public\x20Port[ \t]+Private\x20IP[ \t]+Private\x20Port|
+          [0-9]{1,5}[ \t]+[0-9]{1,3}[ \t]+[0-9]{1,5}[ \t]+[0-9.]{1,15}[ \t]+[0-9]{1,5}|
+          Protocol[ \t]*:[ \t]*0[ \t]*=[ \t]*disable[ \t]*,[ \t]*6[ \t]*=[ \t]*TCP[ \t]*,[ \t]*17[ \t]*=[ \t]*UDP|
+          ---\x20MORE\x20---.*|-{3,}|>[ \t]*(?:srv[ \t]+nat[ \t]+status)?[ \t]*)$
+      loop: "{{ nat_probes.results }}"
+      no_log: true
+
+    - name: Report only NAT framing and row counts
+      ansible.builtin.debug:
+        var: nat_shapes
+
+    - name: Gather NAT redirection facts privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_nat_redirects: true
+      register: nat_facts
+      no_log: true
+      ignore_errors: true  # noqa: ignore-errors
+
+    - name: Gather NAT redirection facts in check mode privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_nat_redirects: true
+      register: nat_check
+      check_mode: true
+      no_log: true
+      ignore_errors: true  # noqa: ignore-errors
+
+    - name: Classify NAT parser failures without returning their messages
+      ansible.builtin.set_fact:
+        nat_fact_failure_classes:
+          normal: >-
+            {{ 'none' if not nat_facts.failed | default(false) else
+               'duplicate_header' if (nat_facts.msg | default('')) is search('Duplicate NAT redirection table header') else
+               'columns_header' if (nat_facts.msg | default('')) is search('Unexpected NAT redirection column header') else
+               'unrecognised_line' if (nat_facts.msg | default('')) is search('Unrecognised NAT redirection table line') else
+               'invalid_index' if (nat_facts.msg | default('')) is search('Invalid, duplicate, or nonsequential NAT redirection index') else
+               'invalid_protocol_or_port' if (nat_facts.msg | default('')) is search('Invalid protocol or port in NAT redirection row') else
+               'invalid_ipv4' if (nat_facts.msg | default('')) is search('Invalid IPv4 address in NAT redirection row') else
+               'incomplete_table' if (nat_facts.msg | default('')) is search('Incomplete NAT redirection table') else
+               'parser_other' if (nat_facts.msg | default('')) is search('NAT redirection') else 'other' }}
+          check: >-
+            {{ 'none' if not nat_check.failed | default(false) else
+               'duplicate_header' if (nat_check.msg | default('')) is search('Duplicate NAT redirection table header') else
+               'columns_header' if (nat_check.msg | default('')) is search('Unexpected NAT redirection column header') else
+               'unrecognised_line' if (nat_check.msg | default('')) is search('Unrecognised NAT redirection table line') else
+               'invalid_index' if (nat_check.msg | default('')) is search('Invalid, duplicate, or nonsequential NAT redirection index') else
+               'invalid_protocol_or_port' if (nat_check.msg | default('')) is search('Invalid protocol or port in NAT redirection row') else
+               'invalid_ipv4' if (nat_check.msg | default('')) is search('Invalid IPv4 address in NAT redirection row') else
+               'incomplete_table' if (nat_check.msg | default('')) is search('Incomplete NAT redirection table') else
+               'parser_other' if (nat_check.msg | default('')) is search('NAT redirection') else 'other' }}
+      no_log: true
+
+    - name: Report only fixed NAT parser failure categories
+      ansible.builtin.debug:
+        var: nat_fact_failure_classes
+
+    - name: Verify the NAT parser against each bounded raw snapshot
+      ansible.builtin.assert:
+        that:
+          - not nat_facts.changed
+          - not nat_check.changed
+          - not nat_facts.failed | default(false)
+          - not nat_check.failed | default(false)
+          - nat_facts.ansible_facts.drayos.nat_redirects | length == nat_shapes['srv nat status'].complete_redirection_rows | int
+          - nat_check.ansible_facts.drayos.nat_redirects | length == nat_shapes['srv nat status'].complete_redirection_rows | int
+      no_log: true
+
+    - name: Report only NAT fact row counts
+      ansible.builtin.debug:
+        msg:
+          normal_rows: "{{ nat_facts.ansible_facts.drayos.nat_redirects | length }}"
+          check_rows: "{{ nat_check.ansible_facts.drayos.nat_redirects | length }}"
+
     - name: Classify fixed network table shapes without retaining matched values
       ansible.builtin.set_fact:
         network_table_shapes: >-
@@ -168,12 +291,59 @@
           pagers: "{{ dhcp_pager_count }}"
           fixed: "{{ dhcp_fixed_count }}"
 
+    - name: Identify unrecognised DHCP table lines privately
+      ansible.builtin.set_fact:
+        dhcp_unrecognised_lines: >-
+          {{ ((dhcp_body.splitlines() | select('search', '\S') | list)[2:]) |
+             reject('match', recognised_line) | list }}
+      vars:
+        dhcp_body: >-
+          {{ network_probes.results[4].stdout[0] |
+             regex_replace('(?ms)^.*?^[ \t]*-{3,}[ \t]*\r?\n', '', count=1) }}
+        recognised_line: >-
+          (?x)^[ \t]*(?:(?:LAN[1-8]|IP\x20Routed)|
+          [0-9]{1,6}[ \t]+[0-9.]+[ \t]+[0-9a-fA-F]{2}(?P<sep>[:-])[0-9a-fA-F]{2}(?:(?P=sep)[0-9a-fA-F]{2}){4}[ \t]+
+          (?:[0-9]+:[0-5][0-9]:[0-5][0-9]|FIXED)(?:[ \t]+[^\x00-\x08\x0a-\x1f\x7f]+)?|
+          ---\x20MORE\x20---[ \t]+\['q':\x20Quit,\x20'Enter':\x20New\x20Lines,\x20'Space\x20Bar':\x20Next\x20Page\]\x20---)[ \t]*$
+      no_log: true
+
+    - name: Classify unrecognised DHCP lines without returning their content
+      ansible.builtin.set_fact:
+        dhcp_unrecognised_shapes:
+          total: "{{ dhcp_unrecognised_lines | length }}"
+          numbered: "{{ dhcp_unrecognised_lines | select('match', '^[ \t]*[0-9]+[ \t]') | list | length }}"
+          section_like: "{{ dhcp_unrecognised_lines | select('match', '^[ \t]*(?:LAN[0-9]+|IP Routed)\\b') | list | length }}"
+          separator: "{{ dhcp_unrecognised_lines | select('match', '^[ \t]*-{3,}[ \t]*$') | list | length }}"
+          pager_like: "{{ dhcp_unrecognised_lines | select('match', '^[ \t]*--- MORE ---') | list | length }}"
+          prompt_like: "{{ dhcp_unrecognised_lines | select('match', '^[ \t]*>') | list | length }}"
+          other: "{{ dhcp_unrecognised_lines | reject('match', known_shape) | list | length }}"
+          valid_index_and_mac: "{{ dhcp_unrecognised_lines | select('match', mac_prefix) | list | length }}"
+          valid_lease_prefix: "{{ dhcp_unrecognised_lines | select('match', lease_prefix) | list | length }}"
+          control_in_host: "{{ dhcp_unrecognised_lines | select('match', host_control) | list | length }}"
+          tab_in_host: "{{ dhcp_unrecognised_lines | select('match', host_tab) | list | length }}"
+          other_control_in_host: "{{ dhcp_unrecognised_lines | select('match', host_other_control) | list | length }}"
+      vars:
+        known_shape: '^[ \t]*(?:[0-9]+[ \t]|(?:LAN[0-9]+|IP Routed)\b|-{3,}[ \t]*$|--- MORE ---|>)'
+        mac_prefix: >-
+          (?x)^[ \t]*[0-9]{1,6}[ \t]+[0-9.]+[ \t]+
+          [0-9a-fA-F]{2}(?P<sep>[:-])[0-9a-fA-F]{2}(?:(?P=sep)[0-9a-fA-F]{2}){4}[ \t]+
+        lease_prefix: "{{ mac_prefix + '(?:[0-9]+:[0-5][0-9]:[0-5][0-9]|FIXED)(?=[ \\t]|$)' }}"
+        host_control: "{{ lease_prefix + '[ \\t]+[^ \\t][^\\x00-\\x1f\\x7f]*[\\x00-\\x1f\\x7f]' }}"
+        host_tab: "{{ lease_prefix + '[ \\t]+[^ \\t][^\\x00-\\x1f\\x7f]*\\t' }}"
+        host_other_control: "{{ lease_prefix + '[ \\t]+[^ \\t][^\\x00-\\x08\\x0a-\\x1f\\x7f]*[\\x00-\\x08\\x0a-\\x1f\\x7f]' }}"
+      no_log: true
+
+    - name: Report only aggregate unrecognised DHCP line shapes
+      ansible.builtin.debug:
+        var: dhcp_unrecognised_shapes
+
     - name: Gather DHCP leases privately
       kpeacocke.draytek.drayos_facts:
         gather_subset: []
         gather_dhcp_leases: true
       register: dhcp_facts
       no_log: true
+      ignore_errors: true  # noqa: ignore-errors
 
     - name: Gather DHCP leases in check mode privately
       kpeacocke.draytek.drayos_facts:
@@ -181,6 +351,38 @@
         gather_dhcp_leases: true
       check_mode: true
       register: dhcp_check
+      no_log: true
+      ignore_errors: true  # noqa: ignore-errors
+
+    - name: Classify DHCP parser failures without returning their messages
+      ansible.builtin.set_fact:
+        dhcp_fact_failure_classes: >-
+          {{ dhcp_fact_failure_classes | default({}) | combine({item.label:
+             'none' if not item.result.failed | default(false) else
+             'preamble' if (item.result.msg | default('')) is search('Missing DHCP status preamble') else
+             'header' if (item.result.msg | default('')) is search('Missing DHCP lease table header') else
+             'duplicate_section' if (item.result.msg | default('')) is search('Duplicate DHCP lease section') else
+             'unrecognised_line' if (item.result.msg | default('')) is search('Unrecognised DHCP lease table line') else
+             'invalid_index' if (item.result.msg | default('')) is search('Invalid or duplicate DHCP lease index') else
+             'invalid_ipv4' if (item.result.msg | default('')) is search('Invalid IPv4 address in DHCP lease table') else
+             'incomplete_table' if (item.result.msg | default('')) is search('Incomplete paginated DHCP lease table') else
+             'other'}) }}
+      loop:
+        - label: normal
+          result: "{{ dhcp_facts }}"
+        - label: check
+          result: "{{ dhcp_check }}"
+      no_log: true
+
+    - name: Report only fixed DHCP parser failure categories
+      ansible.builtin.debug:
+        var: dhcp_fact_failure_classes
+
+    - name: Require successful DHCP fact gathering
+      ansible.builtin.assert:
+        that:
+          - not dhcp_facts.failed | default(false)
+          - not dhcp_check.failed | default(false)
       no_log: true
 
     - name: Verify DHCP row coverage and read-only check mode
