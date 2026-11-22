@@ -293,11 +293,13 @@
 
     - name: Identify unrecognised DHCP table lines privately
       ansible.builtin.set_fact:
-        dhcp_unrecognised_lines: "{{ dhcp_body.splitlines() | select('search', '\\S') | reject('match', recognised_line) | list }}"
+        dhcp_unrecognised_lines: >-
+          {{ ((dhcp_body.splitlines() | select('search', '\S') | list)[2:]) |
+             reject('match', recognised_line) | list }}
       vars:
         dhcp_body: >-
           {{ network_probes.results[4].stdout[0] |
-             regex_replace('(?s)^.*?Index[ \t]+IP Address[ \t]+MAC Address[ \t]+Leased Time[ \t]+HOST ID[ \t]*\r?\n[ \t]*-{3,}[ \t]*\r?\n', '') }}
+             regex_replace('(?ms)^.*?^[ \t]*-{3,}[ \t]*\r?\n', '', count=1) }}
         recognised_line: >-
           (?x)^[ \t]*(?:(?:LAN[1-8]|IP\x20Routed)|
           [0-9]{1,6}[ \t]+[0-9.]+[ \t]+[0-9a-fA-F]{2}(?P<sep>[:-])[0-9a-fA-F]{2}(?:(?P=sep)[0-9a-fA-F]{2}){4}[ \t]+
