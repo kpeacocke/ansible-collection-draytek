@@ -117,7 +117,8 @@
           (?ix)^[ \t%]*(?:(?:NAT\x20)?Port\x20Redirection\x20Running\x20Table[ \t]*:|
           Index[ \t]+Protocol[ \t]+Public\x20Port[ \t]+Private\x20IP[ \t]+Private\x20Port|
           [0-9]{1,5}[ \t]+[0-9]{1,3}[ \t]+[0-9]{1,5}[ \t]+[0-9.]{1,15}[ \t]+[0-9]{1,5}|
-          ---\x20MORE\x20---.*|-{3,}|>[ \t]*)$
+          Protocol[ \t]*:[ \t]*0[ \t]*=[ \t]*disable[ \t]*,[ \t]*6[ \t]*=[ \t]*TCP[ \t]*,[ \t]*17[ \t]*=[ \t]*UDP|
+          ---\x20MORE\x20---.*|-{3,}|>[ \t]*(?:srv[ \t]+nat[ \t]+status)?[ \t]*)$
       loop: "{{ nat_probes.results }}"
       no_log: true
 
