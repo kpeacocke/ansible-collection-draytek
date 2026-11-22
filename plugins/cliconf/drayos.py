@@ -39,7 +39,7 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.c
 )
 
 PAGED_COMMANDS = frozenset((
-    "sys iface", "show status", "show lan", "show nat", "ip route status", "vlan status",
+    "sys iface", "show status", "show lan", "show nat", "show openport", "ip route status", "vlan status",
     "srv dhcp status", "srv nat status", "wan status", "wan lte stus",
 ))
 
