@@ -247,6 +247,7 @@ NAT_ROWS = [
     "3 17 53 198.51.100.20 5353",
 ]
 NAT_TABLE = NAT_HEADER + "\n".join(NAT_ROWS)
+NAT_PROTOCOL_LEGEND = "Protocol: 0=disable, 6=TCP, 17=UDP"
 
 
 def test_nat_redirect_parser_keeps_placeholder_rows_and_crosses_pager():
@@ -263,6 +264,15 @@ def test_nat_redirect_parser_accepts_documented_command_echo():
     assert parse("> srv nat status\n" + NAT_TABLE) == parse(NAT_TABLE)
 
 
+@pytest.mark.parametrize("legend", [
+    NAT_PROTOCOL_LEGEND,
+    "  Protocol : 0 = disable, 6 = TCP, 17 = UDP  ",
+])
+def test_nat_redirect_parser_accepts_live_protocol_legend_at_end(legend):
+    parse = drayos_facts.facts_parsers.parse_nat_redirects
+    assert parse(NAT_TABLE + "\n" + legend + "\n") == parse(NAT_TABLE)
+
+
 @pytest.mark.parametrize("table", [
     NAT_TABLE.replace("NAT Port Redirection Running Table:", "Unknown Table:"),
     NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 53 198.51.100.256 5353"),
@@ -274,6 +284,11 @@ def test_nat_redirect_parser_accepts_documented_command_echo():
     NAT_TABLE.replace("3 17 53 198.51.100.20 5353", "3 17 53 198.51.100.20 5353\nUnknown row"),
     "> srv nat status\n> srv nat status\n" + NAT_TABLE,
     NAT_TABLE + "\n> srv nat status",
+    NAT_HEADER + NAT_PROTOCOL_LEGEND + "\n" + "\n".join(NAT_ROWS),
+    NAT_TABLE + "\n" + NAT_PROTOCOL_LEGEND + "\n" + NAT_PROTOCOL_LEGEND,
+    NAT_TABLE + "\n" + NAT_PROTOCOL_LEGEND + "\n4 0 0 0.0.0.0 0",
+    NAT_TABLE + "\n--- MORE --- ['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page] ---\n" + NAT_PROTOCOL_LEGEND,
+    NAT_TABLE + "\nProtocol: 0=disable, 6=TCP, 17=other",
 ])
 def test_nat_redirect_parser_rejects_incomplete_or_ambiguous_rows(table):
     with pytest.raises(ParseError):
@@ -285,7 +300,7 @@ def test_nat_redirect_facts_are_opt_in_and_read_only(monkeypatch, check_mode):
     def execute(module, commands):
         assert module.check_mode == check_mode
         assert commands == ["srv nat status"]
-        return [NAT_TABLE]
+        return [NAT_TABLE + "\n" + NAT_PROTOCOL_LEGEND]
 
     monkeypatch.setattr(drayos_facts, "run_commands", execute)
     _set_module_args({

@@ -217,21 +217,34 @@ _NAT_TABLE_COLUMNS = re.compile(
 _NAT_REDIRECTION_ROW = re.compile(
     r"([0-9]{1,5})[ \t]+([0-9]{1,3})[ \t]+([0-9]{1,5})[ \t]+([0-9.]{1,15})[ \t]+([0-9]{1,5})"
 )
+_NAT_PROTOCOL_LEGEND = re.compile(
+    r"Protocol[ \t]*:[ \t]*0[ \t]*=[ \t]*disable[ \t]*,[ \t]*"
+    r"6[ \t]*=[ \t]*TCP[ \t]*,[ \t]*17[ \t]*=[ \t]*UDP",
+    re.IGNORECASE,
+)
 
 
 def parse_nat_redirects(text: str) -> list[dict[str, int | str]]:
-    """Parse the documented NAT status table, including its command echo."""
+    """Parse the NAT status table and its optional command echo and protocol legend."""
     table_header = False
     columns_header = False
     awaiting_page = False
     command_echo_seen = False
+    legend_seen = False
     entries: dict[int, dict[str, int | str]] = {}
     for raw in text.splitlines():
         line = raw.lstrip(" \t%").rstrip()
         if not line:
             continue
+        if legend_seen:
+            raise ParseError("Unexpected line after NAT protocol legend")
         if not table_header and not command_echo_seen and line == "> srv nat status":
             command_echo_seen = True
+            continue
+        if _NAT_PROTOCOL_LEGEND.fullmatch(line):
+            if not columns_header or not entries or awaiting_page:
+                raise ParseError("Unexpected NAT protocol legend")
+            legend_seen = True
             continue
         if _NAT_TABLE_HEADER.fullmatch(line):
             if table_header:
