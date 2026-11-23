@@ -16,6 +16,34 @@
       ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
 
   tasks:
+    - name: Read documented DHCP lease-time help privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - "srv dhcp leasetime ?"
+        retries: 1
+      register: dhcp_lease_time_probe
+      no_log: true
+
+    - name: Classify DHCP lease-time response without returning values
+      ansible.builtin.set_fact:
+        dhcp_lease_time_shape:
+          nonblank_lines: "{{ lines | length }}"
+          value_lines: "{{ lines | select('match', value_line) | list | length }}"
+          help_lines: "{{ lines | select('match', help_line) | list | length }}"
+          unclassified_lines: "{{ lines | reject('match', known_line) | list | length }}"
+      vars:
+        lines: "{{ dhcp_lease_time_probe.stdout[0].splitlines() | select('search', '\\S') | list }}"
+        value_line: '(?i)^[ \t%]*Now:[ \t]*[0-9]+[ \t\r]*$'
+        help_line: '(?i)^[ \t%]*srv[ \t]+dhcp[ \t]+leasetime[ \t]+<Lease Time \(sec\.?\)>[ \t\r]*$'
+        known_line: >-
+          (?ix)^[ \t%]*(?:Now:[ \t]*[0-9]+|srv[ \t]+dhcp[ \t]+leasetime[ \t]+<Lease[ \t]+Time[ \t]+\(sec\.?\)>|
+          >[ \t]*(?:srv[ \t]+dhcp[ \t]+leasetime[ \t]+\?)?|---[ \t]+MORE[ \t]+---.*)[ \t\r]*$
+      no_log: true
+
+    - name: Report only DHCP lease-time response shape
+      ansible.builtin.debug:
+        var: dhcp_lease_time_shape
+
     - name: Run fixed read-only network probes privately
       kpeacocke.draytek.drayos_command:
         commands:
@@ -385,6 +413,24 @@
           - not dhcp_check.failed | default(false)
       no_log: true
 
+    - name: Compare DHCP snapshots without exposing client information
+      ansible.builtin.set_fact:
+        dhcp_snapshot_shape:
+          raw_rows: "{{ dhcp_raw_count | int }}"
+          normal_rows: "{{ dhcp_rows | length }}"
+          check_rows: "{{ dhcp_check_rows | length }}"
+          raw_fixed: "{{ dhcp_fixed_count | int }}"
+          normal_fixed: "{{ dhcp_rows | selectattr('lease_time', 'equalto', 'FIXED') | list | length }}"
+          addresses_match: "{{ dhcp_rows | map(attribute='ip_address') | sort == dhcp_check_rows | map(attribute='ip_address') | sort }}"
+      vars:
+        dhcp_rows: "{{ dhcp_facts.ansible_facts.drayos.dhcp_leases }}"
+        dhcp_check_rows: "{{ dhcp_check.ansible_facts.drayos.dhcp_leases }}"
+      no_log: true
+
+    - name: Report only DHCP snapshot comparison counts
+      ansible.builtin.debug:
+        var: dhcp_snapshot_shape
+
     - name: Verify DHCP row coverage and read-only check mode
       ansible.builtin.assert:
         that:
@@ -586,31 +632,3 @@
           - lan_profiles_result.ansible_facts.drayos.lan_profiles | length == 8
           - not lan_profiles_result.ansible_facts.drayos.lan_profiles.LAN7.enabled
       no_log: true
-
-    - name: Read documented DHCP lease-time help privately
-      kpeacocke.draytek.drayos_command:
-        commands:
-          - "srv dhcp leasetime ?"
-        retries: 1
-      register: dhcp_lease_time_probe
-      no_log: true
-
-    - name: Classify DHCP lease-time response without returning values
-      ansible.builtin.set_fact:
-        dhcp_lease_time_shape:
-          nonblank_lines: "{{ lines | length }}"
-          value_lines: "{{ lines | select('match', value_line) | list | length }}"
-          help_lines: "{{ lines | select('match', help_line) | list | length }}"
-          unclassified_lines: "{{ lines | reject('match', known_line) | list | length }}"
-      vars:
-        lines: "{{ dhcp_lease_time_probe.stdout[0].splitlines() | select('search', '\\S') | list }}"
-        value_line: '(?i)^[ \t%]*Now:[ \t]*[0-9]+[ \t\r]*$'
-        help_line: '(?i)^[ \t%]*srv[ \t]+dhcp[ \t]+leasetime[ \t]+<Lease Time \(sec\.?\)>[ \t\r]*$'
-        known_line: >-
-          (?ix)^[ \t%]*(?:Now:[ \t]*[0-9]+|srv[ \t]+dhcp[ \t]+leasetime[ \t]+<Lease[ \t]+Time[ \t]+\(sec\.?\)>|
-          >[ \t]*(?:srv[ \t]+dhcp[ \t]+leasetime[ \t]+\?)?|---[ \t]+MORE[ \t]+---.*)[ \t\r]*$
-      no_log: true
-
-    - name: Report only DHCP lease-time response shape
-      ansible.builtin.debug:
-        var: dhcp_lease_time_shape
