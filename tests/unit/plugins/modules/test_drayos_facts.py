@@ -62,6 +62,43 @@ def test_commands_for_subsets_only_requests_needed_commands():
     assert commands == ["sys version", "show status"]
 
 
+DHCP_LEASE_TIME = "% srv dhcp leasetime <Lease Time (sec.)>\r\n% Now: 86400"
+
+
+def test_dhcp_lease_time_parser_reads_documented_value():
+    assert drayos_facts.facts_parsers.parse_dhcp_lease_time(DHCP_LEASE_TIME) == 86400
+
+
+@pytest.mark.parametrize("response", [
+    "% Now: 86400",
+    "% srv dhcp leasetime <Lease Time (sec.)>",
+    DHCP_LEASE_TIME + "\n% Now: 1234",
+    DHCP_LEASE_TIME + "\nprivate unexpected line",
+    DHCP_LEASE_TIME.replace("86400", "-1"),
+    DHCP_LEASE_TIME.replace("86400", "10000000000"),
+])
+def test_dhcp_lease_time_parser_rejects_ambiguous_or_malformed_output(response):
+    with pytest.raises(ParseError) as error:
+        drayos_facts.facts_parsers.parse_dhcp_lease_time(response)
+    assert "private unexpected line" not in str(error.value)
+
+
+@pytest.mark.parametrize("check_mode", [False, True])
+def test_dhcp_lease_time_is_opt_in_and_read_only(monkeypatch, check_mode):
+    def execute(module, commands):
+        assert module.check_mode == check_mode
+        assert commands == ["srv dhcp leasetime ?"]
+        return [DHCP_LEASE_TIME]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({"gather_subset": [], "gather_dhcp_lease_time": True, "_ansible_check_mode": check_mode})
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    result = excinfo.value.kwargs
+    assert not result["changed"]
+    assert result["ansible_facts"]["drayos"] == {"dhcp_lease_time_seconds": 86400}
+
+
 LAN_TABLE = "\r\n".join([
     "The LAN settings:",
     *[

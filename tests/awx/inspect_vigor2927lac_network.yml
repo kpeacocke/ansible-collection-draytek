@@ -44,6 +44,35 @@
       ansible.builtin.debug:
         var: dhcp_lease_time_shape
 
+    - name: Gather DHCP lease-time facts privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_dhcp_lease_time: true
+      register: dhcp_lease_time_facts
+      no_log: true
+
+    - name: Gather DHCP lease-time facts in check mode privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset: []
+        gather_dhcp_lease_time: true
+      check_mode: true
+      register: dhcp_lease_time_check
+      no_log: true
+
+    - name: Verify the DHCP lease-time fact against the independent read
+      ansible.builtin.assert:
+        that:
+          - not dhcp_lease_time_facts.changed
+          - not dhcp_lease_time_check.changed
+          - lease_time_values | length == 1
+          - dhcp_lease_time_facts.ansible_facts.drayos.dhcp_lease_time_seconds == lease_time_values[0] | int
+          - dhcp_lease_time_check.ansible_facts.drayos == dhcp_lease_time_facts.ansible_facts.drayos
+      vars:
+        lease_time_values: >-
+          {{ dhcp_lease_time_probe.stdout[0] |
+             regex_findall('(?im)^[ \t%]*Now:[ \t]*([0-9]{1,10})[ \t\r]*$') }}
+      no_log: true
+
     - name: Run fixed read-only network probes privately
       kpeacocke.draytek.drayos_command:
         commands:
