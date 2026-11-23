@@ -1,0 +1,2 @@
+bugfixes:
+  - drayos_facts - Reject model identification repeated on a firmware version line.

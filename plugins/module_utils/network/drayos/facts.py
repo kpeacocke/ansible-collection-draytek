@@ -26,8 +26,7 @@ _SYS_VERSION_PATTERNS = {
     "revision": re.compile(r"Revision:\s*(.+)"),
     "serial_no": re.compile(r"Router serial no:\s*(.+)"),
 }
-_MODEL_LABEL = re.compile(r"^[ \t]*Router Model:", re.MULTILINE)
-_VERSION_LINE = re.compile(r"^[ \t]*(?:Router Model:|Version:)")
+_IDENTIFICATION_LINE = re.compile(r"^[ \t]*(?:Router Model:|Version:)")
 
 
 def parse_sys_version(text: str) -> PlatformInfo:
@@ -39,8 +38,8 @@ def parse_sys_version(text: str) -> PlatformInfo:
             values[key] = match.group(1).strip()
 
     lines = text.splitlines()
-    model_labels = sum(line.count("Router Model:") for line in lines if _MODEL_LABEL.match(line))
-    version_labels = sum(len(re.findall(r"\bVersion:", line)) for line in lines if _VERSION_LINE.match(line))
+    model_labels = sum(line.count("Router Model:") for line in lines if _IDENTIFICATION_LINE.match(line))
+    version_labels = sum(len(re.findall(r"\bVersion:", line)) for line in lines if _IDENTIFICATION_LINE.match(line))
     if model_labels != 1:
         values.pop("model", None)
     if version_labels != 1:
