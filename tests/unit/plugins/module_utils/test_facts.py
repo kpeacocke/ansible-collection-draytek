@@ -149,3 +149,11 @@ def test_repeated_labels_on_identification_line_are_ambiguous():
     )
     assert info.model is None
     assert info.firmware_version is None
+
+
+def test_model_repeated_on_version_line_is_ambiguous():
+    info = facts.parse_sys_version(
+        "Router Model: Vigor2927Lac\nVersion: 4.5.2.2 Router Model: Vigor9999"
+    )
+    assert info.model is None
+    assert info.firmware_version == "4.5.2.2"
