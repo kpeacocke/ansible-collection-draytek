@@ -134,6 +134,10 @@ keep client identifiers out of job output, and account for any configured fact c
 seconds reported by `srv dhcp leasetime ?`. The response does not identify a
 LAN, and this value is not a remaining lease timer. Its public fact
 `dhcp_lease_time_seconds` is opt-in and does not change configuration.
+[AWX job 2389](https://awx.ambitiouscake.com/jobs/playbook/2389/output)
+verified the fact against an independent CLI read in normal and check mode
+on Vigor2927Lac firmware 4.5.2.2 using Paramiko. Other models and firmware
+have not been validated.
 
 ## Primary NTP server
 
