@@ -130,6 +130,15 @@ a point-in-time read, not a way to manage reservations, clients or pools.
 Persistent transport logging must be off. Use task-level `no_log: true` to
 keep client identifiers out of job output, and account for any configured fact cache.
 
+`gather_dhcp_lease_time: true` separately reads the single duration in
+seconds reported by `srv dhcp leasetime ?`. The response does not identify a
+LAN, and this value is not a remaining lease timer. Its public fact
+`dhcp_lease_time_seconds` is opt-in and does not change configuration.
+[AWX job 2389](https://awx.ambitiouscake.com/jobs/playbook/2389/output)
+verified the fact against an independent CLI read in normal and check mode
+on Vigor2927Lac firmware 4.5.2.2 using Paramiko. Other models and firmware
+have not been validated.
+
 ## Primary NTP server
 
 The [NTP resource](ntp.md) is restricted to Vigor2927Lac firmware 4.5.2.2.

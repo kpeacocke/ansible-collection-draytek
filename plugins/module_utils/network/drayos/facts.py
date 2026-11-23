@@ -49,6 +49,35 @@ def parse_sys_version(text: str) -> PlatformInfo:
     )
 
 
+_DHCP_LEASE_TIME_HELP = re.compile(
+    r"[ \t%]*srv[ \t]+dhcp[ \t]+leasetime[ \t]+<Lease[ \t]+Time[ \t]+\(sec\.?\)>[ \t]*",
+    re.IGNORECASE,
+)
+_DHCP_LEASE_TIME_VALUE = re.compile(r"[ \t%]*Now:[ \t]*([0-9]{1,10})[ \t]*", re.IGNORECASE)
+
+
+def parse_dhcp_lease_time(text: str) -> int:
+    """Parse the single lease-time value from the documented help response."""
+    header = False
+    value = None
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        if _DHCP_LEASE_TIME_HELP.fullmatch(line):
+            if header:
+                raise ParseError("Duplicate DHCP lease-time help line")
+            header = True
+            continue
+        match = _DHCP_LEASE_TIME_VALUE.fullmatch(line)
+        if match and value is None:
+            value = int(match.group(1))
+            continue
+        raise ParseError("Unrecognised DHCP lease-time response")
+    if not header or value is None:
+        raise ParseError("Incomplete DHCP lease-time response")
+    return value
+
+
 _LAN_HEADER = re.compile(r"[ \t%]*The LAN settings:[ \t]*")
 _LAN_PROFILE_PREFIX = re.compile(r"[ \t%]*(?:\[[^\r\n]*\][ \t]*)?LAN[1-8]\b")
 _LAN_PROFILE_ROW = re.compile(

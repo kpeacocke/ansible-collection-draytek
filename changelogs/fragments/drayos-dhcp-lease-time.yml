@@ -1,0 +1,2 @@
+minor_changes:
+  - drayos_facts - Add opt-in read-only DHCP lease duration from the documented lease-time query.
