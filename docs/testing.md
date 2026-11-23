@@ -69,9 +69,12 @@ not evidence that the feature is unsupported.
 
 `tests/awx/qualify_vigor2927lac_lan7_dns.yml` also has a read-only
 `secondary_check` mode for the secondary resolver's check-mode predictions.
-Its `secondary_cycle` mode writes to the router and requires explicit approval,
-an unchanged unset LAN7 baseline, a disabled LAN7 and independent recovery
-standby. It attempts to restore the baseline automatically, but interruption or
+Its `secondary_cycle` and `secondary_module_cycle` modes write to the router
+and each requires separate explicit approval, an unchanged unset LAN7
+baseline, a disabled LAN7 and independent recovery standby. They attempt to
+restore the baseline automatically. If module cleanup fails, the module
+cycle attempts the independently qualified CLI clear only when the current
+secondary value is the temporary value; the job still fails. Interruption or
 failed readback can prevent cleanup; verify the result independently.
 
 The AWX playbooks described in the device matrix include a fixture-only check

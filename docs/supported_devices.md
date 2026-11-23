@@ -182,9 +182,11 @@ used the documented `srv dhcp dns2` command to set and clear disabled LAN7,
 comparing all LAN DNS fields. Independent read-only
 [job 2369](https://awx.ambitiouscake.com/jobs/playbook/2369/output) confirmed
 both LAN7 fields were unset. The public module accepts `secondary_server` for
-the same guarded target; its secondary write path has not yet been qualified
-on hardware. Supply either `primary_server` or `secondary_server` per task,
-not both; use `"0.0.0.0"` to clear the selected field.
+the same guarded target. [Job 2372](https://awx.ambitiouscake.com/jobs/playbook/2372/output)
+at `5df68bc` verified its changed and unchanged check-mode predictions and
+unchanged readback. Its secondary write path has not yet been qualified on
+hardware. Supply either `primary_server` or `secondary_server` per task, not
+both; use `"0.0.0.0"` to clear the selected field.
 
 ## AWX fixture validation
 
