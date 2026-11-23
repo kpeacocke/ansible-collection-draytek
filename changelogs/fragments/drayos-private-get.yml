@@ -1,0 +1,2 @@
+bugfixes:
+  - drayos cliconf - Enforce existing raw connection logging guards for DHCP lease and TR-069 reads through cli_command.

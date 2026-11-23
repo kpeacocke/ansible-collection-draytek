@@ -80,6 +80,15 @@ class Cliconf(CliconfBase):
                 self._connection.get_option("persistent_log_messages"):
             raise AnsibleConnectionFailure("NAT redirection reads require ansible_persistent_log_messages=false")
 
+    def _require_private_read(self, command):
+        command = command.strip()
+        if command.startswith("sys tr069 get ") and self._connection.get_option("persistent_log_messages"):
+            raise AnsibleConnectionFailure("TR-069 reads require ansible_persistent_log_messages=false")
+        if command == "srv dhcp status" and self._connection.get_option("persistent_log_messages"):
+            raise AnsibleConnectionFailure("DHCP lease reads require ansible_persistent_log_messages=false")
+        self._require_private_lte_read(command)
+        self._require_private_nat_read(command)
+
     def get(
         self,
         command=None,
@@ -95,8 +104,7 @@ class Cliconf(CliconfBase):
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        self._require_private_lte_read(command)
-        self._require_private_nat_read(command)
+        self._require_private_read(command)
         return self.send_command(
             command=command,
             prompt=prompt,
@@ -126,18 +134,7 @@ class Cliconf(CliconfBase):
             if output:
                 raise ValueError("'output' value %s is not supported for run_commands" % output)
 
-            if cmd.get("command", "").strip().startswith("sys tr069 get ") and self._connection.get_option(
-                "persistent_log_messages"
-            ):
-                raise AnsibleConnectionFailure(
-                    "TR-069 reads require ansible_persistent_log_messages=false"
-                )
-
-            if cmd.get("command", "").strip() == "srv dhcp status" and self._connection.get_option("persistent_log_messages"):
-                raise AnsibleConnectionFailure("DHCP lease reads require ansible_persistent_log_messages=false")
-
-            self._require_private_lte_read(cmd.get("command", ""))
-            self._require_private_nat_read(cmd.get("command", ""))
+            self._require_private_read(cmd.get("command", ""))
 
             if cmd.get("command", "").strip() in PAGED_COMMANDS and not cmd.get("prompt"):
                 # check_all consumes one prompt/answer pair per page. A single

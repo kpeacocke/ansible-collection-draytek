@@ -191,3 +191,30 @@ def test_lte_get_requires_private_transport(cliconf, monkeypatch):
     with pytest.raises(AnsibleConnectionFailure, match="persistent_log_messages=false"):
         cliconf.get(command="wan lte stus")
     assert cliconf._connection._sent == []
+
+
+@pytest.mark.parametrize("command", [
+    "srv dhcp status",
+    "sys tr069 get InternetGatewayDevice.DeviceInfo.Manufacturer",
+    "sys tr069 get InternetGatewayDevice.DeviceInfo. nextlevel",
+])
+def test_private_reads_via_get_require_private_transport(cliconf, monkeypatch, command):
+    seen = []
+    monkeypatch.setattr(cliconf, "send_command", lambda **kw: seen.append(kw) or "private")
+    monkeypatch.setattr(cliconf._connection, "get_option",
+                        lambda option: option == "persistent_log_messages")
+    with pytest.raises(AnsibleConnectionFailure, match="persistent_log_messages=false"):
+        cliconf.get(command=command)
+    assert seen == []
+
+
+@pytest.mark.parametrize("command", [
+    "srv dhcp status",
+    "sys tr069 get InternetGatewayDevice.DeviceInfo.Manufacturer",
+])
+def test_private_reads_via_get_work_without_raw_logging(cliconf, monkeypatch, command):
+    seen = []
+    monkeypatch.setattr(cliconf, "send_command", lambda **kw: seen.append(kw) or "private")
+    assert cliconf.get(command=command) == "private"
+    assert len(seen) == 1
+    assert seen[0]["command"] == command
