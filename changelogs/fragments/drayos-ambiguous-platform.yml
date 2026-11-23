@@ -1,0 +1,2 @@
+bugfixes:
+  - drayos_facts - Do not report ambiguous model or firmware identifiers from duplicate labels.

@@ -27,6 +27,9 @@ Never infer that an entire Vigor family works because one model passed tests.
 `drayos_facts` collects read-only `sys version`, `sys iface`, and `show status`
 output through the existing `network_cli` connection. It always reports
 `changed: false`, including in check mode.
+Missing or duplicate model and firmware labels leave the respective
+identification field unset rather than choosing an ambiguous value. A reported
+model and firmware do not by themselves establish feature support.
 
 | Model | Firmware | Evidence | Validation scope |
 | --- | --- | --- | --- |
