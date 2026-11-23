@@ -15,6 +15,7 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.e
 
 from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.models import (
     PlatformInfo,
+    QUALIFIED_V2927LAC_4522_READ_CAPABILITIES,
 )
 
 _SYS_VERSION_PATTERNS = {
@@ -45,16 +46,33 @@ def parse_sys_version(text: str) -> PlatformInfo:
     if version_labels != 1:
         values.pop("version", None)
 
+    model = values.get("model")
+    firmware = values.get("version")
+    if model_labels > 1 or version_labels > 1:
+        discovery_status = "ambiguous"
+    elif model is not None and firmware is not None:
+        discovery_status = "identified"
+    elif model is not None or firmware is not None:
+        discovery_status = "partial"
+    else:
+        discovery_status = "unrecognised"
+
+    capabilities: tuple[str, ...] = ()
+    if discovery_status == "identified" and model == "Vigor2927Lac" and firmware == "4.5.2.2":
+        capabilities = QUALIFIED_V2927LAC_4522_READ_CAPABILITIES
+
     serial = values.get("serial_no")
     if serial in (None, "None", ""):
         serial = None
 
     return PlatformInfo(
-        model=values.get("model"),
+        model=model,
         hostname=values.get("hostname") or None,
-        firmware_version=values.get("version"),
+        firmware_version=firmware,
         hardware_version=values.get("revision"),
         serial_number=serial,
+        discovery_status=discovery_status,
+        capabilities=capabilities,
     )
 
 

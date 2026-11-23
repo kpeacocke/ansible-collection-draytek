@@ -157,3 +157,28 @@ def test_model_repeated_on_version_line_is_ambiguous():
     )
     assert info.model is None
     assert info.firmware_version == "4.5.2.2"
+
+
+def test_qualified_platform_reports_explicit_read_capabilities():
+    info = facts.parse_sys_version(
+        "Router Model: Vigor2927Lac\nVersion: 4.5.2.2"
+    )
+    assert info.discovery_status == "identified"
+    assert "platform" in info.capabilities
+    assert "dhcp_leases" in info.capabilities
+    assert "lte_access" in info.capabilities
+
+
+def test_unrelated_platform_reports_no_qualified_capabilities():
+    info = facts.parse_sys_version(
+        "Router Model: Vigor9999\nVersion: 9.9.9"
+    )
+    assert info.discovery_status == "identified"
+    assert info.capabilities == ()
+
+
+def test_incomplete_identification_is_partial():
+    info = facts.parse_sys_version("Router Model: Vigor2927Lac")
+    assert info.discovery_status == "partial"
+    assert info.model == "Vigor2927Lac"
+    assert info.firmware_version is None

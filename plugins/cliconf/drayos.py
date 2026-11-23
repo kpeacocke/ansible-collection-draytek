@@ -105,7 +105,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'output' value %s is not supported for get" % output)
 
         self._require_private_read(command)
-        return self.send_command(
+        response = self.send_command(
             command=command,
             prompt=prompt,
             answer=answer,
@@ -113,6 +113,11 @@ class Cliconf(CliconfBase):
             newline=newline,
             check_all=check_all,
         )
+        if response is None or isinstance(response, (bytes, bytearray)) and len(response) == 0:
+            raise AnsibleConnectionFailure("Command execution returned no response")
+        if isinstance(response, str) and not response.strip():
+            raise AnsibleConnectionFailure("Command execution returned an empty response")
+        return response
 
     def run_commands(self, commands=None, check_rc=True):
         if commands is None:
@@ -152,6 +157,10 @@ class Cliconf(CliconfBase):
                     raise
                 out = getattr(exc, "message", str(exc))
 
+            if out is None or isinstance(out, (bytes, bytearray)) and len(out) == 0:
+                raise AnsibleConnectionFailure("Command execution returned no response")
+            if isinstance(out, str) and not out.strip():
+                raise AnsibleConnectionFailure("Command execution returned an empty response")
             responses.append(out)
 
         return responses

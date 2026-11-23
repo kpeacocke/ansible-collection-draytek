@@ -63,6 +63,17 @@ def run_commands(module: Any, commands: Any, check_rc: bool = True) -> list:
     """Execute one or more operational commands and return their raw output."""
     connection = get_connection(module)
     try:
-        return connection.run_commands(commands=commands, check_rc=check_rc)
+        responses = connection.run_commands(commands=commands, check_rc=check_rc)
     except AnsibleConnectionError as exc:
         raise CommandError(to_text(exc)) from exc
+
+    if not isinstance(responses, list):
+        raise CommandError("Command execution returned an invalid response collection")
+    if len(responses) != len(commands):
+        raise CommandError("Command execution returned fewer or more responses than requested")
+    for response in responses:
+        if response is None or isinstance(response, (bytes, bytearray)) and len(response) == 0:
+            raise CommandError("Command execution returned no response")
+        if isinstance(response, str) and not response.strip():
+            raise CommandError("Command execution returned an empty response")
+    return responses

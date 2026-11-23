@@ -15,6 +15,17 @@ version_added: "0.1.0"
 author:
   - kpeacocke (@kpeacocke)
 options:
+  state:
+    description:
+      - C(gathered) connects through network_cli and reads the device.
+      - C(parsed) parses O(running_config) locally and never opens a device connection.
+    type: str
+    choices: [gathered, parsed]
+    default: gathered
+  running_config:
+    description:
+      - Synthetic C(sys version) output used only by O(state=parsed).
+    type: str
   gather_subset:
     description:
       - Subsets of facts to collect. V(all) expands to every other choice.
@@ -219,6 +230,8 @@ def build_facts(subsets: set, responses: dict) -> dict:
 
 def main() -> None:
     argument_spec = dict(
+        state=dict(type="str", choices=["gathered", "parsed"], default="gathered"),
+        running_config=dict(type="str"),
         gather_subset=dict(
             type="list",
             elements="str",
@@ -238,6 +251,15 @@ def main() -> None:
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+    if module.params["state"] == "parsed":
+        running_config = module.params["running_config"]
+        if not running_config:
+            module.fail_json(msg="running_config is required for state=parsed")
+            return
+        subsets = resolve_subsets(module.params["gather_subset"])
+        facts = build_facts(subsets, {"sys version": running_config})
+        module.exit_json(changed=False, ansible_facts={"drayos": facts})
+        return
     subsets = resolve_subsets(module.params["gather_subset"])
     commands = commands_for_subsets(subsets)
     optional_facts = [

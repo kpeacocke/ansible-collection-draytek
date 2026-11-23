@@ -83,3 +83,32 @@ def test_run_commands_wraps_connection_errors(monkeypatch):
 
     with pytest.raises(CommandError):
         connection_module.run_commands(module, ["show system"])
+
+
+@pytest.mark.parametrize("responses", [
+    [None],
+    [""],
+    [b""],
+])
+def test_run_commands_rejects_missing_or_empty_responses(monkeypatch, responses):
+    module = FakeModule()
+
+    class EmptyConnection(FakeConnection):
+        def run_commands(self, commands, check_rc=True):
+            return responses
+
+    monkeypatch.setattr(connection_module, "Connection", EmptyConnection)
+    with pytest.raises(CommandError, match="no response|empty response"):
+        connection_module.run_commands(module, ["show system"])
+
+
+def test_run_commands_rejects_response_count_mismatch(monkeypatch):
+    module = FakeModule()
+
+    class MismatchedConnection(FakeConnection):
+        def run_commands(self, commands, check_rc=True):
+            return []
+
+    monkeypatch.setattr(connection_module, "Connection", MismatchedConnection)
+    with pytest.raises(CommandError, match="fewer or more responses"):
+        connection_module.run_commands(module, ["show system"])

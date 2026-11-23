@@ -10,6 +10,19 @@ from dataclasses import dataclass, field
 
 VENDOR = "DrayTek"
 PLATFORM = "DrayOS"
+QUALIFIED_V2927LAC_4522_READ_CAPABILITIES = (
+    "platform",
+    "lan_profiles",
+    "ipv4_routes",
+    "vlan_slots",
+    "vlan_p1_untagged_access",
+    "nat_redirects",
+    "dhcp_leases",
+    "dhcp_lease_time",
+    "dhcp2_status",
+    "wan_links",
+    "lte_access",
+)
 
 
 @dataclass(frozen=True)
@@ -23,6 +36,7 @@ class PlatformInfo:
     hardware_version: str | None = None
     serial_number: str | None = None
     hostname: str | None = None
+    discovery_status: str = "unrecognised"
     capabilities: tuple[str, ...] = field(default_factory=tuple)
 
     def as_dict(self) -> dict[str, object]:
@@ -34,6 +48,7 @@ class PlatformInfo:
             "firmware_version": self.firmware_version,
             "hardware_version": self.hardware_version,
             "serial_number": self.serial_number,
+            "discovery_status": self.discovery_status,
             "capabilities": list(self.capabilities),
         }
 
