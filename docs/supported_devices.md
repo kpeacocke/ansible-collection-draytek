@@ -184,9 +184,14 @@ comparing all LAN DNS fields. Independent read-only
 both LAN7 fields were unset. The public module accepts `secondary_server` for
 the same guarded target. [Job 2372](https://awx.ambitiouscake.com/jobs/playbook/2372/output)
 at `5df68bc` verified its changed and unchanged check-mode predictions and
-unchanged readback. Its secondary write path has not yet been qualified on
-hardware. Supply either `primary_server` or `secondary_server` per task, not
-both; use `"0.0.0.0"` to clear the selected field.
+unchanged readback. Separately approved
+[job 2376](https://awx.ambitiouscake.com/jobs/playbook/2376/output) at
+`ffa7e9d` verified the module's set, unchanged repeat, clear and full baseline
+restoration. Independent read-only
+[job 2378](https://awx.ambitiouscake.com/jobs/playbook/2378/output) confirmed
+both LAN7 DNS fields were unset. Supply either `primary_server` or
+`secondary_server` per task, not both; use `"0.0.0.0"` to clear the selected
+field. Enabled LANs, other firmware and reboot persistence remain unqualified.
 
 ## AWX fixture validation
 
