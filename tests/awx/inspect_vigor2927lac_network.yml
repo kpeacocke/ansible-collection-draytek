@@ -85,7 +85,31 @@
       vars:
         index: "{{ bindmac_all_lines.index(item) }}"
       loop: "{{ bindmac_unknown_lines }}"
+      register: bindmac_unknown_result
+      ignore_errors: true  # noqa: ignore-errors
       no_log: true
+
+    - name: Classify binding diagnostic failure without returning the error
+      ansible.builtin.set_fact:
+        bindmac_diagnostic_failure:
+          undefined: "{{ message is search('(?i)undefined|has no attribute') }}"
+          index: "{{ message is search('(?i)index') }}"
+          type_error: "{{ message is search('(?i)typeerror|unsupported operand|not supported between') }}"
+          template_error: "{{ message is search('(?i)template|templating|rendering') }}"
+      vars:
+        message: "{{ (bindmac_unknown_result.results | selectattr('failed', 'defined') | selectattr('failed') | first).msg | default('') }}"
+      when: bindmac_unknown_result.failed | default(false)
+      no_log: true
+
+    - name: Report only binding diagnostic failure categories
+      ansible.builtin.debug:
+        var: bindmac_diagnostic_failure
+      when: bindmac_unknown_result.failed | default(false)
+
+    - name: Require successful binding diagnostic classification
+      ansible.builtin.assert:
+        that:
+          - not bindmac_unknown_result.failed | default(false)
 
     - name: Report only unknown binding line shapes
       ansible.builtin.debug:
