@@ -1,0 +1,5 @@
+minor_changes:
+  - drayos_facts - Report explicit platform discovery status and evidence-bounded read capabilities.
+  - drayos_facts - Add a no-device parsed state for deterministic public-module integration tests.
+bugfixes:
+  - drayos transport - Reject missing or empty command responses instead of returning success-shaped data.

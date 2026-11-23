@@ -62,6 +62,26 @@ def test_commands_for_subsets_only_requests_needed_commands():
     assert commands == ["sys version", "show status"]
 
 
+def test_parsed_state_returns_platform_status_and_capabilities_without_device():
+    _set_module_args({
+        "state": "parsed",
+        "running_config": "Router Model: Vigor2927Lac\nVersion: 4.5.2.2",
+    })
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    drayos = excinfo.value.kwargs["ansible_facts"]["drayos"]
+    assert not excinfo.value.kwargs["changed"]
+    assert drayos["default"]["discovery_status"] == "identified"
+    assert "platform" in drayos["default"]["capabilities"]
+
+
+def test_parsed_state_requires_running_config():
+    _set_module_args({"state": "parsed"})
+    with pytest.raises(AnsibleFailJson) as excinfo:
+        drayos_facts.main()
+    assert "running_config is required" in excinfo.value.kwargs["msg"]
+
+
 DHCP_LEASE_TIME = "% srv dhcp leasetime <Lease Time (sec.)>\r\n% Now: 86400"
 
 

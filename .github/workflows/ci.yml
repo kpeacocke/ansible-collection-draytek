@@ -53,6 +53,8 @@ jobs:
             ansible-playbook "$smoke_root/collections/ansible_collections/kpeacocke/draytek/tests/integration/tr069.yml" -i localhost,
           ANSIBLE_COLLECTIONS_PATH="$smoke_root/collections" \
             ansible-playbook "$smoke_root/collections/ansible_collections/kpeacocke/draytek/tests/integration/dns.yml" -i localhost,
+          ANSIBLE_COLLECTIONS_PATH="$smoke_root/collections" \
+            ansible-playbook "$smoke_root/collections/ansible_collections/kpeacocke/draytek/tests/integration/facts.yml" -i localhost,
 
   units:
     # Uses plain pytest, not `ansible-test units --docker`: the only maintained

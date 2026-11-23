@@ -83,6 +83,10 @@ authorised device, and record its model, firmware, job ID and checked-out
 revision. The live check collects sensitive facts with logging suppressed; it
 does not validate configuration changes.
 
+The installed-archive facts integration target runs `drayos_facts` in
+`state=parsed` mode, with synthetic `sys version` output. It verifies identified,
+ambiguous and missing-input contracts without network access or router writes.
+
 The fixture-only AWX playbook runs the full unit suite in a temporary Python
 environment. It copies the repository governance scripts, catalogue and workflows
 alongside the collection because the unit tests cover those files too. Collection

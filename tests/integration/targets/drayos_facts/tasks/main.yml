@@ -1,0 +1,50 @@
+---
+- name: Parse identified platform without a device
+  kpeacocke.draytek.drayos_facts:
+    state: parsed
+    running_config: |
+      Router Model: Vigor2927Lac
+      Version: 4.5.2.2
+  register: identified
+
+- name: Check identified platform contract
+  ansible.builtin.assert:
+    that:
+      - not identified.changed
+      - identified.ansible_facts.drayos.default.discovery_status == 'identified'
+      - identified.ansible_facts.drayos.default.model == 'Vigor2927Lac'
+      - identified.ansible_facts.drayos.default.firmware_version == '4.5.2.2'
+      - "'platform' in identified.ansible_facts.drayos.default.capabilities"
+
+- name: Parse ambiguous platform without a device
+  kpeacocke.draytek.drayos_facts:
+    state: parsed
+    running_config: |
+      Router Model: Vigor2927Lac
+      Version: 4.5.2.2 Router Model: Vigor9999
+  register: ambiguous
+
+- name: Check ambiguous platform fails closed
+  ansible.builtin.assert:
+    that:
+      - not ambiguous.changed
+      - ambiguous.ansible_facts.drayos.default.discovery_status == 'ambiguous'
+      - ambiguous.ansible_facts.drayos.default.model is none
+      - ambiguous.ansible_facts.drayos.default.firmware_version == '4.5.2.2'
+      - ambiguous.ansible_facts.drayos.default.capabilities == []
+
+- name: Reject missing synthetic input
+  block:
+    - name: Invoke parsed state without running_config
+      kpeacocke.draytek.drayos_facts:
+        state: parsed
+
+    - name: Require missing input to fail
+      ansible.builtin.fail:
+        msg: Parsed facts accepted missing running_config
+  rescue:
+    - name: Check controlled validation failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'running_config is required' in ansible_failed_result.msg"

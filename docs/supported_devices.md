@@ -30,6 +30,10 @@ output through the existing `network_cli` connection. It always reports
 Missing or duplicate model and firmware labels leave the respective
 identification field unset rather than choosing an ambiguous value. A reported
 model and firmware do not by themselves establish feature support.
+`drayos_facts` reports `discovery_status` as `identified`, `partial`,
+`ambiguous`, or `unrecognised`. Read capabilities are included only for the
+Vigor2927Lac firmware 4.5.2.2 combination with live read evidence; capability
+names describe verified reads, not configuration support or a family-wide claim.
 
 | Model | Firmware | Evidence | Validation scope |
 | --- | --- | --- | --- |
