@@ -100,6 +100,31 @@
         var: bindmac_unknown_shapes
       when: bindmac_unknown_lines | length > 0
 
+    - name: Test binding row reconstruction around the pager privately
+      ansible.builtin.set_fact:
+        bindmac_reconstructed:
+          adjacent_fragments: "{{ index | int > 0 and (index | int) + 1 < bindmac_all_lines | length }}"
+          raw_join_is_entry: "{{ index | int > 0 and (index | int) + 1 < bindmac_all_lines | length and raw_join is match(entry_line) }}"
+          trimmed_join_is_entry: "{{ index | int > 0 and (index | int) + 1 < bindmac_all_lines | length and trimmed_join is match(entry_line) }}"
+      vars:
+        pager: "{{ bindmac_all_lines | select('match', pager_line) | list | first }}"
+        pager_line: '^[ \t%]*--- MORE ---.*$'
+        index: "{{ bindmac_all_lines.index(pager) }}"
+        raw_join: "{{ bindmac_all_lines[(index | int) - 1] ~ bindmac_all_lines[(index | int) + 1] }}"
+        trimmed_join: "{{ (bindmac_all_lines[(index | int) - 1] | trim) ~ (bindmac_all_lines[(index | int) + 1] | trim) }}"
+        entry_line: '(?i)^[ \t%]*IP[ \t]*:[ \t]*[0-9.]+[ \t]+bind MAC[ \t]*:[ \t]*[0-9a-f:-]+[ \t]+HOST ID[ \t]*:.*$'
+      when: bindmac_shape.pager_lines | int == 1
+      no_log: true
+
+    - name: Report only binding row reconstruction shape
+      ansible.builtin.debug:
+        var: bindmac_reconstructed
+      when: bindmac_shape.pager_lines | int == 1
+
+    - name: End after the requested binding-only discovery
+      ansible.builtin.meta: end_play
+      when: drayos_bindmac_probe_only | default(false) | bool
+
     - name: Read documented DHCP lease-time help privately
       kpeacocke.draytek.drayos_command:
         commands:
