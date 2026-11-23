@@ -218,3 +218,24 @@ def test_private_reads_via_get_work_without_raw_logging(cliconf, monkeypatch, co
     assert cliconf.get(command=command) == "private"
     assert len(seen) == 1
     assert seen[0]["command"] == command
+
+
+@pytest.mark.parametrize("response", [None, "", b""])
+def test_get_rejects_missing_or_empty_response(cliconf, monkeypatch, response):
+    monkeypatch.setattr(cliconf, "send_command", lambda **kw: response)
+    with pytest.raises(AnsibleConnectionFailure, match="no response|empty response"):
+        cliconf.get(command="sys version")
+
+
+@pytest.mark.parametrize("message", [
+    "Authentication failed",
+    "timeout value 10 seconds reached",
+    "connection closed before prompt",
+])
+def test_run_commands_propagates_transport_failures(cliconf, monkeypatch, message):
+    def fail(**kwargs):
+        raise AnsibleConnectionFailure(message)
+
+    monkeypatch.setattr(cliconf, "send_command", fail)
+    with pytest.raises(AnsibleConnectionFailure, match=message):
+        cliconf.run_commands(["sys version"])
