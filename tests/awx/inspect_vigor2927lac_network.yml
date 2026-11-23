@@ -42,6 +42,7 @@
           comment_lines: "{{ lines | select('match', comment_line) | list | length }}"
           pager_lines: "{{ lines | select('match', pager_line) | list | length }}"
           unclassified_lines: "{{ lines | reject('match', known_line) | list | length }}"
+        bindmac_unknown_lines: "{{ lines | reject('match', known_line) | list }}"
       vars:
         lines: "{{ bindmac_probe.stdout[0].splitlines() | select('search', '\\S') | list }}"
         mode_line: '(?i)^[ \t%]*ip bind mac function is turned (?:ON|OFF)[ \t]*$'
@@ -60,6 +61,28 @@
     - name: Report only IP-MAC binding response shape
       ansible.builtin.debug:
         var: bindmac_shape
+
+    - name: Classify unknown binding lines without returning their content
+      ansible.builtin.set_fact:
+        bindmac_unknown_shapes: >-
+          {{ (bindmac_unknown_shapes | default([])) + [
+            {'length': item | length,
+             'has_ipv4': item is search('[0-9]{1,3}(?:\\.[0-9]{1,3}){3}'),
+             'has_mac': item is search('(?i)[0-9a-f]{2}(?:[-:][0-9a-f]{2}){5}'),
+             'starts_prompt': item is match('^[ \\t]*>'),
+             'mentions_command': item is search('(?i)\\bbindmac\\b'),
+             'mentions_pager': item is search('(?i)\\bMORE\\b'),
+             'mentions_total': item is search('(?i)\\b(?:total|count|entries)\\b'),
+             'mentions_comment': item is search('(?i)\\bcomment\\b'),
+             'mentions_host': item is search('(?i)\\bhost\\b'),
+             'only_separator': item is match('^[ \\t%=-]+$')} ] }}
+      loop: "{{ bindmac_unknown_lines }}"
+      no_log: true
+
+    - name: Report only unknown binding line shapes
+      ansible.builtin.debug:
+        var: bindmac_unknown_shapes
+      when: bindmac_unknown_lines | length > 0
 
     - name: Read documented DHCP lease-time help privately
       kpeacocke.draytek.drayos_command:
