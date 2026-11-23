@@ -99,6 +99,53 @@ def test_dhcp_lease_time_is_opt_in_and_read_only(monkeypatch, check_mode):
     assert result["ansible_facts"]["drayos"] == {"dhcp_lease_time_seconds": 86400}
 
 
+DHCP2_STATUS = "\r\n".join([
+    "2nd DHCP server flag status --",
+    "Server works on specified MAC address: ON",
+    "Server works on specified LAN port: OFF",
+    "Port 1 flag: ON",
+    "Port 2 flag: OFF",
+])
+
+
+def test_dhcp2_status_parser_returns_reported_flags():
+    assert drayos_facts.facts_parsers.parse_dhcp2_status(DHCP2_STATUS) == {
+        "mac_address_mode": True, "lan_port_mode": False, "port_1": True, "port_2": False,
+    }
+
+
+@pytest.mark.parametrize("response", [
+    DHCP2_STATUS.replace("Port 2 flag: OFF", ""),
+    DHCP2_STATUS + "\nPort 1 flag: OFF",
+    DHCP2_STATUS + "\nprivate unexpected line",
+    DHCP2_STATUS.replace("Port 1 flag: ON", "Port 1 flag: MAYBE"),
+    DHCP2_STATUS.replace("2nd DHCP server flag status --\r\n", ""),
+    DHCP2_STATUS + "\n2nd DHCP server flag status --",
+])
+def test_dhcp2_status_parser_rejects_incomplete_or_ambiguous_output(response):
+    with pytest.raises(ParseError) as error:
+        drayos_facts.facts_parsers.parse_dhcp2_status(response)
+    assert "private unexpected line" not in str(error.value)
+
+
+@pytest.mark.parametrize("check_mode", [False, True])
+def test_dhcp2_status_is_opt_in_and_read_only(monkeypatch, check_mode):
+    def execute(module, commands):
+        assert module.check_mode == check_mode
+        assert commands == ["srv dhcp dhcp2 -v"]
+        return [DHCP2_STATUS]
+
+    monkeypatch.setattr(drayos_facts, "run_commands", execute)
+    _set_module_args({"gather_subset": [], "gather_dhcp2_status": True, "_ansible_check_mode": check_mode})
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_facts.main()
+    result = excinfo.value.kwargs
+    assert not result["changed"]
+    assert result["ansible_facts"]["drayos"]["dhcp2_status"] == {
+        "mac_address_mode": True, "lan_port_mode": False, "port_1": True, "port_2": False,
+    }
+
+
 LAN_TABLE = "\r\n".join([
     "The LAN settings:",
     *[
