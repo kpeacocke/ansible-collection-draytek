@@ -142,7 +142,10 @@ have not been validated.
 `gather_dhcp2_status: true` reads the secondary DHCP server's reported MAC
 address mode, LAN port mode and two port flags. These flags do not prove that
 the server is active or serving clients. This independent opt-in does not
-change configuration.
+change configuration. [AWX job 2397](https://awx.ambitiouscake.com/jobs/playbook/2397/output)
+verified the flags against an independent CLI read in normal and check mode
+on Vigor2927Lac firmware 4.5.2.2 using Paramiko. Other models and firmware
+have not been validated.
 
 ## Primary NTP server
 
