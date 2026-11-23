@@ -87,37 +87,13 @@
              'has_ip_label': item is search('(?i)\\bIP[ \\t]*:'),
              'has_bind_mac_label': item is search('(?i)\\bbind[ \\t]+MAC[ \\t]*:'),
              'has_colon': ':' in item,
-             'follows_pager': index > 0 and bindmac_all_lines[index - 1] is match('^[ \\t%]*--- MORE ---'),
-             'precedes_pager': index + 1 < bindmac_all_lines | length and bindmac_all_lines[index + 1] is match('^[ \\t%]*--- MORE ---'),
+             'follows_pager': index | int > 0 and bindmac_all_lines[(index | int) - 1] is match('^[ \\t%]*--- MORE ---'),
+             'precedes_pager': (index | int) + 1 < bindmac_all_lines | length and bindmac_all_lines[(index | int) + 1] is match('^[ \\t%]*--- MORE ---'),
              'only_separator': item is match('^[ \\t%=-]+$')} ] }}
       vars:
         index: "{{ bindmac_all_lines.index(item) }}"
       loop: "{{ bindmac_unknown_lines }}"
-      register: bindmac_unknown_result
-      ignore_errors: true  # noqa: ignore-errors
       no_log: true
-
-    - name: Classify binding diagnostic failure without returning the error
-      ansible.builtin.set_fact:
-        bindmac_diagnostic_failure:
-          undefined: "{{ message is search('(?i)undefined|has no attribute') }}"
-          index: "{{ message is search('(?i)index') }}"
-          type_error: "{{ message is search('(?i)typeerror|unsupported operand|not supported between') }}"
-          template_error: "{{ message is search('(?i)template|templating|rendering') }}"
-      vars:
-        message: "{{ (bindmac_unknown_result.results | selectattr('failed', 'defined') | selectattr('failed') | first).msg | default('') }}"
-      when: bindmac_unknown_result.failed | default(false)
-      no_log: true
-
-    - name: Report only binding diagnostic failure categories
-      ansible.builtin.debug:
-        var: bindmac_diagnostic_failure
-      when: bindmac_unknown_result.failed | default(false)
-
-    - name: Require successful binding diagnostic classification
-      ansible.builtin.assert:
-        that:
-          - not bindmac_unknown_result.failed | default(false)
 
     - name: Report only unknown binding line shapes
       ansible.builtin.debug:
