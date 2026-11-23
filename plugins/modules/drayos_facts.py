@@ -70,6 +70,13 @@ options:
       - The command reports a single value without identifying a LAN. It is not an active lease timer.
     type: bool
     default: false
+  gather_dhcp2_status:
+    description:
+      - Also collect the secondary DHCP server mode and port flags using C(srv dhcp dhcp2 -v).
+      - Independent of O(gather_subset); existing subset output is unchanged.
+      - These are reported flags, not proof that the server is serving clients.
+    type: bool
+    default: false
   gather_wan_links:
     description:
       - Also collect the online and stall indicators from numbered WAN and PVC WAN headers using C(wan status).
@@ -121,6 +128,8 @@ ansible_facts:
       This is a point-in-time lease table, not a reservation or pool configuration export.
     - When O(gather_dhcp_lease_time=true), C(dhcp_lease_time_seconds) is the
       single duration reported by the command, not a per-LAN or per-client lease timer.
+    - When O(gather_dhcp2_status=true), C(dhcp2_status) contains boolean
+      C(mac_address_mode), C(lan_port_mode), C(port_1) and C(port_2) flags.
     - When O(gather_wan_links=true), C(wan_links) lists interface, online and stalled
       for the numbered WAN and PVC WAN headers. This excludes traffic, addressing and other status blocks.
     - When O(gather_lte_access=true), C(lte_access) contains C(access_technology),
@@ -223,6 +232,7 @@ def main() -> None:
         gather_nat_redirects=dict(type="bool", default=False),
         gather_dhcp_leases=dict(type="bool", default=False),
         gather_dhcp_lease_time=dict(type="bool", default=False),
+        gather_dhcp2_status=dict(type="bool", default=False),
         gather_wan_links=dict(type="bool", default=False),
         gather_lte_access=dict(type="bool", default=False),
     )
@@ -240,6 +250,7 @@ def main() -> None:
             ("gather_nat_redirects", "srv nat status", "nat_redirects", facts_parsers.parse_nat_redirects),
             ("gather_dhcp_leases", "srv dhcp status", "dhcp_leases", facts_parsers.parse_dhcp_leases),
             ("gather_dhcp_lease_time", "srv dhcp leasetime ?", "dhcp_lease_time_seconds", facts_parsers.parse_dhcp_lease_time),
+            ("gather_dhcp2_status", "srv dhcp dhcp2 -v", "dhcp2_status", facts_parsers.parse_dhcp2_status),
             ("gather_wan_links", "wan status", "wan_links", facts_parsers.parse_wan_links),
             ("gather_lte_access", "wan lte stus", "lte_access", facts_parsers.parse_lte_access),
         )

@@ -78,6 +78,42 @@ def parse_dhcp_lease_time(text: str) -> int:
     return value
 
 
+_DHCP2_HEADER = re.compile(r"[ \t%]*2nd DHCP server flag status[ \t]*--[ \t]*", re.IGNORECASE)
+_DHCP2_FLAG = re.compile(
+    r"[ \t%]*(Server works on specified MAC address|Server works on specified LAN port|"
+    r"Port 1 flag|Port 2 flag):[ \t]*(ON|OFF)[ \t]*",
+    re.IGNORECASE,
+)
+_DHCP2_KEYS = {
+    "server works on specified mac address": "mac_address_mode",
+    "server works on specified lan port": "lan_port_mode",
+    "port 1 flag": "port_1",
+    "port 2 flag": "port_2",
+}
+
+
+def parse_dhcp2_status(text: str) -> dict[str, bool]:
+    """Parse the secondary DHCP server's reported mode and port flags."""
+    header = False
+    flags: dict[str, bool] = {}
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        if _DHCP2_HEADER.fullmatch(line) and not header:
+            header = True
+            continue
+        match = _DHCP2_FLAG.fullmatch(line)
+        if not header or match is None:
+            raise ParseError("Unrecognised secondary DHCP status response")
+        key = _DHCP2_KEYS[match.group(1).lower()]
+        if key in flags:
+            raise ParseError("Duplicate secondary DHCP status flag")
+        flags[key] = match.group(2).upper() == "ON"
+    if not header or len(flags) != len(_DHCP2_KEYS):
+        raise ParseError("Incomplete secondary DHCP status response")
+    return flags
+
+
 _LAN_HEADER = re.compile(r"[ \t%]*The LAN settings:[ \t]*")
 _LAN_PROFILE_PREFIX = re.compile(r"[ \t%]*(?:\[[^\r\n]*\][ \t]*)?LAN[1-8]\b")
 _LAN_PROFILE_ROW = re.compile(
