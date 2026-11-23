@@ -10,7 +10,7 @@
     - name: Require explicit mode and private, bounded execution
       ansible.builtin.assert:
         that:
-          - dns_lan7_mode | default('') in ['qualify_once', 'restore_once', 'verify_restored', 'module_cycle', 'secondary_cycle']
+          - dns_lan7_mode | default('') in ['qualify_once', 'restore_once', 'verify_restored', 'module_cycle', 'secondary_cycle', 'secondary_check']
           - dns_lan7_mode != 'qualify_once' or dns_lan7_write_approved | default(false) | bool
           - dns_lan7_mode != 'restore_once' or dns_lan7_restore_approved | default(false) | bool
           - dns_lan7_mode != 'module_cycle' or dns_lan7_module_cycle_approved | default(false) | bool
@@ -172,6 +172,46 @@
           - dns_module_clear.before == '192.0.2.53'
           - dns_module_clear.after is none
       no_log: true
+
+    - name: Verify secondary DNS module predictions without a write
+      when: dns_lan7_mode == 'secondary_check'
+      block:
+        - name: Predict a secondary resolver change
+          kpeacocke.draytek.drayos_dns:
+            state: merged
+            lan: LAN7
+            secondary_server: "192.0.2.54"
+          check_mode: true
+          diff: true
+          register: dns_secondary_prediction
+          no_log: true
+
+        - name: Predict no change when clearing the unset secondary resolver
+          kpeacocke.draytek.drayos_dns:
+            state: merged
+            lan: LAN7
+            secondary_server: "0.0.0.0"
+          check_mode: true
+          register: dns_secondary_no_change
+          no_log: true
+
+        - name: Gather DNS after the check-mode predictions
+          kpeacocke.draytek.drayos_dns:
+          register: dns_secondary_after_predictions
+          no_log: true
+
+        - name: Verify both predictions and unchanged DNS readback
+          ansible.builtin.assert:
+            that:
+              - dns_secondary_prediction.changed
+              - dns_secondary_prediction.before is none
+              - dns_secondary_prediction.after == '192.0.2.54'
+              - dns_secondary_prediction.diff.before.secondary_server is none
+              - dns_secondary_prediction.diff.after.secondary_server == '192.0.2.54'
+              - not dns_secondary_no_change.changed
+              - dns_secondary_no_change.after is none
+              - dns_secondary_after_predictions.gathered == dns_baseline.gathered
+          no_log: true
 
     - name: Qualify secondary DNS only with explicit approval and recovery standby
       when: dns_lan7_mode == 'secondary_cycle'

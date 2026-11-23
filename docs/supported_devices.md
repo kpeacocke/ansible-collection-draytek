@@ -165,8 +165,8 @@ restored the field to unset using `srv dhcp dns1 lan7 0.0.0.0`. Both compared al
 LAN DNS fields before and after the operation. Independent read-only
 [job 2115](https://awx.ambitiouscake.com/jobs/playbook/2115/output) confirmed
 that both LAN7 DNS settings were unset. These tests do not qualify changes
-on active LANs, secondary DNS writes, effective resolver selection or reboot
-persistence. The public `drayos_dns` module restricts `state: merged` to
+on active LANs, effective resolver selection or reboot persistence.
+The public `drayos_dns` module restricts `state: merged` to
 disabled LAN7 on this exact firmware and verifies all eight LAN DNS pairs
 after a write. Use `primary_server: "0.0.0.0"` to clear the field.
 [Job 2117](https://awx.ambitiouscake.com/jobs/playbook/2117/output) at `2c76a32`
@@ -176,6 +176,15 @@ verified the public module's set, unchanged repeat, clear and full baseline
 restoration. An independent read-only
 [job 2122](https://awx.ambitiouscake.com/jobs/playbook/2122/output) at the same
 revision confirmed both LAN7 DNS fields were unset.
+
+For secondary DNS, operator-approved [job 2367](https://awx.ambitiouscake.com/jobs/playbook/2367/output)
+used the documented `srv dhcp dns2` command to set and clear disabled LAN7,
+comparing all LAN DNS fields. Independent read-only
+[job 2369](https://awx.ambitiouscake.com/jobs/playbook/2369/output) confirmed
+both LAN7 fields were unset. The public module accepts `secondary_server` for
+the same guarded target; its secondary write path has not yet been qualified
+on hardware. Supply either `primary_server` or `secondary_server` per task,
+not both; use `"0.0.0.0"` to clear the selected field.
 
 ## AWX fixture validation
 

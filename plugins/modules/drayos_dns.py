@@ -5,10 +5,10 @@ from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: drayos_dns
-short_description: Read DrayOS LAN DNS settings and manage the primary resolver on disabled LAN7
+short_description: Read DrayOS LAN DNS settings and manage resolvers on disabled LAN7
 description:
   - Gather the primary and secondary IPv4 DNS fields for LAN1 through LAN8.
-  - Set or clear the primary IPv4 DNS on a disabled LAN7 only.
+  - Set or clear one IPv4 DNS field at a time on a disabled LAN7 only.
   - Does not report effective upstream resolver selection.
 version_added: "0.1.0"
 author:
@@ -18,7 +18,7 @@ options:
     description:
       - V(gathered) reads the device.
       - V(parsed) parses an existing response without a connection.
-      - V(merged) manages the primary field on disabled LAN7.
+      - V(merged) manages one DNS field on disabled LAN7.
     choices: [gathered, parsed, merged]
     type: str
     default: gathered
@@ -31,21 +31,29 @@ options:
     type: str
   primary_server:
     description:
-      - Desired IPv4 address, required only with V(merged).
+      - Desired primary IPv4 address, accepted only with V(merged).
       - Use V(0.0.0.0) to clear the field.
+      - Mutually exclusive with O(secondary_server).
+    type: str
+  secondary_server:
+    description:
+      - Desired secondary IPv4 address, accepted only with V(merged).
+      - Use V(0.0.0.0) to clear the field.
+      - Mutually exclusive with O(primary_server).
     type: str
 notes:
   - Disable persistent connection logging and use task-level C(no_log=true) if
     resolver addresses are private.
   - The response format targets Vigor2927Lac firmware 4.5.2.2.
   - Writes are restricted to that exact model and firmware and require LAN7 to be disabled.
+  - V(merged) requires either O(primary_server) or O(secondary_server), not both.
   - Readback verifies all eight LAN DNS pairs; other fields are not managed.
 attributes:
   check_mode:
     description: Performs reads and predicts changes without writing.
     support: full
   diff_mode:
-    description: Return the current and desired primary server in merged state.
+    description: Return the current and desired server in merged state.
     support: full
 """
 
@@ -61,6 +69,13 @@ EXAMPLES = r"""
     lan: LAN7
     primary_server: "0.0.0.0"
   no_log: true
+
+- name: Set secondary DNS on a disabled LAN7
+  kpeacocke.draytek.drayos_dns:
+    state: merged
+    lan: LAN7
+    secondary_server: "192.0.2.54"
+  no_log: true
 """
 
 RETURN = r"""
@@ -75,11 +90,11 @@ parsed:
   returned: when state is parsed
   type: dict
 before:
-  description: Primary server before the change, or null if unset.
+  description: Selected server before the change, or null if unset.
   returned: on success when state is merged
   type: str
 after:
-  description: Verified or predicted primary server, or null if unset.
+  description: Verified or predicted selected server, or null if unset.
   returned: on success when state is merged
   type: str
 state_may_have_changed:
@@ -172,12 +187,19 @@ def main() -> None:
             "running_config": {"type": "str", "no_log": True},
             "lan": {"type": "str", "choices": ["LAN7"]},
             "primary_server": {"type": "str"},
+            "secondary_server": {"type": "str"},
         },
-        required_if=[("state", "parsed", ["running_config"]), ("state", "merged", ["lan", "primary_server"])],
+        required_if=[
+            ("state", "parsed", ["running_config"]),
+            ("state", "merged", ["lan"]),
+            ("state", "merged", ["primary_server", "secondary_server"], True),
+        ],
+        mutually_exclusive=[("primary_server", "secondary_server")],
         supports_check_mode=True,
     )
     state = module.params["state"]
-    for field, mode in (("running_config", "parsed"), ("lan", "merged"), ("primary_server", "merged")):
+    for field, mode in (("running_config", "parsed"), ("lan", "merged"),
+                        ("primary_server", "merged"), ("secondary_server", "merged")):
         if state != mode and module.params[field] is not None:
             module.fail_json(msg=f"{field} is accepted only with state={mode}", changed=False)
 
@@ -188,26 +210,29 @@ def main() -> None:
         if state == "gathered":
             module.exit_json(changed=False, gathered=parse_lan_dns(_read(module, "show dns", paged=True)))
 
+        option = "primary_server" if module.params["primary_server"] is not None else "secondary_server"
+        field = "primary" if option == "primary_server" else "secondary"
         try:
-            address = IPv4Address(module.params["primary_server"])
+            address = IPv4Address(module.params[option])
         except AddressValueError as exc:
-            raise ValidationError("primary_server must be a dotted IPv4 address") from exc
+            raise ValidationError(f"{option} must be a dotted IPv4 address") from exc
         if address.is_multicast or address == IPv4Address("255.255.255.255"):
-            raise ValidationError("primary_server must not be multicast or broadcast")
+            raise ValidationError(f"{option} must not be multicast or broadcast")
         desired = None if address.is_unspecified else str(address)
         _require_write_target(module)
         before = parse_lan_dns(_read(module, "show dns", paged=True))
-        current = before["LAN7"]["primary"]
+        current = before["LAN7"][field]
         changed = current != desired
         if changed and not module.check_mode:
-            expected = {**before, "LAN7": {**before["LAN7"], "primary": desired}}
+            expected = {**before, "LAN7": {**before["LAN7"], field: desired}}
             write_attempted = True
-            run_commands(module, [f"srv dhcp dns1 lan7 {address}"])
+            command = "dns1" if field == "primary" else "dns2"
+            run_commands(module, [f"srv dhcp {command} lan7 {address}"])
             if parse_lan_dns(_read(module, "show dns", paged=True)) != expected:
                 raise ParseError("DNS readback did not match the requested change and unchanged other LAN fields")
         result = {"changed": changed, "before": current, "after": desired}
         if module._diff:
-            result["diff"] = {"before": {"primary_server": current}, "after": {"primary_server": desired}}
+            result["diff"] = {"before": {option: current}, "after": {option: desired}}
         module.exit_json(**result)
     except DrayTekError as exc:
         message = str(exc) if isinstance(exc, (ParseError, UnsupportedPlatformError, ValidationError)) else (

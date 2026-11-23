@@ -67,6 +67,13 @@ without reporting a change, and returns the same result in check mode.
 It does not print resolver addresses. A missing marker or failed probe is
 not evidence that the feature is unsupported.
 
+`tests/awx/qualify_vigor2927lac_lan7_dns.yml` also has a read-only
+`secondary_check` mode for the secondary resolver's check-mode predictions.
+Its `secondary_cycle` mode writes to the router and requires explicit approval,
+an unchanged unset LAN7 baseline, a disabled LAN7 and independent recovery
+standby. It attempts to restore the baseline automatically, but interruption or
+failed readback can prevent cleanup; verify the result independently.
+
 The AWX playbooks described in the device matrix include a fixture-only check
 and a separate read-only live facts check. Run the latter only on an
 authorised device, and record its model, firmware, job ID and checked-out
