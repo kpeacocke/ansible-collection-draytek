@@ -111,3 +111,41 @@ def test_unrelated_version_label_is_not_firmware_identification():
     info = facts.parse_sys_version("Router Model: Vigor2927Lac\nDescription Version: 4.5.2.2")
     assert info.model == "Vigor2927Lac"
     assert info.firmware_version is None
+
+
+@pytest.mark.parametrize("extra", [
+    "Router Model: Vigor9999",
+    "Router Model: Vigor2927Lac",
+    "Router Model:",
+])
+def test_ambiguous_model_is_not_reported(extra):
+    info = facts.parse_sys_version(_read_live("sys_version.txt") + "\n" + extra)
+    assert info.model is None
+
+
+@pytest.mark.parametrize("extra", [
+    "Version: 9.9.9",
+    "Version: 4.5.2.2",
+    "Version:",
+])
+def test_ambiguous_firmware_is_not_reported(extra):
+    info = facts.parse_sys_version(_read_live("sys_version.txt") + "\n" + extra)
+    assert info.firmware_version is None
+
+
+def test_missing_model_does_not_consume_version_label():
+    info = facts.parse_sys_version("Router Model: Version: 4.5.2.2")
+    assert info.model is None
+
+
+def test_model_and_version_on_separate_crlf_lines():
+    info = facts.parse_sys_version("Router Model: Vigor2927Lac\r\nVersion: 4.5.2.2\r\n")
+    assert (info.model, info.firmware_version) == ("Vigor2927Lac", "4.5.2.2")
+
+
+def test_repeated_labels_on_identification_line_are_ambiguous():
+    info = facts.parse_sys_version(
+        "Router Model: Vigor2927Lac Version: 4.5.2.2 Router Model: Vigor9999 Version: 9.9"
+    )
+    assert info.model is None
+    assert info.firmware_version is None

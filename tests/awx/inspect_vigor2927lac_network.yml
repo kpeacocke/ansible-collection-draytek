@@ -16,6 +16,51 @@
       ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
 
   tasks:
+    - name: Read platform identification through cli_command privately
+      ansible.netcommon.cli_command:
+        command: sys version
+      register: platform_cli
+      no_log: true
+
+    - name: Read platform identification through drayos_command privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - sys version
+        retries: 1
+      register: platform_command
+      no_log: true
+
+    - name: Gather platform facts privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset:
+          - default
+      register: platform_facts
+      no_log: true
+
+    - name: Gather platform facts in check mode privately
+      kpeacocke.draytek.drayos_facts:
+        gather_subset:
+          - default
+      check_mode: true
+      register: platform_facts_check
+      no_log: true
+
+    - name: Verify independent platform reads and facts
+      ansible.builtin.assert:
+        that:
+          - not platform_cli.changed
+          - not platform_command.changed
+          - not platform_facts.changed
+          - not platform_facts_check.changed
+          - platform_cli.stdout is search(platform_header)
+          - platform_command.stdout[0] is search(platform_header)
+          - platform_facts.ansible_facts.drayos.default.model == 'Vigor2927Lac'
+          - platform_facts.ansible_facts.drayos.default.firmware_version == '4.5.2.2'
+          - platform_facts_check.ansible_facts.drayos == platform_facts.ansible_facts.drayos
+      vars:
+        platform_header: '(?m)^[ \t]*Router Model:[ \t]*Vigor2927Lac[ \t]+Version:[ \t]*4\.5\.2\.2(?:[ \t\r]|$)'
+      no_log: true
+
     - name: Read documented DHCP pool and secondary-server status privately
       kpeacocke.draytek.drayos_command:
         commands:
