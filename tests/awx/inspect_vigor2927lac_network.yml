@@ -16,6 +16,51 @@
       ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
 
   tasks:
+    - name: Read documented IP-MAC binding status privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: ip bindmac show
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+        retries: 1
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      register: bindmac_probe
+      no_log: true
+
+    - name: Classify IP-MAC binding response without returning values
+      ansible.builtin.set_fact:
+        bindmac_shape:
+          nonblank_lines: "{{ lines | length }}"
+          mode_lines: "{{ lines | select('match', mode_line) | list | length }}"
+          strict_lines: "{{ lines | select('match', strict_line) | list | length }}"
+          header_lines: "{{ lines | select('match', header_line) | list | length }}"
+          entry_lines: "{{ lines | select('match', entry_line) | list | length }}"
+          comment_lines: "{{ lines | select('match', comment_line) | list | length }}"
+          pager_lines: "{{ lines | select('match', pager_line) | list | length }}"
+          unclassified_lines: "{{ lines | reject('match', known_line) | list | length }}"
+      vars:
+        lines: "{{ bindmac_probe.stdout[0].splitlines() | select('search', '\\S') | list }}"
+        mode_line: '(?i)^[ \t%]*ip bind mac function is turned (?:ON|OFF)[ \t]*$'
+        strict_line: '(?i)^[ \t%]*ip bind mac function is STRICT (?:ON|OFF)[ \t]*$'
+        header_line: '(?i)^[ \t%]*Show all IP Bind MAC entries\.[ \t]*$'
+        entry_line: '(?i)^[ \t%]*IP[ \t]*:[ \t]*[0-9.]+[ \t]+bind MAC[ \t]*:[ \t]*[0-9a-f:-]+[ \t]+HOST ID[ \t]*:.*$'
+        comment_line: '(?i)^[ \t%]*Comment[ \t]*:.*$'
+        pager_line: '^[ \t%]*--- MORE ---.*$'
+        known_line: >-
+          (?ix)^[ \t%]*(?:ip[ \t]+bind[ \t]+mac[ \t]+function[ \t]+is[ \t]+(?:turned|STRICT)[ \t]+(?:ON|OFF)|
+          Show[ \t]+all[ \t]+IP[ \t]+Bind[ \t]+MAC[ \t]+entries\.|
+          IP[ \t]*:[ \t]*[0-9.]+[ \t]+bind[ \t]+MAC[ \t]*:[ \t]*[0-9a-f:-]+[ \t]+HOST[ \t]+ID[ \t]*:.*|
+          Comment[ \t]*:.*|---[ \t]+MORE[ \t]+---.*)[ \t]*$
+      no_log: true
+
+    - name: Report only IP-MAC binding response shape
+      ansible.builtin.debug:
+        var: bindmac_shape
+
     - name: Read documented DHCP lease-time help privately
       kpeacocke.draytek.drayos_command:
         commands:
