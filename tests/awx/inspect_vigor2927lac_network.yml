@@ -43,6 +43,7 @@
           pager_lines: "{{ lines | select('match', pager_line) | list | length }}"
           unclassified_lines: "{{ lines | reject('match', known_line) | list | length }}"
         bindmac_unknown_lines: "{{ lines | reject('match', known_line) | list }}"
+        bindmac_all_lines: "{{ lines }}"
       vars:
         lines: "{{ bindmac_probe.stdout[0].splitlines() | select('search', '\\S') | list }}"
         mode_line: '(?i)^[ \t%]*ip bind mac function is turned (?:ON|OFF)[ \t]*$'
@@ -75,7 +76,14 @@
              'mentions_total': item is search('(?i)\\b(?:total|count|entries)\\b'),
              'mentions_comment': item is search('(?i)\\bcomment\\b'),
              'mentions_host': item is search('(?i)\\bhost\\b'),
+             'has_ip_label': item is search('(?i)\\bIP[ \\t]*:'),
+             'has_bind_mac_label': item is search('(?i)\\bbind[ \\t]+MAC[ \\t]*:'),
+             'has_colon': ':' in item,
+             'follows_pager': index > 0 and bindmac_all_lines[index - 1] is match('^[ \\t%]*--- MORE ---'),
+             'precedes_pager': index + 1 < bindmac_all_lines | length and bindmac_all_lines[index + 1] is match('^[ \\t%]*--- MORE ---'),
              'only_separator': item is match('^[ \\t%=-]+$')} ] }}
+      vars:
+        index: "{{ bindmac_all_lines.index(item) }}"
       loop: "{{ bindmac_unknown_lines }}"
       no_log: true
 
