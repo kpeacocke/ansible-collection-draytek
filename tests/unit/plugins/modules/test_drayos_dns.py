@@ -109,3 +109,78 @@ def test_dns_merge_safety(monkeypatch, capsys, desired, check, version, lan, aft
     else:
         assert output["diff"]["after"] == {"primary_server": None if desired == "0.0.0.0" else desired}
         assert calls.count("show dns") == (2 if sets else 1)
+
+
+@pytest.mark.parametrize("desired,check,before,after,lan,failed,changed,sets", [
+    ("0.0.0.0", False, DNS, DNS, "[X]LAN7 ", False, False, False),
+    ("192.0.2.54", False, DNS.replace("LAN7 Secondary DNS: [Not set]", "LAN7 Secondary DNS: 192.0.2.54"),
+     DNS, "[X]LAN7 ", False, False, False),
+    ("192.0.2.54", True, DNS, DNS, "[X]LAN7 ", False, True, False),
+    ("192.0.2.54", False, DNS, DNS.replace("LAN7 Secondary DNS: [Not set]", "LAN7 Secondary DNS: 192.0.2.54"),
+     "[X]LAN7 ", False, True, True),
+    ("0.0.0.0", False, DNS.replace("LAN7 Secondary DNS: [Not set]", "LAN7 Secondary DNS: 192.0.2.54"),
+     DNS, "[X]LAN7 ", False, True, True),
+    ("192.0.2.54", False, DNS, DNS, "[X]LAN7 ", True, True, True),
+    ("192.0.2.54", False, DNS,
+     DNS.replace("LAN7 Secondary DNS: [Not set]", "LAN7 Secondary DNS: 192.0.2.54").replace("192.0.2.1", "192.0.2.99"),
+     "[X]LAN7 ", True, True, True),
+    ("192.0.2.54", False, DNS, None, "[X]LAN7 ", True, True, True),
+    ("192.0.2.54", False, DNS, DNS, "[V]LAN7 ", True, False, False),
+    ("224.0.0.1", False, DNS, DNS, "[X]LAN7 ", True, False, False),
+    ("192.0.2.54\nshow dns", False, DNS, DNS, "[X]LAN7 ", True, False, False),
+])
+def test_secondary_dns_merge_safety(monkeypatch, capsys, desired, check, before, after, lan, failed, changed, sets):
+    args = {"state": "merged", "lan": "LAN7", "secondary_server": desired,
+            "_ansible_check_mode": check, "_ansible_diff": True}
+    monkeypatch.setattr(basic, "_ANSIBLE_ARGS", json.dumps({"ANSIBLE_MODULE_ARGS": args}).encode())
+    if hasattr(basic, "_ANSIBLE_PROFILE"):
+        monkeypatch.setattr(basic, "_ANSIBLE_PROFILE", "legacy")
+    calls = []
+
+    def run(_module, commands):
+        request = commands[0]
+        command = request if isinstance(request, str) else request["command"]
+        calls.append(command)
+        if command == "sys version":
+            return ["Router Model: Vigor2927Lac    Version: 4.5.2.2 English"]
+        if command == "show lan":
+            return [lan]
+        if command == "show dns":
+            return [before if calls.count(command) == 1 else after]
+        if after is None:
+            raise CommandError("private-device-output")
+        return ["ack"]
+
+    monkeypatch.setattr(drayos_dns, "run_commands", run)
+    with pytest.raises(SystemExit) as result:
+        drayos_dns.main()
+    assert result.value.code == int(failed)
+    output = json.loads(capsys.readouterr().out)
+    assert output["changed"] is changed
+    assert [cmd for cmd in calls if cmd.startswith("srv ")] == (
+        [f"srv dhcp dns2 lan7 {desired}"] if sets else []
+    )
+    if failed:
+        assert output["state_may_have_changed"] is sets
+        assert "private-device-output" not in output["msg"]
+    else:
+        expected = None if desired == "0.0.0.0" else desired
+        assert output["after"] == expected
+        assert output["diff"]["after"] == {"secondary_server": expected}
+        assert calls.count("show dns") == (2 if sets else 1)
+
+
+@pytest.mark.parametrize("args", [
+    {"state": "merged", "lan": "LAN7"},
+    {"state": "merged", "lan": "LAN7", "primary_server": "192.0.2.53", "secondary_server": "192.0.2.54"},
+    {"state": "gathered", "secondary_server": "192.0.2.54"},
+])
+def test_dns_rejects_ambiguous_or_misplaced_server_parameters(monkeypatch, capsys, args):
+    monkeypatch.setattr(basic, "_ANSIBLE_ARGS", json.dumps({"ANSIBLE_MODULE_ARGS": args}).encode())
+    if hasattr(basic, "_ANSIBLE_PROFILE"):
+        monkeypatch.setattr(basic, "_ANSIBLE_PROFILE", "legacy")
+    monkeypatch.setattr(drayos_dns, "run_commands", lambda *_args: pytest.fail("unexpected device access"))
+    with pytest.raises(SystemExit) as result:
+        drayos_dns.main()
+    assert result.value.code == 1
+    assert json.loads(capsys.readouterr().out)["failed"]

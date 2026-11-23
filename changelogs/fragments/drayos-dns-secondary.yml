@@ -1,0 +1,2 @@
+minor_changes:
+  - drayos_dns - Manage the secondary IPv4 DNS field on disabled LAN7 on Vigor2927Lac firmware 4.5.2.2, one resolver per task.

@@ -1,5 +1,5 @@
 ---
-- name: Qualify or verify restoration of LAN7 primary DNS
+- name: Qualify or verify restoration of LAN7 DNS
   hosts: HomeOne
   gather_facts: false
   vars_files:
@@ -10,10 +10,15 @@
     - name: Require explicit mode and private, bounded execution
       ansible.builtin.assert:
         that:
-          - dns_lan7_mode | default('') in ['qualify_once', 'restore_once', 'verify_restored', 'module_cycle']
+          - >-
+            dns_lan7_mode | default('') in ['qualify_once', 'restore_once', 'verify_restored',
+            'module_cycle', 'secondary_cycle', 'secondary_check', 'secondary_module_cycle']
           - dns_lan7_mode != 'qualify_once' or dns_lan7_write_approved | default(false) | bool
           - dns_lan7_mode != 'restore_once' or dns_lan7_restore_approved | default(false) | bool
           - dns_lan7_mode != 'module_cycle' or dns_lan7_module_cycle_approved | default(false) | bool
+          - dns_lan7_mode != 'secondary_cycle' or dns_lan7_secondary_cycle_approved | default(false) | bool
+          - dns_lan7_mode != 'secondary_module_cycle' or dns_lan7_secondary_module_cycle_approved | default(false) | bool
+          - dns_lan7_mode not in ['secondary_cycle', 'secondary_module_cycle'] or dns_lan7_independent_recovery_ready | default(false) | bool
           - not ansible_check_mode
           - not ansible_persistent_log_messages | bool
           - ansible_play_hosts_all == ['HomeOne']
@@ -169,6 +174,225 @@
           - dns_module_clear.changed
           - dns_module_clear.before == '192.0.2.53'
           - dns_module_clear.after is none
+      no_log: true
+
+    - name: Verify secondary DNS module predictions without a write
+      when: dns_lan7_mode == 'secondary_check'
+      block:
+        - name: Predict a secondary resolver change
+          kpeacocke.draytek.drayos_dns:
+            state: merged
+            lan: LAN7
+            secondary_server: "192.0.2.54"
+          check_mode: true
+          diff: true
+          register: dns_secondary_prediction
+          no_log: true
+
+        - name: Predict no change when clearing the unset secondary resolver
+          kpeacocke.draytek.drayos_dns:
+            state: merged
+            lan: LAN7
+            secondary_server: "0.0.0.0"
+          check_mode: true
+          register: dns_secondary_no_change
+          no_log: true
+
+        - name: Gather DNS after the check-mode predictions
+          kpeacocke.draytek.drayos_dns:
+          register: dns_secondary_after_predictions
+          no_log: true
+
+        - name: Verify both predictions and unchanged DNS readback
+          ansible.builtin.assert:
+            that:
+              - dns_secondary_prediction.changed
+              - dns_secondary_prediction.before is none
+              - dns_secondary_prediction.after == '192.0.2.54'
+              - dns_secondary_prediction.diff.before.secondary_server is none
+              - dns_secondary_prediction.diff.after.secondary_server == '192.0.2.54'
+              - not dns_secondary_no_change.changed
+              - dns_secondary_no_change.after is none
+              - dns_secondary_after_predictions.gathered == dns_baseline.gathered
+          no_log: true
+
+    - name: Qualify secondary DNS only with explicit approval and recovery standby
+      when: dns_lan7_mode in ['secondary_cycle', 'secondary_module_cycle']
+      block:
+        - name: Read LAN settings privately before the secondary DNS write
+          kpeacocke.draytek.drayos_command:
+            commands:
+              - command: show lan
+                prompt: "{{ [pager_prompt] * 64 }}"
+                answer: "{{ [' '] * 64 }}"
+                newline: false
+                check_all: true
+            retries: 1
+          vars:
+            pager_prompt: >-
+              --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+          register: dns_secondary_lan_status
+          no_log: true
+
+        - name: Require an unambiguously disabled LAN7 for secondary DNS
+          ansible.builtin.assert:
+            that:
+              - dns_secondary_lan_status.stdout[0] | regex_findall('(?m)^[ \t%]*\[[VX]\][ \t]*LAN7(?=[ \t])') | length == 1
+              - dns_secondary_lan_status.stdout[0] is search('(?m)^[ \t%]*\[X\][ \t]*LAN7(?=[ \t])')
+            fail_msg: LAN7 is not demonstrably disabled; no setter will run.
+
+        - name: Recheck the DNS baseline immediately before the write
+          kpeacocke.draytek.drayos_dns:
+          register: dns_secondary_prewrite
+          no_log: true
+
+        - name: Refuse to write if the DNS baseline changed
+          ansible.builtin.assert:
+            that:
+              - dns_secondary_prewrite.gathered == dns_baseline.gathered
+            fail_msg: DNS baseline changed; no secondary DNS setter will run.
+          no_log: true
+
+        - name: Test the documented secondary DNS command with automatic cleanup
+          block:
+            - name: Set only the temporary LAN7 secondary resolver
+              when: dns_lan7_mode == 'secondary_cycle'
+              kpeacocke.draytek.drayos_command:
+                commands:
+                  - srv dhcp dns2 lan7 192.0.2.54
+                retries: 1
+              changed_when: true
+              no_log: true
+
+            - name: Set the temporary secondary resolver with the public module
+              when: dns_lan7_mode == 'secondary_module_cycle'
+              kpeacocke.draytek.drayos_dns:
+                state: merged
+                lan: LAN7
+                secondary_server: "192.0.2.54"
+              register: dns_secondary_module_set
+              no_log: true
+
+            - name: Gather DNS fields after the secondary DNS write
+              kpeacocke.draytek.drayos_dns:
+              register: dns_secondary_after
+              no_log: true
+
+            - name: Verify the secondary resolver and all other DNS fields
+              ansible.builtin.assert:
+                that:
+                  - >-
+                    dns_secondary_after.gathered == dns_baseline.gathered |
+                    combine({'LAN7': {'secondary': '192.0.2.54'}}, recursive=true)
+                fail_msg: Unexpected DNS readback; use the independently approved HTTPS recovery.
+              no_log: true
+
+            - name: Repeat the same desired secondary resolver
+              when: dns_lan7_mode == 'secondary_module_cycle'
+              kpeacocke.draytek.drayos_dns:
+                state: merged
+                lan: LAN7
+                secondary_server: "192.0.2.54"
+              register: dns_secondary_module_repeat
+              no_log: true
+
+            - name: Verify the module changed only on the first invocation
+              when: dns_lan7_mode == 'secondary_module_cycle'
+              ansible.builtin.assert:
+                that:
+                  - dns_secondary_module_set.changed
+                  - dns_secondary_module_set.before is none
+                  - dns_secondary_module_set.after == '192.0.2.54'
+                  - not dns_secondary_module_repeat.changed
+                  - dns_secondary_module_repeat.after == '192.0.2.54'
+              no_log: true
+          always:
+            - name: Read current DNS before attempting secondary cleanup
+              kpeacocke.draytek.drayos_dns:
+              register: dns_secondary_cleanup_before
+              no_log: true
+
+            - name: Refuse to overwrite an unexpected secondary DNS value
+              ansible.builtin.assert:
+                that:
+                  - dns_secondary_cleanup_before.gathered.LAN7.secondary in [none, '192.0.2.54']
+                fail_msg: LAN7 secondary DNS is neither unset nor the temporary value; inspect independently.
+
+            - name: Attempt to restore the unset LAN7 secondary resolver
+              when: dns_lan7_mode == 'secondary_cycle' and dns_secondary_cleanup_before.gathered.LAN7.secondary is not none
+              kpeacocke.draytek.drayos_command:
+                commands:
+                  - srv dhcp dns2 lan7 0.0.0.0
+                retries: 1
+              changed_when: true
+              no_log: true
+
+            - name: Restore secondary DNS with module and qualified CLI fallback
+              when: dns_lan7_mode == 'secondary_module_cycle' and dns_secondary_cleanup_before.gathered.LAN7.secondary is not none
+              block:
+                - name: Clear the secondary resolver with the public module
+                  kpeacocke.draytek.drayos_dns:
+                    state: merged
+                    lan: LAN7
+                    secondary_server: "0.0.0.0"
+                  register: dns_secondary_module_clear
+                  no_log: true
+              rescue:
+                - name: Re-read DNS after the module cleanup failure
+                  kpeacocke.draytek.drayos_dns:
+                  register: dns_secondary_fallback_before
+                  no_log: true
+
+                - name: Refuse fallback for an unexpected secondary value
+                  ansible.builtin.assert:
+                    that:
+                      - dns_secondary_fallback_before.gathered.LAN7.secondary in [none, '192.0.2.54']
+                    fail_msg: LAN7 secondary DNS is unexpected; inspect independently.
+
+                - name: Restore the unset secondary resolver with the qualified CLI
+                  when: dns_secondary_fallback_before.gathered.LAN7.secondary is not none
+                  kpeacocke.draytek.drayos_command:
+                    commands:
+                      - srv dhcp dns2 lan7 0.0.0.0
+                    retries: 1
+                  changed_when: true
+                  no_log: true
+
+                - name: Read all DNS fields after the fallback
+                  kpeacocke.draytek.drayos_dns:
+                  register: dns_secondary_fallback_after
+                  no_log: true
+
+                - name: Verify the full baseline after the fallback
+                  ansible.builtin.assert:
+                    that:
+                      - dns_secondary_fallback_after.gathered == dns_baseline.gathered
+                    fail_msg: DNS baseline not restored; use the independently approved HTTPS recovery.
+                  no_log: true
+
+                - name: Report the module cleanup failure despite fallback
+                  ansible.builtin.fail:
+                    msg: Module cleanup failed; CLI fallback restored the DNS baseline. Verify independently before retrying.
+
+            - name: Read all DNS fields after secondary cleanup
+              kpeacocke.draytek.drayos_dns:
+              register: dns_secondary_cleanup_after
+              no_log: true
+
+            - name: Require restoration of the entire DNS baseline
+              ansible.builtin.assert:
+                that:
+                  - dns_secondary_cleanup_after.gathered == dns_baseline.gathered
+                fail_msg: DNS baseline not restored; use the independently approved HTTPS recovery.
+              no_log: true
+
+    - name: Require that the module performed secondary DNS restoration
+      when: dns_lan7_mode == 'secondary_module_cycle'
+      ansible.builtin.assert:
+        that:
+          - dns_secondary_module_clear.changed
+          - dns_secondary_module_clear.before == '192.0.2.54'
+          - dns_secondary_module_clear.after is none
       no_log: true
 
     - name: Report the approved next step
