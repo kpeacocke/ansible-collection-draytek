@@ -16,6 +16,51 @@
       ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
 
   tasks:
+    - name: Read documented DHCP pool and secondary-server status privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - command: "{{ item }}"
+            prompt: "{{ [pager_prompt] * 64 }}"
+            answer: "{{ [' '] * 64 }}"
+            newline: false
+            check_all: true
+        retries: 1
+      vars:
+        pager_prompt: >-
+          --- MORE ---[ \t]+\['q': Quit, 'Enter': New Lines, 'Space Bar': Next Page\] ---[ \t\r\n]*$
+      loop:
+        - "srv dhcp ipcnt ?"
+        - srv dhcp public status
+        - srv dhcp dhcp2 -v
+      register: dhcp_pool_probes
+      no_log: true
+
+    - name: Classify DHCP pool responses without returning values
+      ansible.builtin.set_fact:
+        dhcp_pool_shapes: >-
+          {{ (dhcp_pool_shapes | default([])) + [
+            {'command': item.item, 'nonblank_lines': lines | length,
+             'ipcnt_help_lines': lines | select('match', ipcnt_help) | list | length,
+             'numeric_now_lines': lines | select('match', numeric_now) | list | length,
+             'public_header_lines': lines | select('match', public_header) | list | length,
+             'indexed_mac_lines': lines | select('match', indexed_mac) | list | length,
+             'secondary_header_lines': lines | select('match', secondary_header) | list | length,
+             'secondary_flag_lines': lines | select('match', secondary_flag) | list | length} ] }}
+      vars:
+        lines: "{{ item.stdout[0].splitlines() | select('search', '\\S') | list }}"
+        ipcnt_help: '(?i)^[ \t%]*srv[ \t]+dhcp[ \t]+ipcnt[ \t]+<IP[ \t]+counts>[ \t]*$'
+        numeric_now: '(?i)^[ \t%]*Now:[ \t]*[0-9]+[ \t]*$'
+        public_header: '(?i)^[ \t%]*Index[ \t]+MAC[ \t]+Address[ \t]*$'
+        indexed_mac: '(?i)^[ \t%]*[0-9]+[ \t]+[0-9a-f]{2}(?:[-:][0-9a-f]{2}){5}[ \t]*$'
+        secondary_header: '(?i)^[ \t%]*2nd DHCP server flag status[ \t]*--[ \t]*$'
+        secondary_flag: '(?i)^[ \t%]*(?:Server works on specified (?:MAC address|LAN port)|Port [12] flag):[ \t]*(?:ON|OFF)[ \t]*$'
+      loop: "{{ dhcp_pool_probes.results }}"
+      no_log: true
+
+    - name: Report only DHCP pool response shapes
+      ansible.builtin.debug:
+        var: dhcp_pool_shapes
+
     - name: Read documented DHCP lease-time help privately
       kpeacocke.draytek.drayos_command:
         commands:
