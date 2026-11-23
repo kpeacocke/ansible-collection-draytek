@@ -16,6 +16,14 @@
       ansible.builtin.import_tasks: tasks/prepare_live_validation.yml
 
   tasks:
+    - name: Test binding diagnostic indexing with synthetic data
+      ansible.builtin.debug:
+        msg:
+          index_is_number: "{{ index is number }}"
+      vars:
+        sample_lines: ["--- MORE ---", "synthetic"]
+        index: "{{ sample_lines.index('synthetic') }}"
+
     - name: Read documented IP-MAC binding status privately
       kpeacocke.draytek.drayos_command:
         commands:
