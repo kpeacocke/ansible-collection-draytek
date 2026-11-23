@@ -586,3 +586,31 @@
           - lan_profiles_result.ansible_facts.drayos.lan_profiles | length == 8
           - not lan_profiles_result.ansible_facts.drayos.lan_profiles.LAN7.enabled
       no_log: true
+
+    - name: Read documented DHCP lease-time help privately
+      kpeacocke.draytek.drayos_command:
+        commands:
+          - "srv dhcp leasetime ?"
+        retries: 1
+      register: dhcp_lease_time_probe
+      no_log: true
+
+    - name: Classify DHCP lease-time response without returning values
+      ansible.builtin.set_fact:
+        dhcp_lease_time_shape:
+          nonblank_lines: "{{ lines | length }}"
+          value_lines: "{{ lines | select('match', value_line) | list | length }}"
+          help_lines: "{{ lines | select('match', help_line) | list | length }}"
+          unclassified_lines: "{{ lines | reject('match', known_line) | list | length }}"
+      vars:
+        lines: "{{ dhcp_lease_time_probe.stdout[0].splitlines() | select('search', '\\S') | list }}"
+        value_line: '(?i)^[ \t%]*Now:[ \t]*[0-9]+[ \t\r]*$'
+        help_line: '(?i)^[ \t%]*srv[ \t]+dhcp[ \t]+leasetime[ \t]+<Lease Time \(sec\.?\)>[ \t\r]*$'
+        known_line: >-
+          (?ix)^[ \t%]*(?:Now:[ \t]*[0-9]+|srv[ \t]+dhcp[ \t]+leasetime[ \t]+<Lease[ \t]+Time[ \t]+\(sec\.?\)>|
+          >[ \t]*(?:srv[ \t]+dhcp[ \t]+leasetime[ \t]+\?)?|---[ \t]+MORE[ \t]+---.*)[ \t\r]*$
+      no_log: true
+
+    - name: Report only DHCP lease-time response shape
+      ansible.builtin.debug:
+        var: dhcp_lease_time_shape
