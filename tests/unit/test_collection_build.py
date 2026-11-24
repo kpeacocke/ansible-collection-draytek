@@ -24,15 +24,18 @@ def test_built_collection_contains_runtime_and_not_repository_tooling(tmp_path):
         manifest = json.load(manifest_file)
     forbidden = {
         ".github", ".baseline", "scripts", "config", "AGENTS.md",
-        ".devcontainer", ".vscode", ".cache", ".venv",
+        ".devcontainer", ".vscode", ".cache", ".venv", ".ansible",
+        ".pytest_cache",
         "tests/unit/test_project_factory.py",
         "tests/unit/test_ci_workflows.py",
         "tests/unit/test_collection_build.py",
+        "tests/unit/test_doc_links.py",
     }
     assert not {
         name for name in names
         if any(name == path or name.startswith(path + "/") for path in forbidden)
     }
+    assert not {name for name in names if name.endswith(".tar.gz")}
     assert {
         "plugins/modules/drayos_command.py",
         "plugins/modules/drayos_facts.py",
@@ -52,6 +55,8 @@ def test_built_collection_contains_runtime_and_not_repository_tooling(tmp_path):
         "tests/integration/tr069.yml",
         "tests/integration/targets/drayos_tr069/tasks/main.yml",
         "tests/integration/dns.yml",
+        "tests/integration/command.yml",
+        "tests/integration/targets/drayos_command/tasks/main.yml",
     } <= names
     info = manifest["collection_info"]
     assert info["repository"] == "https://github.com/kpeacocke/ansible-collection-draytek"

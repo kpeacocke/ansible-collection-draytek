@@ -25,6 +25,7 @@ options:
   running_config:
     description:
       - Synthetic C(sys version) output used only by O(state=parsed).
+      - Not logged, because version output can contain device identifiers.
     type: str
   gather_subset:
     description:
@@ -231,7 +232,7 @@ def build_facts(subsets: set, responses: dict) -> dict:
 def main() -> None:
     argument_spec = dict(
         state=dict(type="str", choices=["gathered", "parsed"], default="gathered"),
-        running_config=dict(type="str"),
+        running_config=dict(type="str", no_log=True),
         gather_subset=dict(
             type="list",
             elements="str",

@@ -32,9 +32,13 @@ build_ignore:
   - .mypy_cache
   - .venv
   - .cache
+  - .ansible
+  - .pytest_cache
+  - "*.tar.gz"
 
   - tests/unit/test_project_factory.py
   - tests/unit/test_ci_workflows.py
   - tests/unit/test_collection_build.py
+  - tests/unit/test_doc_links.py
   - tests/awx/collections
   - docs/command-reference/sources

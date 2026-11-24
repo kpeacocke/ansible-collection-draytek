@@ -61,6 +61,17 @@ avoid logging them. `drayos_command` accepts arbitrary device commands and
 does **not** prevent configuration changes in normal mode. Use only commands
 known to be read-only on the target device.
 
+Operational documentation:
+
+- [Platform guide](docs/platform.md) — connection setup, terminal/cliconf
+  behaviour, platform identification.
+- [Qualification matrix](docs/qualification-matrix.md) — exactly which
+  runtime and device combinations are tested.
+- [Troubleshooting](docs/troubleshooting.md).
+- [Release A acceptance criteria](docs/release-a.md) and
+  [maintenance operations](docs/maintenance.md).
+- [Security architecture](docs/security.md) and [development](docs/development.md).
+
 See [testing](docs/testing.md), [contributing](CONTRIBUTING.md), the
 [security policy](SECURITY.md), and the
 [GPL-3.0-or-later licence](https://spdx.org/licenses/GPL-3.0-or-later.html).

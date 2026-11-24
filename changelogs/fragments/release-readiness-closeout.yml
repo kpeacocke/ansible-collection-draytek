@@ -1,0 +1,12 @@
+minor_changes:
+  - drayos_command - check mode now matches the ``show`` command word exactly
+    instead of any ``show``-prefixed word, so commands such as ``showoff``
+    are rejected before device access.
+  - drayos_facts - mark ``running_config`` ``no_log`` for consistency with
+    the other modules, because version output can contain device identifiers.
+  - collection build - exclude workspace caches, installed collections, and
+    local archives (``.ansible``, ``.pytest_cache``, ``*.tar.gz``) from the
+    built artefact, with an archive-content regression test.
+  - integration - add an offline ``drayos_command`` validation playbook
+    covering check-mode and argument rejection, run against the installed
+    artefact in CI alongside the other modules.
