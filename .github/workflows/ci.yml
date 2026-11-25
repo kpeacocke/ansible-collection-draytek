@@ -29,6 +29,9 @@ jobs:
           smoke_root="$RUNNER_TEMP/hostname-smoke"
           ansible-galaxy collection install kpeacocke-draytek-*.tar.gz \
             --no-deps -p "$smoke_root/collections"
+          ansible-galaxy collection install -r \
+            "$GITHUB_WORKSPACE/requirements.yml" \
+            -p "$smoke_root/collections"
           cd "$smoke_root"
           ANSIBLE_COLLECTIONS_PATH="$smoke_root/collections" \
             ansible-doc --json kpeacocke.draytek.drayos_command \
