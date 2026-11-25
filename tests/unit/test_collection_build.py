@@ -9,11 +9,23 @@ REPO_ROOT = Path(__file__).parents[2]
 
 
 def test_built_collection_contains_runtime_and_not_repository_tooling(tmp_path):
-    result = subprocess.run(
-        [sys.executable, "-m", "ansible.cli.galaxy", "collection", "build",
-         "--output-path", str(tmp_path)],
-        cwd=REPO_ROOT, capture_output=True, text=True, check=False,
-    )
+    probe_paths = [
+        REPO_ROOT / ".ansible" / "reviewer-probe.txt",
+        REPO_ROOT / ".pytest_cache" / "reviewer-probe.txt",
+        REPO_ROOT / "reviewer-probe.tar.gz",
+    ]
+    for probe in probe_paths:
+        probe.parent.mkdir(parents=True, exist_ok=True)
+        probe.write_text("review-only packaging probe", encoding="utf-8")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "ansible.cli.galaxy", "collection", "build",
+             "--output-path", str(tmp_path)],
+            cwd=REPO_ROOT, capture_output=True, text=True, check=False,
+        )
+    finally:
+        for probe in probe_paths:
+            probe.unlink(missing_ok=True)
     assert result.returncode == 0, result.stdout + result.stderr
     archives = list(tmp_path.glob("*.tar.gz"))
     assert len(archives) == 1

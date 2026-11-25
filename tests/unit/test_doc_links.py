@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import subprocess
 
 REPO_ROOT = Path(__file__).parents[2]
 
@@ -19,14 +18,13 @@ _EXTERNAL = ("http://", "https://", "mailto:")
 
 
 def _tracked_markdown_files() -> list[Path]:
-    result = subprocess.run(
-        ["git", "ls-files", "*.md"],
-        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
-    )
     return [
-        REPO_ROOT / line
-        for line in result.stdout.splitlines()
-        if line and not line.startswith(".baseline/")
+        path
+        for path in REPO_ROOT.rglob("*.md")
+        if not any(
+            part in {".git", ".baseline"}
+            for part in path.relative_to(REPO_ROOT).parts
+        )
     ]
 
 
