@@ -1,0 +1,68 @@
+---
+- name: Reject a write-shaped command in check mode before device access
+  block:
+    - name: Invoke a non-show command in check mode
+      kpeacocke.draytek.drayos_command:
+        commands: [reboot]
+      check_mode: true
+
+    - name: Require the non-show command to fail
+      ansible.builtin.fail:
+        msg: Check mode accepted a non-show command
+  rescue:
+    - name: Check controlled check-mode rejection
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'only show commands are supported' in ansible_failed_result.msg"
+
+- name: Reject a show-prefixed word in check mode before device access
+  block:
+    - name: Invoke a show-prefixed non-show command in check mode
+      kpeacocke.draytek.drayos_command:
+        commands: [showoff status]
+      check_mode: true
+
+    - name: Require the show-prefixed command to fail
+      ansible.builtin.fail:
+        msg: Check mode accepted a show-prefixed non-show command
+  rescue:
+    - name: Check word-boundary check-mode rejection
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'only show commands are supported' in ansible_failed_result.msg"
+
+- name: Reject invalid retries before device access
+  block:
+    - name: Invoke a command with zero retries
+      kpeacocke.draytek.drayos_command:
+        commands: [show status]
+        retries: 0
+
+    - name: Require invalid retries to fail
+      ansible.builtin.fail:
+        msg: Invalid retries value was accepted
+  rescue:
+    - name: Check controlled validation failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'retries must be at least 1' in ansible_failed_result.msg"
+
+- name: Reject negative interval before device access
+  block:
+    - name: Invoke a command with a negative interval
+      kpeacocke.draytek.drayos_command:
+        commands: [show status]
+        interval: -1
+
+    - name: Require negative interval to fail
+      ansible.builtin.fail:
+        msg: Negative interval was accepted
+  rescue:
+    - name: Check controlled validation failure
+      ansible.builtin.assert:
+        that:
+          - not ansible_failed_result.changed
+          - "'interval must not be negative' in ansible_failed_result.msg"

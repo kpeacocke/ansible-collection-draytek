@@ -102,6 +102,34 @@ def test_check_mode_rejects_non_show_commands(monkeypatch):
     assert "only show commands are supported" in excinfo.value.kwargs["msg"]
 
 
+def test_check_mode_rejects_show_prefixed_words(monkeypatch):
+    monkeypatch.setattr(
+        drayos_command,
+        "run_commands",
+        lambda module, commands: pytest.fail("run_commands must not execute in this test"),
+    )
+    _set_module_args({"commands": ["showoff status"], "_ansible_check_mode": True})
+
+    with pytest.raises(AnsibleFailJson) as excinfo:
+        drayos_command.main()
+
+    assert "only show commands are supported" in excinfo.value.kwargs["msg"]
+
+
+def test_check_mode_accepts_show_commands(monkeypatch):
+    monkeypatch.setattr(
+        drayos_command,
+        "run_commands",
+        lambda module, commands: ["status output"],
+    )
+    _set_module_args({"commands": ["show status"], "_ansible_check_mode": True})
+
+    with pytest.raises(AnsibleExitJson) as excinfo:
+        drayos_command.main()
+
+    assert excinfo.value.kwargs["stdout"] == ["status output"]
+
+
 def test_command_error_is_reported_via_fail_json(monkeypatch):
     from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.errors import (
         CommandError,

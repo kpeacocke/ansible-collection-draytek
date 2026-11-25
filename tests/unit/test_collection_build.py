@@ -9,11 +9,23 @@ REPO_ROOT = Path(__file__).parents[2]
 
 
 def test_built_collection_contains_runtime_and_not_repository_tooling(tmp_path):
-    result = subprocess.run(
-        [sys.executable, "-m", "ansible.cli.galaxy", "collection", "build",
-         "--output-path", str(tmp_path)],
-        cwd=REPO_ROOT, capture_output=True, text=True, check=False,
-    )
+    probe_paths = [
+        REPO_ROOT / ".ansible" / "reviewer-probe.txt",
+        REPO_ROOT / ".pytest_cache" / "reviewer-probe.txt",
+        REPO_ROOT / "reviewer-probe.tar.gz",
+    ]
+    for probe in probe_paths:
+        probe.parent.mkdir(parents=True, exist_ok=True)
+        probe.write_text("review-only packaging probe", encoding="utf-8")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "ansible.cli.galaxy", "collection", "build",
+             "--output-path", str(tmp_path)],
+            cwd=REPO_ROOT, capture_output=True, text=True, check=False,
+        )
+    finally:
+        for probe in probe_paths:
+            probe.unlink(missing_ok=True)
     assert result.returncode == 0, result.stdout + result.stderr
     archives = list(tmp_path.glob("*.tar.gz"))
     assert len(archives) == 1
@@ -24,15 +36,18 @@ def test_built_collection_contains_runtime_and_not_repository_tooling(tmp_path):
         manifest = json.load(manifest_file)
     forbidden = {
         ".github", ".baseline", "scripts", "config", "AGENTS.md",
-        ".devcontainer", ".vscode", ".cache", ".venv",
+        ".devcontainer", ".vscode", ".cache", ".venv", ".ansible",
+        ".pytest_cache",
         "tests/unit/test_project_factory.py",
         "tests/unit/test_ci_workflows.py",
         "tests/unit/test_collection_build.py",
+        "tests/unit/test_doc_links.py",
     }
     assert not {
         name for name in names
         if any(name == path or name.startswith(path + "/") for path in forbidden)
     }
+    assert not {name for name in names if name.endswith(".tar.gz")}
     assert {
         "plugins/modules/drayos_command.py",
         "plugins/modules/drayos_facts.py",
@@ -52,6 +67,8 @@ def test_built_collection_contains_runtime_and_not_repository_tooling(tmp_path):
         "tests/integration/tr069.yml",
         "tests/integration/targets/drayos_tr069/tasks/main.yml",
         "tests/integration/dns.yml",
+        "tests/integration/command.yml",
+        "tests/integration/targets/drayos_command/tasks/main.yml",
     } <= names
     info = manifest["collection_info"]
     assert info["repository"] == "https://github.com/kpeacocke/ansible-collection-draytek"

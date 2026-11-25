@@ -24,6 +24,20 @@ def test_workflows_declare_only_supported_token_permissions():
                 assert set(permissions) <= TOKEN_PERMISSIONS, path.name
 
 
+def test_installed_smoke_environment_installs_collection_dependencies():
+    workflow = yaml.safe_load(
+        (WORKFLOW_ROOT / "ci.yml").read_text(encoding="utf-8")
+    )
+    steps = workflow["jobs"]["lint"]["steps"]
+    smoke = next(
+        step for step in steps
+        if step.get("name") == "Discover installed modules and smoke-test without a device"
+    )
+    assert 'ansible-galaxy collection install -r \\' in smoke["run"]
+    assert '"$GITHUB_WORKSPACE/requirements.yml"' in smoke["run"]
+    assert '-p "$smoke_root/collections"' in smoke["run"]
+
+
 def test_updater_uses_same_workflow_capable_credential_for_git_and_prs():
     workflow = yaml.safe_load(
         (WORKFLOW_ROOT / "baseline-update.yml").read_text(encoding="utf-8")

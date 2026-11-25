@@ -13,6 +13,8 @@ from ansible_collections.kpeacocke.draytek.plugins.module_utils.network.drayos.t
     parse_names,
     parse_value,
     read_command,
+    validate_write_value,
+    write_command,
 )
 from ansible_collections.kpeacocke.draytek.plugins.modules import drayos_tr069
 
@@ -93,6 +95,13 @@ def test_invalid_paths_cannot_generate_commands(parameter, query):
         read_command(parameter, query)
 
 
+def test_write_command_rejects_injection_characters():
+    assert write_command(LEAF, "new-value") == f"sys tr069 set {LEAF} new-value"
+    for value in ("", " leading", "trailing ", "x\nsys reboot", "x;sys reboot", 'x"y', "x\\y", "\u79d8\u5bc6"):
+        with pytest.raises(ValidationError):
+            validate_write_value(value)
+
+
 @pytest.fixture
 def invoke(monkeypatch, capsys):
     def run(args):
@@ -155,6 +164,161 @@ def test_invalid_module_input_fails_without_connecting(monkeypatch, invoke, args
 
     monkeypatch.setattr(drayos_tr069, "run_commands", execute)
     assert invoke(args)["failed"] is True
+
+
+PLATFORM = "Router Model: Vigor2927Lac\nVersion: 4.5.2.2"
+WRITABLE_VALUE = "new-value\n\nFlag: 9022\n\nWritable: 1\n"
+WRITABLE_OLD = "old-value\n\nFlag: 9022\n\nWritable: 1\n"
+
+
+def test_write_requires_confirmation_before_platform_or_parameter_access(monkeypatch, invoke):
+    def execute(*args, **kwargs):
+        pytest.fail("Unconfirmed write attempted device access")
+
+    monkeypatch.setattr(drayos_tr069, "run_commands", execute)
+    result = invoke({
+        "state": "merged",
+        "parameter": LEAF,
+        "value": "new-value",
+        "confirmation": "wrong",
+    })
+    assert result["failed"] is True
+    assert "exact confirmation" in result["msg"]
+
+
+def test_write_rejects_wrong_platform_before_parameter_read(monkeypatch, invoke):
+    calls = []
+
+    def execute(module, commands):
+        calls.extend(commands)
+        if commands[0]["command"] == "sys version":
+            return ["Router Model: Vigor2927Vac\nVersion: 4.4.0"]
+        pytest.fail("Parameter read ran after platform rejection")
+
+    monkeypatch.setattr(drayos_tr069, "run_commands", execute)
+    result = invoke({
+        "state": "merged",
+        "parameter": LEAF,
+        "value": "new-value",
+        "confirmation": "I_AUTHORISE_TR069_WRITE",
+    })
+    assert result["failed"] is True
+    assert calls == [{"command": "sys version"}]
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_write_check_mode_and_unchanged_paths(monkeypatch, invoke, check):
+    calls = []
+
+    def execute(module, commands):
+        calls.extend(commands)
+        command = commands[0]["command"]
+        if command == "sys version":
+            return [PLATFORM]
+        if command == f"sys tr069 get {LEAF}":
+            count = len([c for c in calls if c["command"].startswith("sys tr069 get")])
+            return [WRITABLE_OLD] if count == 1 else [WRITABLE_VALUE]
+        if command == f"sys tr069 set {LEAF} new-value":
+            return ["Set OK"]
+        pytest.fail(f"Unexpected command: {command}")
+
+    monkeypatch.setattr(drayos_tr069, "run_commands", execute)
+    args = {
+        "state": "merged",
+        "parameter": LEAF,
+        "value": "new-value",
+        "confirmation": "I_AUTHORISE_TR069_WRITE",
+        "_ansible_check_mode": check,
+    }
+    result = invoke(args)
+    assert result["changed"] is True
+    expected = [{"command": "sys version"}, {"command": f"sys tr069 get {LEAF}"}]
+    if not check:
+        expected.extend([
+            {"command": f"sys tr069 set {LEAF} new-value"},
+            {"command": f"sys tr069 get {LEAF}"},
+        ])
+    assert calls == expected
+    assert result["diff"]["before"] == {"value": "<redacted>"}
+    assert result["merged"]["value"] == "new-value"
+
+
+def test_write_is_idempotent_and_never_sets_when_equal(monkeypatch, invoke):
+    calls = []
+
+    def execute(module, commands):
+        calls.extend(commands)
+        command = commands[0]["command"]
+        if command == "sys version":
+            return [PLATFORM]
+        if command == f"sys tr069 get {LEAF}":
+            return [WRITABLE_VALUE]
+        pytest.fail(f"Unexpected command: {command}")
+
+    monkeypatch.setattr(drayos_tr069, "run_commands", execute)
+    result = invoke({
+        "state": "merged",
+        "parameter": LEAF,
+        "value": "new-value",
+        "confirmation": "I_AUTHORISE_TR069_WRITE",
+    })
+    assert result["changed"] is False
+    assert calls == [{"command": "sys version"}, {"command": f"sys tr069 get {LEAF}"}]
+
+
+def test_write_rereads_and_reports_success(monkeypatch, invoke):
+    calls = []
+
+    def execute(module, commands):
+        calls.extend(commands)
+        command = commands[0]["command"]
+        if command == "sys version":
+            return [PLATFORM]
+        if command == f"sys tr069 get {LEAF}":
+            return [WRITABLE_OLD] if len([c for c in calls if c["command"].startswith("sys tr069 get")]) == 1 else [WRITABLE_VALUE]
+        if command == f"sys tr069 set {LEAF} new-value":
+            return ["Set OK"]
+        pytest.fail(f"Unexpected command: {command}")
+
+    monkeypatch.setattr(drayos_tr069, "run_commands", execute)
+    result = invoke({
+        "state": "merged",
+        "parameter": LEAF,
+        "value": "new-value",
+        "confirmation": "I_AUTHORISE_TR069_WRITE",
+    })
+    assert result["changed"] is True
+    assert calls[-2:] == [
+        {"command": f"sys tr069 set {LEAF} new-value"},
+        {"command": f"sys tr069 get {LEAF}"},
+    ]
+
+
+def test_write_readback_mismatch_fails_without_success(monkeypatch, invoke):
+    calls = []
+
+    def execute(module, commands):
+        calls.extend(commands)
+        command = commands[0]["command"]
+        if command == "sys version":
+            return [PLATFORM]
+        if command == f"sys tr069 get {LEAF}":
+            count = len([c for c in calls if c["command"].startswith("sys tr069 get")])
+            return [WRITABLE_OLD] if count == 1 else [WRITABLE_OLD]
+        if command == f"sys tr069 set {LEAF} new-value":
+            return ["Set OK"]
+        pytest.fail(f"Unexpected command: {command}")
+
+    monkeypatch.setattr(drayos_tr069, "run_commands", execute)
+    result = invoke({
+        "state": "merged",
+        "parameter": LEAF,
+        "value": "new-value",
+        "confirmation": "I_AUTHORISE_TR069_WRITE",
+    })
+    assert result["failed"] is True
+    assert result["changed"] is True
+    assert result["state_may_have_changed"] is True
 
 
 @pytest.mark.parametrize("response", [None, [], ["a", "b"], [None], [VALUE + "\nSECRET"]])

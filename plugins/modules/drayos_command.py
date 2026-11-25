@@ -108,7 +108,7 @@ def parse_commands(module: AnsibleModule) -> list:
 
     if module.check_mode:
         for command in commands:
-            if not command["command"].startswith("show"):
+            if command["command"].split(None, 1)[:1] != ["show"]:
                 raise ValidationError(
                     "only show commands are supported when using check mode, "
                     f"received {command['command']!r}"

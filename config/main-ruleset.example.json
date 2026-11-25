@@ -34,6 +34,27 @@
         "required_status_checks": [
           {
             "context": "baseline"
+          },
+          {
+            "context": "lint"
+          },
+          {
+            "context": "sanity"
+          },
+          {
+            "context": "units (3.11, >=2.19,<2.20, 6.0.0)"
+          },
+          {
+            "context": "units (3.12, >=2.20,<2.21, 8.7.1)"
+          },
+          {
+            "context": "units (3.14, >=2.21,<2.22, 8.7.1)"
+          },
+          {
+            "context": "Analyze (actions)"
+          },
+          {
+            "context": "Analyze (python)"
           }
         ],
         "strict_required_status_checks_policy": true

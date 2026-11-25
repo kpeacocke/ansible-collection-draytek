@@ -82,6 +82,24 @@ def test_parsed_state_requires_running_config():
     assert "running_config is required" in excinfo.value.kwargs["msg"]
 
 
+def test_running_config_is_marked_no_log(monkeypatch):
+    captured = {}
+    original_init = basic.AnsibleModule.__init__
+
+    def _capture_init(self, *args, **kwargs):
+        captured["argument_spec"] = kwargs.get("argument_spec", args[0] if args else None)
+        original_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(basic.AnsibleModule, "__init__", _capture_init)
+    _set_module_args({
+        "state": "parsed",
+        "running_config": "Router Model: Vigor2927Lac\nVersion: 4.5.2.2",
+    })
+    with pytest.raises(AnsibleExitJson):
+        drayos_facts.main()
+    assert captured["argument_spec"]["running_config"]["no_log"] is True
+
+
 DHCP_LEASE_TIME = "% srv dhcp leasetime <Lease Time (sec.)>\r\n% Now: 86400"
 
 

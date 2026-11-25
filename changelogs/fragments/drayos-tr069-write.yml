@@ -1,0 +1,5 @@
+minor_changes:
+  - drayos_tr069 - add approval-gated ``state=merged`` write support with
+    exact Vigor2927Lac 4.5.2.2 platform guarding, printable-ASCII value
+    validation, redacted diffs, check-mode prediction, and mandatory
+    post-write readback. Live hardware qualification remains pending.
