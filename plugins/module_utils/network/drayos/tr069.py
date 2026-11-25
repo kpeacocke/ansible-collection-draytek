@@ -38,6 +38,23 @@ def read_command(parameter: str, query: str) -> str:
     return f"sys tr069 get {parameter}{suffix}"
 
 
+def validate_write_value(value: str) -> None:
+    if not isinstance(value, str) or not value:
+        raise ValidationError("TR-069 value must be a non-empty string")
+    if value != value.strip():
+        raise ValidationError("TR-069 value must not have leading or trailing whitespace")
+    if any(ord(char) < 0x20 or ord(char) > 0x7E for char in value):
+        raise ValidationError("TR-069 value must contain printable ASCII only")
+    if any(char in "\"'\\\\;" for char in value):
+        raise ValidationError("TR-069 value contains unsupported command characters")
+
+
+def write_command(parameter: str, value: str) -> str:
+    validate_parameter(parameter, "value")
+    validate_write_value(value)
+    return f"sys tr069 set {parameter} {value}"
+
+
 def parse_value(output: str, parameter: str) -> dict[str, object]:
     validate_parameter(parameter, "value")
     match = _VALUE.fullmatch(output) if isinstance(output, str) else None
